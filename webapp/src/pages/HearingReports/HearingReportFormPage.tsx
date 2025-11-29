@@ -7,6 +7,30 @@ import Parse from '../../api/parseClient'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 
+interface SpeechAudiometry {
+  SAT?: { R?: number; L?: number; Bi?: number }
+  SRT?: { R?: number; L?: number; Bi?: number }
+  Mask?: { R?: number; L?: number; Bi?: number }
+  MCL?: { R?: number; L?: number; Bi?: number }
+  UCL?: { R?: number; L?: number; Bi?: number }
+}
+
+interface DiscriminationLoss {
+  WR?: { R?: number; L?: number; Bi?: number }
+  WRLevel?: { R?: number; L?: number; Bi?: number }
+  WRMask?: { R?: number; L?: number; Bi?: number }
+  WRN?: { R?: number; L?: number; Bi?: number }
+  WRNLevel?: { R?: number; L?: number; Bi?: number }
+  WRNMask?: { R?: number; L?: number; Bi?: number }
+}
+
+interface Tympanogram {
+  type?: string
+  pressure?: number
+  compliance?: number
+  volume?: number
+}
+
 export default function HearingReportFormPage() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
@@ -26,6 +50,12 @@ export default function HearingReportFormPage() {
     queryFn: () => clientService.getAll({ isActive: true }),
   })
 
+  const { data: selectedClient } = useQuery({
+    queryKey: ['client', clientId],
+    queryFn: () => clientService.getById(clientId!),
+    enabled: !!clientId,
+  })
+
   const [formData, setFormData] = useState({
     clientId: clientId || '',
     audiologist: '',
@@ -33,9 +63,17 @@ export default function HearingReportFormPage() {
     typeOfTest: 'pure tone audiometry',
     leftEarThresholds: {} as EarThresholds,
     rightEarThresholds: {} as EarThresholds,
-    diagnosis: '',
+    caseHistory: '',
+    speechAudiometry: {} as SpeechAudiometry,
+    discriminationLoss: {} as DiscriminationLoss,
+    leftTympanogram: {} as Tympanogram,
+    rightTympanogram: {} as Tympanogram,
+    results: '',
     recommendations: '',
-    hearingAidSuggested: '',
+    signature: '',
+    printName: '',
+    licenseNo: '',
+    signatureDate: new Date().toISOString().split('T')[0],
   })
 
   useEffect(() => {
@@ -52,20 +90,31 @@ export default function HearingReportFormPage() {
         typeOfTest: report.get('typeOfTest') || 'pure tone audiometry',
         leftEarThresholds: report.get('leftEarThresholds') || {},
         rightEarThresholds: report.get('rightEarThresholds') || {},
-        diagnosis: report.get('diagnosis') || '',
+        caseHistory: (report as any).get('caseHistory') || '',
+        speechAudiometry: (report as any).get('speechAudiometry') || {},
+        discriminationLoss: (report as any).get('discriminationLoss') || {},
+        leftTympanogram: (report as any).get('leftTympanogram') || {},
+        rightTympanogram: (report as any).get('rightTympanogram') || {},
+        results: report.get('diagnosis') || '',
         recommendations: report.get('recommendations') || '',
-        hearingAidSuggested: report.get('hearingAidSuggested') || '',
+        signature: (report as any).get('signature') || '',
+        printName: (report as any).get('printName') || '',
+        licenseNo: (report as any).get('licenseNo') || '',
+        signatureDate: (report as any).get('signatureDate') 
+          ? new Date((report as any).get('signatureDate')).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
       })
     }
   }, [report])
 
   const mutation = useMutation({
-    mutationFn: async (data: Partial<HearingReport>) => {
-      const client = Parse.Object.createWithoutData('Client', data.clientId as any)
+    mutationFn: async (data: any) => {
+      const client = Parse.Object.createWithoutData('Client', data.clientId)
       const reportData = {
         ...data,
         client,
-        testDate: new Date(data.testDate as any),
+        testDate: new Date(data.testDate),
+        signatureDate: data.signatureDate ? new Date(data.signatureDate) : undefined,
       }
       if (isEdit) {
         return hearingReportService.update(id!, reportData)
@@ -85,12 +134,12 @@ export default function HearingReportFormPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    mutation.mutate(formData as any)
+    mutation.mutate(formData)
   }
 
   const updateThreshold = (
     ear: 'leftEarThresholds' | 'rightEarThresholds',
-    frequency: keyof EarThresholds,
+    frequency: number,
     value: string
   ) => {
     setFormData({
@@ -102,81 +151,182 @@ export default function HearingReportFormPage() {
     })
   }
 
-  const frequencies: (keyof EarThresholds)[] = [250, 500, 1000, 2000, 4000, 8000]
+  const updateSpeechAudiometry = (field: keyof SpeechAudiometry, ear: 'R' | 'L' | 'Bi', value: string) => {
+    setFormData({
+      ...formData,
+      speechAudiometry: {
+        ...formData.speechAudiometry,
+        [field]: {
+          ...formData.speechAudiometry[field],
+          [ear]: value ? parseFloat(value) : undefined,
+        },
+      },
+    })
+  }
+
+  const updateDiscriminationLoss = (field: keyof DiscriminationLoss, ear: 'R' | 'L' | 'Bi', value: string) => {
+    setFormData({
+      ...formData,
+      discriminationLoss: {
+        ...formData.discriminationLoss,
+        [field]: {
+          ...formData.discriminationLoss[field],
+          [ear]: value ? parseFloat(value) : undefined,
+        },
+      },
+    })
+  }
+
+  const updateTympanogram = (ear: 'leftTympanogram' | 'rightTympanogram', field: keyof Tympanogram, value: string) => {
+    setFormData({
+      ...formData,
+      [ear]: {
+        ...formData[ear],
+        [field]: field === 'type' ? value : (value ? parseFloat(value) : undefined),
+      },
+    })
+  }
+
+  const frequencies = [125, 250, 500, 1000, 2000, 4000, 8000]
 
   if (isEdit && isLoading) {
     return <div className="text-center py-8">Loading...</div>
   }
 
+  const client = selectedClient || clients.find(c => c.id === formData.clientId)
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">
-        {isEdit ? 'Edit Hearing Report' : 'New Hearing Report'}
-      </h1>
+    <div className="max-w-6xl mx-auto bg-white p-8">
+      {/* Header */}
+      <div className="text-center mb-8 border-b pb-4">
+        <h1 className="text-2xl font-bold mb-2">Hearing Loss Assessment</h1>
+        <div className="text-sm text-gray-600">
+          <p className="font-semibold">Hearing Clinic System</p>
+          <p>Address: [Your Clinic Address]</p>
+          <p>Tel: [Phone] | Fax: [Fax]</p>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="card space-y-6">
-        <div>
-          <label className="label">Client *</label>
-          <select
-            className="input"
-            value={formData.clientId}
-            onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-            required
-            disabled={!!clientId}
-          >
-            <option value="">Select client...</option>
-            {clients.map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.get('fullName')}
-              </option>
-            ))}
-          </select>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Patient Information */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Patient Information</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Patient (Last Name) *</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={client?.get('lastName') || ''}
+                disabled
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">First Name *</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={client?.get('firstName') || ''}
+                disabled
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Client *</label>
+              <select
+                className="w-full px-3 py-2 border rounded"
+                value={formData.clientId}
+                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                required
+                disabled={!!clientId}
+              >
+                <option value="">Select client...</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.get('fullName')}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Address (Street)</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={client?.get('address') || ''}
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">City/Town</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={client?.get('city') || ''}
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Postal Code</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={client?.get('postalCode') || ''}
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Telephone Number</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={client?.get('phone') || ''}
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Date of Birth</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border rounded"
+                value={client?.get('dateOfBirth') ? new Date(client.get('dateOfBirth')).toISOString().split('T')[0] : ''}
+                disabled
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Date of Service *</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border rounded"
+                value={formData.testDate}
+                onChange={(e) => setFormData({ ...formData, testDate: e.target.value })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="label">Test Date *</label>
-            <input
-              type="date"
-              className="input"
-              value={formData.testDate}
-              onChange={(e) => setFormData({ ...formData, testDate: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="label">Type of Test</label>
-            <select
-              className="input"
-              value={formData.typeOfTest}
-              onChange={(e) => setFormData({ ...formData, typeOfTest: e.target.value })}
-            >
-              <option value="pure tone audiometry">Pure Tone Audiometry</option>
-              <option value="speech audiometry">Speech Audiometry</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="label">Audiologist</label>
-          <input
-            type="text"
-            className="input"
-            value={formData.audiologist}
-            onChange={(e) => setFormData({ ...formData, audiologist: e.target.value })}
-            placeholder="Audiologist name"
+        {/* Case History */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Case History</h2>
+          <textarea
+            className="w-full px-3 py-2 border rounded"
+            rows={4}
+            value={formData.caseHistory}
+            onChange={(e) => setFormData({ ...formData, caseHistory: e.target.value })}
+            placeholder="Enter case history..."
           />
         </div>
 
-        {/* Hearing Thresholds */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Hearing Thresholds (dB HL)</h3>
+        {/* Puretone Audiometry */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Puretone Audiometry</h2>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse border">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="border px-4 py-2">Frequency (Hz)</th>
+                  <th className="border px-4 py-2 text-left">Frequency (Hz)</th>
                   {frequencies.map((freq) => (
                     <th key={freq} className="border px-4 py-2">
                       {freq}
@@ -186,28 +336,167 @@ export default function HearingReportFormPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td className="border px-4 py-2 font-medium">Left Ear</td>
+                  <td className="border px-4 py-2 font-medium">Right Ear (Red Circle/X)</td>
                   {frequencies.map((freq) => (
                     <td key={freq} className="border px-4 py-2">
                       <input
                         type="number"
-                        className="w-full px-2 py-1 border rounded"
-                        value={formData.leftEarThresholds[freq] || ''}
-                        onChange={(e) => updateThreshold('leftEarThresholds', freq, e.target.value)}
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        value={formData.rightEarThresholds[freq as keyof EarThresholds] || ''}
+                        onChange={(e) => updateThreshold('rightEarThresholds', freq, e.target.value)}
                         placeholder="-"
                       />
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="border px-4 py-2 font-medium">Right Ear</td>
+                  <td className="border px-4 py-2 font-medium">Left Ear (Blue X/Square)</td>
                   {frequencies.map((freq) => (
                     <td key={freq} className="border px-4 py-2">
                       <input
                         type="number"
-                        className="w-full px-2 py-1 border rounded"
-                        value={formData.rightEarThresholds[freq] || ''}
-                        onChange={(e) => updateThreshold('rightEarThresholds', freq, e.target.value)}
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        value={formData.leftEarThresholds[freq as keyof EarThresholds] || ''}
+                        onChange={(e) => updateThreshold('leftEarThresholds', freq, e.target.value)}
+                        placeholder="-"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Note: Graph visualization can be added here</p>
+        </div>
+
+        {/* Speech Audiometry */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Speech Audiometry</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border px-4 py-2 text-left">Test</th>
+                  <th className="border px-4 py-2">R</th>
+                  <th className="border px-4 py-2">L</th>
+                  <th className="border px-4 py-2">Bi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(['SAT', 'SRT', 'Mask', 'MCL', 'UCL'] as const).map((test) => (
+                  <tr key={test}>
+                    <td className="border px-4 py-2 font-medium">{test}</td>
+                    {(['R', 'L', 'Bi'] as const).map((ear) => (
+                      <td key={ear} className="border px-4 py-2">
+                        <input
+                          type="number"
+                          className="w-full px-2 py-1 border rounded text-sm"
+                          value={formData.speechAudiometry[test]?.[ear] || ''}
+                          onChange={(e) => updateSpeechAudiometry(test, ear, e.target.value)}
+                          placeholder="-"
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Discrimination Loss */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Discrimination Loss</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border px-4 py-2 text-left">Test</th>
+                  <th className="border px-4 py-2">R</th>
+                  <th className="border px-4 py-2">L</th>
+                  <th className="border px-4 py-2">Bi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="border px-4 py-2 font-medium">WR %</td>
+                  {(['R', 'L', 'Bi'] as const).map((ear) => (
+                    <td key={ear} className="border px-4 py-2">
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        value={formData.discriminationLoss.WR?.[ear] || ''}
+                        onChange={(e) => updateDiscriminationLoss('WR', ear, e.target.value)}
+                        placeholder="-"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="border px-4 py-2 font-medium">WR Level</td>
+                  {(['R', 'L', 'Bi'] as const).map((ear) => (
+                    <td key={ear} className="border px-4 py-2">
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        value={formData.discriminationLoss.WRLevel?.[ear] || ''}
+                        onChange={(e) => updateDiscriminationLoss('WRLevel', ear, e.target.value)}
+                        placeholder="-"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="border px-4 py-2 font-medium">WR Mask</td>
+                  {(['R', 'L', 'Bi'] as const).map((ear) => (
+                    <td key={ear} className="border px-4 py-2">
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        value={formData.discriminationLoss.WRMask?.[ear] || ''}
+                        onChange={(e) => updateDiscriminationLoss('WRMask', ear, e.target.value)}
+                        placeholder="-"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="border px-4 py-2 font-medium">WRN %</td>
+                  {(['R', 'L', 'Bi'] as const).map((ear) => (
+                    <td key={ear} className="border px-4 py-2">
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        value={formData.discriminationLoss.WRN?.[ear] || ''}
+                        onChange={(e) => updateDiscriminationLoss('WRN', ear, e.target.value)}
+                        placeholder="-"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="border px-4 py-2 font-medium">WRN Level</td>
+                  {(['R', 'L', 'Bi'] as const).map((ear) => (
+                    <td key={ear} className="border px-4 py-2">
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        value={formData.discriminationLoss.WRNLevel?.[ear] || ''}
+                        onChange={(e) => updateDiscriminationLoss('WRNLevel', ear, e.target.value)}
+                        placeholder="-"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="border px-4 py-2 font-medium">WRN Mask</td>
+                  {(['R', 'L', 'Bi'] as const).map((ear) => (
+                    <td key={ear} className="border px-4 py-2">
+                      <input
+                        type="number"
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        value={formData.discriminationLoss.WRNMask?.[ear] || ''}
+                        onChange={(e) => updateDiscriminationLoss('WRNMask', ear, e.target.value)}
                         placeholder="-"
                       />
                     </td>
@@ -218,50 +507,197 @@ export default function HearingReportFormPage() {
           </div>
         </div>
 
-        <div>
-          <label className="label">Diagnosis</label>
+        {/* Tympanograms */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Tympanograms (Pressure mmH20)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-3">Left Ear</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border rounded"
+                    value={formData.leftTympanogram.type || ''}
+                    onChange={(e) => updateTympanogram('leftTympanogram', 'type', e.target.value)}
+                    placeholder="A, B, C, etc."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Pressure</label>
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2 border rounded"
+                    value={formData.leftTympanogram.pressure || ''}
+                    onChange={(e) => updateTympanogram('leftTympanogram', 'pressure', e.target.value)}
+                    placeholder="-"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Compliance</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full px-3 py-2 border rounded"
+                    value={formData.leftTympanogram.compliance || ''}
+                    onChange={(e) => updateTympanogram('leftTympanogram', 'compliance', e.target.value)}
+                    placeholder="-"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Volume</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full px-3 py-2 border rounded"
+                    value={formData.leftTympanogram.volume || ''}
+                    onChange={(e) => updateTympanogram('leftTympanogram', 'volume', e.target.value)}
+                    placeholder="-"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Note: Graph visualization can be added here</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-3">Right Ear</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border rounded"
+                    value={formData.rightTympanogram.type || ''}
+                    onChange={(e) => updateTympanogram('rightTympanogram', 'type', e.target.value)}
+                    placeholder="A, B, C, etc."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Pressure</label>
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2 border rounded"
+                    value={formData.rightTympanogram.pressure || ''}
+                    onChange={(e) => updateTympanogram('rightTympanogram', 'pressure', e.target.value)}
+                    placeholder="-"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Compliance</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full px-3 py-2 border rounded"
+                    value={formData.rightTympanogram.compliance || ''}
+                    onChange={(e) => updateTympanogram('rightTympanogram', 'compliance', e.target.value)}
+                    placeholder="-"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Volume</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full px-3 py-2 border rounded"
+                    value={formData.rightTympanogram.volume || ''}
+                    onChange={(e) => updateTympanogram('rightTympanogram', 'volume', e.target.value)}
+                    placeholder="-"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Note: Graph visualization can be added here</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Results</h2>
           <textarea
-            className="input"
+            className="w-full px-3 py-2 border rounded"
             rows={4}
-            value={formData.diagnosis}
-            onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
+            value={formData.results}
+            onChange={(e) => setFormData({ ...formData, results: e.target.value })}
+            placeholder="Enter results summary..."
           />
         </div>
 
-        <div>
-          <label className="label">Recommendations</label>
+        {/* Recommendations */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Recommendations</h2>
           <textarea
-            className="input"
+            className="w-full px-3 py-2 border rounded"
             rows={4}
             value={formData.recommendations}
             onChange={(e) => setFormData({ ...formData, recommendations: e.target.value })}
+            placeholder="Enter recommendations..."
           />
         </div>
 
-        <div>
-          <label className="label">Hearing Aid Suggested</label>
-          <input
-            type="text"
-            className="input"
-            value={formData.hearingAidSuggested}
-            onChange={(e) => setFormData({ ...formData, hearingAidSuggested: e.target.value })}
-          />
+        {/* Signature */}
+        <div className="border rounded-lg p-6">
+          <h2 className="text-lg font-bold mb-4">Signature</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Signature</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={formData.signature}
+                onChange={(e) => setFormData({ ...formData, signature: e.target.value })}
+                placeholder="Enter signature name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Print Name</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={formData.printName}
+                onChange={(e) => setFormData({ ...formData, printName: e.target.value })}
+                placeholder="Enter print name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Lic. No</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded"
+                value={formData.licenseNo}
+                onChange={(e) => setFormData({ ...formData, licenseNo: e.target.value })}
+                placeholder="Enter license number"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Date</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border rounded"
+                value={formData.signatureDate}
+                onChange={(e) => setFormData({ ...formData, signatureDate: e.target.value })}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-2 justify-end">
+        {/* Form Actions */}
+        <div className="flex gap-2 justify-end pt-4 border-t">
           <button
             type="button"
             onClick={() => navigate('/hearing-reports')}
-            className="btn btn-secondary"
+            className="px-6 py-2 border rounded-lg hover:bg-gray-50"
           >
             Cancel
           </button>
-          <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Saving...' : isEdit ? 'Update' : 'Create'}
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? 'Saving...' : isEdit ? 'Update Report' : 'Create Report'}
           </button>
         </div>
       </form>
     </div>
   )
 }
-

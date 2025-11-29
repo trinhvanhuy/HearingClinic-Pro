@@ -4,9 +4,15 @@ require('dotenv').config();
 // Parse Server Configuration - same as in index.js
 const APP_ID = process.env.PARSE_APP_ID || 'hearing-clinic-app-id';
 const MASTER_KEY = process.env.PARSE_MASTER_KEY || 'your-master-key-change-this';
-// When running inside Docker, use internal port 1337, otherwise use 1338
-const SERVER_URL = process.env.PARSE_SERVER_URL || (process.env.INSIDE_DOCKER ? 'http://localhost:1337/parse' : 'http://localhost:1338/parse');
 const DATABASE_URI = process.env.DATABASE_URI || 'mongodb://mongo:27017/hearing-clinic-db';
+// When running inside Docker, use service name or localhost with internal port
+// Check if running inside Docker by checking if DATABASE_URI contains 'mongo:'
+const isInsideDocker = DATABASE_URI.includes('mongo:');
+// If inside Docker, try connecting to the same container on port 1337
+// Otherwise use the external URL
+const SERVER_URL = isInsideDocker 
+  ? 'http://127.0.0.1:1337/parse'  // Use 127.0.0.1 instead of localhost
+  : (process.env.PARSE_SERVER_URL || 'http://localhost:1338/parse');
 
 // Initialize Parse
 Parse.initialize(APP_ID);

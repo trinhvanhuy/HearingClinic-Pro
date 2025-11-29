@@ -85,10 +85,16 @@ if (process.env.NODE_ENV !== 'production') {
 const port = process.env.PORT || 1337;
 const httpServer = require('http').createServer(app);
 
-httpServer.listen(port, process.env.HOST || '0.0.0.0', () => {
-  console.log(`Parse Server running on port ${port}`);
-  console.log(`Parse Dashboard: http://localhost:1338/dashboard`);
-});
+// Start Parse Server before listening (required for Parse Server v6+)
+api.start().then(() => {
+  httpServer.listen(port, process.env.HOST || '0.0.0.0', () => {
+    console.log(`Parse Server running on port ${port}`);
+    console.log(`Parse Dashboard: http://localhost:1338/dashboard`);
+  });
 
-// This will enable the Live Query real-time server
-ParseServer.createLiveQueryServer(httpServer);
+  // This will enable the Live Query real-time server
+  ParseServer.createLiveQueryServer(httpServer);
+}).catch((error) => {
+  console.error('Error starting Parse Server:', error);
+  process.exit(1);
+});
