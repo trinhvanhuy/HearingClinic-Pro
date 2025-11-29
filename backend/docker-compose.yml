@@ -6,7 +6,7 @@ services:
     container_name: hearing-clinic-mongo
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongo-data:/data/db
     environment:
@@ -21,11 +21,11 @@ services:
     container_name: hearing-clinic-parse-server
     restart: unless-stopped
     ports:
-      - "1337:1337"
+      - "1338:1337"
     environment:
       PARSE_APP_ID: ${PARSE_APP_ID:-hearing-clinic-app-id}
       PARSE_MASTER_KEY: ${PARSE_MASTER_KEY:-your-master-key-change-this}
-      PARSE_SERVER_URL: ${PARSE_SERVER_URL:-http://localhost:1337/parse}
+      PARSE_SERVER_URL: ${PARSE_SERVER_URL:-http://localhost:1338/parse}
       DATABASE_URI: mongodb://mongo:27017/hearing-clinic-db
       PARSE_SERVER_CLOUD: /parse/cloud/main.js
       PORT: 1337
@@ -34,6 +34,7 @@ services:
       PARSE_DASHBOARD_PASSWORD: ${PARSE_DASHBOARD_PASSWORD:-admin}
     volumes:
       - ./src/cloud:/parse/cloud
+      - ./src:/app/src
     depends_on:
       - mongo
     networks:

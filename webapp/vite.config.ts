@@ -14,7 +14,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/parse': {
-        target: 'http://localhost:1337',
+        target: 'http://localhost:1338',
         changeOrigin: true,
       },
     },

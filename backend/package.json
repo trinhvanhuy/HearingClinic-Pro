@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "cloud": "parse-server-cloud-code"
+    "cloud": "parse-server-cloud-code",
+    "seed": "node src/seed.js"
   },
   "dependencies": {
     "express": "^4.18.2",

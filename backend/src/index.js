@@ -1,19 +1,18 @@
 const express = require('express');
-const ParseServer = require('parse-server').ParseServer;
+const { ParseServer } = require('parse-server');
 const ParseDashboard = require('parse-dashboard');
-const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
 // Parse Server Configuration
-const parseServer = new ParseServer({
+const api = new ParseServer({
   databaseURI: process.env.DATABASE_URI || 'mongodb://mongo:27017/hearing-clinic-db',
   cloud: process.env.PARSE_SERVER_CLOUD || __dirname + '/cloud/main.js',
   appId: process.env.PARSE_APP_ID || 'hearing-clinic-app-id',
   masterKey: process.env.PARSE_MASTER_KEY || 'your-master-key-change-this',
-  serverURL: process.env.PARSE_SERVER_URL || 'http://localhost:1337/parse',
-  publicServerURL: process.env.PARSE_SERVER_URL || 'http://localhost:1337/parse',
+  serverURL: process.env.PARSE_SERVER_URL || 'http://localhost:1338/parse',
+  publicServerURL: process.env.PARSE_SERVER_URL || 'http://localhost:1338/parse',
   allowClientClassCreation: true,
   enableAnonymousUsers: false,
   // Security: Only authenticated users can read/write
@@ -49,15 +48,23 @@ const parseServer = new ParseServer({
   }
 });
 
+// Health check endpoint (before Parse Server)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Serve the Parse API server
-app.use('/parse', parseServer);
+// Parse Server v6: the instance should be mountable directly
+// Access the internal Express app if available
+const parseApp = api.app || api.expressApp || api;
+app.use('/parse', parseApp);
 
 // Parse Dashboard (optional, for development)
 if (process.env.NODE_ENV !== 'production') {
   const dashboard = new ParseDashboard({
     apps: [
       {
-        serverURL: process.env.PARSE_SERVER_URL || 'http://localhost:1337/parse',
+        serverURL: process.env.PARSE_SERVER_URL || 'http://localhost:1338/parse',
         appId: process.env.PARSE_APP_ID || 'hearing-clinic-app-id',
         masterKey: process.env.PARSE_MASTER_KEY || 'your-master-key-change-this',
         appName: 'Hearing Clinic System'
@@ -75,19 +82,13 @@ if (process.env.NODE_ENV !== 'production') {
   app.use('/dashboard', dashboard);
 }
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
 const port = process.env.PORT || 1337;
 const httpServer = require('http').createServer(app);
 
 httpServer.listen(port, process.env.HOST || '0.0.0.0', () => {
   console.log(`Parse Server running on port ${port}`);
-  console.log(`Parse Dashboard: http://localhost:${port}/dashboard`);
+  console.log(`Parse Dashboard: http://localhost:1338/dashboard`);
 });
 
 // This will enable the Live Query real-time server
 ParseServer.createLiveQueryServer(httpServer);
-
