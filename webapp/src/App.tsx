@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
+import { I18nProvider } from './i18n/I18nContext'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import ClientListPage from './pages/Clients/ClientListPage'
@@ -32,31 +33,33 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/"
-          element={
-            <PrivateRoute>
-              <Layout />
-            </PrivateRoute>
-          }
-        >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="clients" element={<ClientListPage />} />
-          <Route path="clients/new" element={<ClientFormPage />} />
-          <Route path="clients/:id" element={<ClientDetailPage />} />
-          <Route path="clients/:id/edit" element={<ClientFormPage />} />
-          <Route path="hearing-reports/new" element={<HearingReportFormPage />} />
-          <Route path="hearing-reports/:id" element={<HearingReportDetailPage />} />
-          <Route path="hearing-reports/:id/print" element={<HearingReportPrintPage />} />
-          <Route path="reminders" element={<ReminderListPage />} />
-        </Route>
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </BrowserRouter>
+    <I18nProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <Layout />
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="clients" element={<ClientListPage />} />
+            <Route path="clients/new" element={<ClientFormPage />} />
+            <Route path="clients/:id" element={<ClientDetailPage />} />
+            <Route path="clients/:id/edit" element={<ClientFormPage />} />
+            <Route path="hearing-reports/new" element={<HearingReportFormPage />} />
+            <Route path="hearing-reports/:id" element={<HearingReportDetailPage />} />
+            <Route path="hearing-reports/:id/print" element={<HearingReportPrintPage />} />
+            <Route path="reminders" element={<ReminderListPage />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </BrowserRouter>
+    </I18nProvider>
   )
 }
 

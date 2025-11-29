@@ -1,11 +1,13 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { clientService } from '../../api/clientService'
+import { useI18n } from '../../i18n/I18nContext'
 import { Client } from '@hearing-clinic/shared/src/models/client'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 
 export default function ClientFormPage() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -56,12 +58,12 @@ export default function ClientFormPage() {
       }
     },
     onSuccess: () => {
-      toast.success(isEdit ? 'Client updated' : 'Client created')
+      toast.success(isEdit ? t.clients.editClient : t.clients.newClient)
       queryClient.invalidateQueries({ queryKey: ['clients'] })
       navigate('/clients')
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to save client')
+      toast.error(error.message || t.common.save)
     },
   })
 
@@ -79,19 +81,19 @@ export default function ClientFormPage() {
   }
 
   if (isEdit && isLoading) {
-    return <div className="text-center py-8">Loading...</div>
+    return <div className="text-center py-8">{t.common.loading}</div>
   }
 
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">
-        {isEdit ? 'Edit Client' : 'New Client'}
+        {isEdit ? t.clients.editClient : t.clients.newClient}
       </h1>
 
       <form onSubmit={handleSubmit} className="card space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="label">First Name *</label>
+            <label className="label">{t.clients.firstName} *</label>
             <input
               type="text"
               className="input"
@@ -101,7 +103,7 @@ export default function ClientFormPage() {
             />
           </div>
           <div>
-            <label className="label">Last Name *</label>
+            <label className="label">{t.clients.lastName} *</label>
             <input
               type="text"
               className="input"
@@ -114,7 +116,7 @@ export default function ClientFormPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="label">Date of Birth</label>
+            <label className="label">{t.clients.dateOfBirth}</label>
             <input
               type="date"
               className="input"
@@ -123,7 +125,7 @@ export default function ClientFormPage() {
             />
           </div>
           <div>
-            <label className="label">Gender</label>
+            <label className="label">{t.clients.gender}</label>
             <select
               className="input"
               value={formData.gender}
@@ -131,16 +133,16 @@ export default function ClientFormPage() {
                 setFormData({ ...formData, gender: e.target.value as any })
               }
             >
-              <option value="">Select...</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
+              <option value="">{t.clients.selectGender}</option>
+              <option value="male">{t.clients.male}</option>
+              <option value="female">{t.clients.female}</option>
+              <option value="other">{t.clients.other}</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label className="label">Phone *</label>
+          <label className="label">{t.clients.phone} *</label>
           <input
             type="tel"
             className="input"
@@ -151,7 +153,7 @@ export default function ClientFormPage() {
         </div>
 
         <div>
-          <label className="label">Email</label>
+          <label className="label">{t.clients.email}</label>
           <input
             type="email"
             className="input"
@@ -161,7 +163,7 @@ export default function ClientFormPage() {
         </div>
 
         <div>
-          <label className="label">Address</label>
+          <label className="label">{t.clients.address}</label>
           <textarea
             className="input"
             rows={3}
@@ -171,7 +173,7 @@ export default function ClientFormPage() {
         </div>
 
         <div>
-          <label className="label">Notes</label>
+          <label className="label">{t.clients.notes}</label>
           <textarea
             className="input"
             rows={4}
@@ -189,7 +191,7 @@ export default function ClientFormPage() {
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm">Active</span>
+              <span className="text-sm">{t.clients.isActive}</span>
             </label>
           </div>
         )}
@@ -200,10 +202,10 @@ export default function ClientFormPage() {
             onClick={() => navigate('/clients')}
             className="btn btn-secondary"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Saving...' : isEdit ? 'Update' : 'Create'}
+            {mutation.isPending ? t.common.loading : t.common.save}
           </button>
         </div>
       </form>

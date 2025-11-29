@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { clientService } from '../../api/clientService'
+import { useI18n } from '../../i18n/I18nContext'
 import { formatDate, formatPhone } from '@hearing-clinic/shared/src/utils/formatting'
 
 export default function ClientListPage() {
+  const { t } = useI18n()
   const [search, setSearch] = useState('')
   const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(true)
 
@@ -16,9 +18,9 @@ export default function ClientListPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Clients</h1>
+        <h1 className="text-3xl font-bold">{t.clients.title}</h1>
         <Link to="/clients/new" className="btn btn-primary">
-          New Client
+          {t.clients.newClient}
         </Link>
       </div>
 
@@ -26,7 +28,7 @@ export default function ClientListPage() {
         <div className="flex gap-4 mb-4">
           <input
             type="text"
-            placeholder="Search by name, phone, or email..."
+            placeholder={t.clients.searchPlaceholder}
             className="input flex-1"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -39,27 +41,27 @@ export default function ClientListPage() {
               setIsActiveFilter(value === 'all' ? undefined : value === 'active')
             }}
           >
-            <option value="all">All Clients</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
+            <option value="all">{t.clients.allClients}</option>
+            <option value="active">{t.clients.activeOnly}</option>
+            <option value="inactive">{t.clients.inactiveOnly}</option>
           </select>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8">Loading...</div>
+          <div className="text-center py-8">{t.common.loading}</div>
         ) : clients.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No clients found</div>
+          <div className="text-center py-8 text-gray-500">{t.clients.noClientsFound}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">DOB</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Phone</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Last Visit</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.name}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.dob}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.phone}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.email}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.lastVisitDate}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.common.actions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -87,13 +89,13 @@ export default function ClientListPage() {
                           to={`/clients/${client.id}`}
                           className="text-primary-600 hover:underline text-sm"
                         >
-                          View
+                          {t.common.view}
                         </Link>
                         <Link
                           to={`/clients/${client.id}/edit`}
                           className="text-primary-600 hover:underline text-sm"
                         >
-                          Edit
+                          {t.common.edit}
                         </Link>
                       </div>
                     </td>

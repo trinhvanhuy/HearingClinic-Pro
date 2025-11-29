@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useI18n } from '../i18n/I18nContext'
 import toast from 'react-hot-toast'
 
 const REMEMBER_ME_KEY = 'hearing_clinic_remember_me'
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [email, setEmail] = useState('')
   const { login, requestPasswordReset, isLoggingIn, user, loading } = useAuth()
+  const { t, language, setLanguage } = useI18n()
   const navigate = useNavigate()
 
   // Load remembered username on mount
@@ -42,7 +44,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600">
-        <div className="text-white text-lg">Loading...</div>
+        <div className="text-white text-lg">{t.common.loading}</div>
       </div>
     )
   }
@@ -67,10 +69,10 @@ export default function LoginPage() {
         localStorage.removeItem(REMEMBERED_USERNAME_KEY)
       }
       
-      toast.success('Login successful!')
+      toast.success(t.login.loginSuccessful)
       navigate('/dashboard')
     } catch (error: any) {
-      toast.error(error.message || 'Login failed')
+      toast.error(error.message || t.login.loginFailed)
     }
   }
 
@@ -78,11 +80,11 @@ export default function LoginPage() {
     e.preventDefault()
     try {
       await requestPasswordReset(email)
-      toast.success('Password reset email sent!')
+      toast.success(t.login.passwordResetSent)
       setShowForgotPassword(false)
       setEmail('')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to send password reset email')
+      toast.error(error.message || t.login.passwordResetSent)
     }
   }
 
@@ -107,43 +109,43 @@ export default function LoginPage() {
 
         {/* Login Panel */}
         <div className="bg-gradient-to-br from-blue-500 to-blue-300 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-3xl font-bold text-white text-center mb-8">Sign In</h2>
+          <h2 className="text-3xl font-bold text-white text-center mb-8">{t.login.title}</h2>
 
           {!showForgotPassword ? (
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label className="block text-white text-sm font-medium mb-2">Account Name</label>
+                <label className="block text-white text-sm font-medium mb-2">{t.login.accountName}</label>
                 <input
                   type="text"
                   className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
-                  placeholder="Enter account name"
+                  placeholder={t.login.accountName}
                 />
               </div>
 
               <div>
-                <label className="block text-white text-sm font-medium mb-2">User ID</label>
+                <label className="block text-white text-sm font-medium mb-2">{t.login.userId}</label>
                 <input
                   type="text"
                   className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  placeholder="Enter user ID"
+                  placeholder={t.login.userId}
                   required
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-white text-sm font-medium mb-2">Password</label>
+                <label className="block text-white text-sm font-medium mb-2">{t.login.password}</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 pr-12"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password"
+                    placeholder={t.login.password}
                     required
                   />
                   <button
@@ -173,14 +175,14 @@ export default function LoginPage() {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
                   />
-                  <span className="text-sm">Remember me</span>
+                  <span className="text-sm">{t.login.rememberMe}</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
                   className="text-sm text-white hover:underline"
                 >
-                  Forgot Password?
+                  {t.login.forgotPassword}
                 </button>
               </div>
 
@@ -189,7 +191,7 @@ export default function LoginPage() {
                 disabled={isLoggingIn}
                 className="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoggingIn ? 'Logging in...' : 'Log In'}
+                {isLoggingIn ? t.login.loggingIn : t.login.login}
               </button>
 
               <button
@@ -197,25 +199,25 @@ export default function LoginPage() {
                 onClick={() => setShowForgotPassword(true)}
                 className="w-full text-center text-white text-sm hover:underline"
               >
-                Can't access your account?
+                {t.login.cantAccessAccount}
               </button>
             </form>
           ) : (
             <form onSubmit={handleForgotPassword} className="space-y-6">
               <div>
-                <label className="block text-white text-sm font-medium mb-2">Email</label>
+                <label className="block text-white text-sm font-medium mb-2">{t.clients.email}</label>
                 <input
                   type="email"
                   className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder={t.clients.email}
                   required
                   autoFocus
                 />
               </div>
               <button type="submit" className="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                Send Reset Email
+                {t.login.sendResetEmail}
               </button>
               <button
                 type="button"
@@ -225,7 +227,7 @@ export default function LoginPage() {
                 }}
                 className="w-full text-center text-white text-sm hover:underline"
               >
-                Back to login
+                {t.login.backToLogin}
               </button>
             </form>
           )}
@@ -243,8 +245,11 @@ export default function LoginPage() {
 
         {/* Language Selector */}
         <div className="absolute top-8 right-8 z-10">
-          <button className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-orange-600 transition-colors">
-            English (EN)
+          <button 
+            onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+            className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-orange-600 transition-colors"
+          >
+            {language === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>

@@ -2,10 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { reminderService } from '../api/reminderService'
 import { clientService } from '../api/clientService'
+import { useI18n } from '../i18n/I18nContext'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import { format, startOfToday, endOfWeek, addDays } from 'date-fns'
 
 export default function DashboardPage() {
+  const { t } = useI18n()
   const today = startOfToday()
   const weekEnd = endOfWeek(addDays(today, 7))
 
@@ -28,13 +30,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-bold">{t.dashboard.title}</h1>
         <div className="flex gap-2">
           <Link to="/clients/new" className="btn btn-primary">
-            New Client
+            {t.dashboard.newClient}
           </Link>
           <Link to="/hearing-reports/new" className="btn btn-primary">
-            New Hearing Report
+            {t.dashboard.newHearingReport}
           </Link>
         </div>
       </div>
@@ -42,9 +44,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Today's Reminders */}
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Upcoming Reminders</h2>
+          <h2 className="text-xl font-semibold mb-4">{t.dashboard.upcomingReminders}</h2>
           {todayReminders.length === 0 ? (
-            <p className="text-gray-500">No upcoming reminders</p>
+            <p className="text-gray-500">{t.dashboard.noUpcomingReminders}</p>
           ) : (
             <ul className="space-y-2">
               {todayReminders.map((reminder) => (
@@ -56,10 +58,10 @@ export default function DashboardPage() {
                     <div>
                       <p className="font-medium">{reminder.get('title')}</p>
                       <p className="text-sm text-gray-600">
-                        Client: {reminder.get('client')?.get('fullName') || 'N/A'}
+                        {t.dashboard.client}: {reminder.get('client')?.get('fullName') || 'N/A'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Due: {formatDate(reminder.get('dueAt'))}
+                        {t.dashboard.due}: {formatDate(reminder.get('dueAt'))}
                       </p>
                     </div>
                     <span
@@ -69,7 +71,7 @@ export default function DashboardPage() {
                           : 'bg-yellow-100 text-yellow-800'
                       }`}
                     >
-                      {reminder.get('status')}
+                      {t.reminders[reminder.get('status') as keyof typeof t.reminders] || reminder.get('status')}
                     </span>
                   </div>
                 </li>
@@ -80,15 +82,15 @@ export default function DashboardPage() {
             to="/reminders"
             className="mt-4 text-primary-600 hover:underline text-sm font-medium"
           >
-            View all reminders →
+            {t.dashboard.viewAllReminders} →
           </Link>
         </div>
 
         {/* Recent Clients */}
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Recent Clients</h2>
+          <h2 className="text-xl font-semibold mb-4">{t.dashboard.recentClients}</h2>
           {recentClients.length === 0 ? (
-            <p className="text-gray-500">No clients yet</p>
+            <p className="text-gray-500">{t.dashboard.noClients}</p>
           ) : (
             <ul className="space-y-2">
               {recentClients.map((client) => (
@@ -104,7 +106,7 @@ export default function DashboardPage() {
                     <p className="text-sm text-gray-600">{client.get('phone')}</p>
                     {client.get('lastVisitDate') && (
                       <p className="text-xs text-gray-500">
-                        Last visit: {formatDate(client.get('lastVisitDate'))}
+                        {t.dashboard.lastVisit}: {formatDate(client.get('lastVisitDate'))}
                       </p>
                     )}
                   </Link>
@@ -116,7 +118,7 @@ export default function DashboardPage() {
             to="/clients"
             className="mt-4 text-primary-600 hover:underline text-sm font-medium"
           >
-            View all clients →
+            {t.dashboard.viewAllClients} →
           </Link>
         </div>
       </div>

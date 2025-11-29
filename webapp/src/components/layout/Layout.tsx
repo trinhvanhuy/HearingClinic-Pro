@@ -1,9 +1,11 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useI18n } from '../../i18n/I18nContext'
 import { useState } from 'react'
 
 export default function Layout() {
   const { user, logout } = useAuth()
+  const { t, language, setLanguage } = useI18n()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -12,10 +14,14 @@ export default function Layout() {
     navigate('/login')
   }
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'vi' ? 'en' : 'vi')
+  }
+
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/clients', label: 'Clients', icon: '👥' },
-    { path: '/reminders', label: 'Reminders', icon: '🔔' },
+    { path: '/dashboard', label: t.nav.dashboard, icon: '📊' },
+    { path: '/clients', label: t.nav.clients, icon: '👥' },
+    { path: '/reminders', label: t.nav.reminders, icon: '🔔' },
   ]
 
   return (
@@ -54,16 +60,28 @@ export default function Layout() {
               ))}
             </ul>
           </nav>
-          <div className="p-4 border-t">
-            <div className="mb-4 px-4">
+          <div className="p-4 border-t space-y-2">
+            {/* Language Toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="w-full px-4 py-2 text-left text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-between"
+            >
+              <span className="flex items-center gap-2">
+                <span>🌐</span>
+                <span>{t.nav.language}</span>
+              </span>
+              <span className="text-sm font-medium">{language === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}</span>
+            </button>
+            
+            <div className="mb-2 px-4">
               <p className="text-sm font-medium text-gray-700">{user?.get('username') || user?.get('email')}</p>
-              <p className="text-xs text-gray-500">Staff</p>
+              <p className="text-xs text-gray-500">{t.clients.staff}</p>
             </div>
             <button
               onClick={handleLogout}
               className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
-              Logout
+              {t.nav.logout}
             </button>
           </div>
         </div>
