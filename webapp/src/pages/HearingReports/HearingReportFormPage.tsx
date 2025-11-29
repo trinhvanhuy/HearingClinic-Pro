@@ -6,6 +6,7 @@ import { HearingReport, EarThresholds } from '@hearing-clinic/shared/src/models/
 import Parse from '../../api/parseClient'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
+import Audiogram from '../../components/Audiogram'
 
 interface SpeechAudiometry {
   SAT?: { R?: number; L?: number; Bi?: number }
@@ -76,6 +77,8 @@ export default function HearingReportFormPage() {
     signatureDate: new Date().toISOString().split('T')[0],
   })
 
+  const [activeEar, setActiveEar] = useState<'left' | 'right'>('right')
+
   useEffect(() => {
     if (report) {
       const client = report.get('client')
@@ -140,13 +143,14 @@ export default function HearingReportFormPage() {
   const updateThreshold = (
     ear: 'leftEarThresholds' | 'rightEarThresholds',
     frequency: number,
-    value: string
+    value: string | number | undefined
   ) => {
+    const numValue = typeof value === 'string' ? (value ? parseFloat(value) : undefined) : value
     setFormData({
       ...formData,
       [ear]: {
         ...formData[ear],
-        [frequency]: value ? parseFloat(value) : undefined,
+        [frequency]: numValue,
       },
     })
   }
@@ -322,6 +326,21 @@ export default function HearingReportFormPage() {
         {/* Puretone Audiometry */}
         <div className="border rounded-lg p-6">
           <h2 className="text-lg font-bold mb-4">Puretone Audiometry</h2>
+          
+          {/* Interactive Audiogram */}
+          <div className="mb-6">
+            <Audiogram
+              leftEarThresholds={formData.leftEarThresholds}
+              rightEarThresholds={formData.rightEarThresholds}
+              onThresholdChange={(ear, frequency, value) => {
+                updateThreshold(ear, frequency, value)
+              }}
+              activeEar={activeEar}
+              onEarChange={setActiveEar}
+            />
+          </div>
+
+          {/* Data Table */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border">
               <thead>
@@ -336,7 +355,7 @@ export default function HearingReportFormPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td className="border px-4 py-2 font-medium">Right Ear (Red Circle/X)</td>
+                  <td className="border px-4 py-2 font-medium">Right Ear (Red Circle O)</td>
                   {frequencies.map((freq) => (
                     <td key={freq} className="border px-4 py-2">
                       <input
@@ -350,7 +369,7 @@ export default function HearingReportFormPage() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="border px-4 py-2 font-medium">Left Ear (Blue X/Square)</td>
+                  <td className="border px-4 py-2 font-medium">Left Ear (Blue X)</td>
                   {frequencies.map((freq) => (
                     <td key={freq} className="border px-4 py-2">
                       <input
@@ -366,7 +385,6 @@ export default function HearingReportFormPage() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Note: Graph visualization can be added here</p>
         </div>
 
         {/* Speech Audiometry */}

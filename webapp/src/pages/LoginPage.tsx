@@ -248,7 +248,7 @@ export default function LoginPage() {
             {/* Content */}
             <div className="relative z-10 flex flex-col items-center justify-center h-full px-12 w-full">
               {/* Doctor Image */}
-              <div className="mb-8 relative flex items-center justify-center">
+              <div className="flex items-center justify-center">
                 <img 
                   src="/assets/background.png" 
                   alt="Doctor"
@@ -258,40 +258,8 @@ export default function LoginPage() {
                     filter: 'drop-shadow(0 25px 50px -12px rgba(0, 0, 0, 0.25))'
                   }}
                 />
-                
-                {/* Customers Card - Positioned near doctor */}
-                <div className="absolute top-20 right-0 bg-white rounded-xl p-4 shadow-xl w-48">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl font-bold text-gray-800">50k+</span>
-                    <span className="text-gray-600 text-sm">{language === 'vi' ? 'Khách hàng' : 'Customers'}</span>
-                  </div>
-                  <div className="flex items-center -space-x-2">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border-2 border-white"></div>
-                    ))}
-                    <div className="w-8 h-8 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
-                      +
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Connect with Doctor Card */}
-              <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{language === 'vi' ? 'Kết nối với Bác sĩ' : 'Connect with a Doctor'}</h3>
-                    <p className="text-sm text-gray-500">{language === 'vi' ? 'Đặt lịch hẹn ngay hôm nay' : 'Schedule your appointment today'}</p>
-                  </div>
-                </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
     </div>
