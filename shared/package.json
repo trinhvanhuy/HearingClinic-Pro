@@ -1,0 +1,24 @@
+{
+  "name": "@hearing-clinic/shared",
+  "version": "1.0.0",
+  "description": "Shared models and utilities for Hearing Clinic System",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "parse": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "shared",
+    "models"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+
