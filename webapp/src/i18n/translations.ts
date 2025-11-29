@@ -128,6 +128,56 @@ export interface Translations {
     dueDate: string
     titleLabel: string
     description: string
+    allStatus: string
+    done: string
+    markDone: string
+    reminderUpdated: string
+    reminderDeleted: string
+    confirmDelete: string
+  }
+
+  // Client Detail
+  clientDetail: {
+    patient: string
+    patientDetails: string
+    inPatientCounselling: string
+    editProfile: string
+    sex: string
+    age: string
+    blood: string
+    status: string
+    department: string
+    registeredDate: string
+    appointment: string
+    bedNumber: string
+    bloodPressure: string
+    heartRate: string
+    glucose: string
+    cholesterol: string
+    inTheNorm: string
+    aboveTheNorm: string
+    patientHistory: string
+    totalVisits: string
+    noReportsYet: string
+    createFirstReport: string
+    dateOfVisit: string
+    diagnosis: string
+    severity: string
+    totalVisitsCount: string
+    documents: string
+    download: string
+    cured: string
+    underTreatment: string
+    clientNotFound: string
+    clientDeleted: string
+  }
+
+  // Not Found
+  notFound: {
+    title: string
+    subtitle: string
+    message: string
+    goToDashboard: string
   }
 }
 
@@ -247,6 +297,52 @@ export const translations: Record<Language, Translations> = {
       dueDate: 'Due Date',
       titleLabel: 'Title',
       description: 'Description',
+      allStatus: 'All Status',
+      done: 'done',
+      markDone: 'Mark Done',
+      reminderUpdated: 'Reminder updated',
+      reminderDeleted: 'Reminder deleted',
+      confirmDelete: 'Are you sure you want to delete this reminder?',
+    },
+    clientDetail: {
+      patient: 'Patient',
+      patientDetails: 'Patient Details',
+      inPatientCounselling: 'In Patient Counselling',
+      editProfile: 'Edit Profile',
+      sex: 'Sex',
+      age: 'Age',
+      blood: 'Blood',
+      status: 'Status',
+      department: 'Department',
+      registeredDate: 'Registered Date',
+      appointment: 'Appointment',
+      bedNumber: 'Bed Number',
+      bloodPressure: 'Blood Pressure',
+      heartRate: 'Heart rate',
+      glucose: 'Glucose',
+      cholesterol: 'Cholesterol',
+      inTheNorm: 'In the norm',
+      aboveTheNorm: 'Above the norm',
+      patientHistory: 'Patient History',
+      totalVisits: 'Total {count} Visits',
+      noReportsYet: 'No hearing reports yet',
+      createFirstReport: 'Create First Report',
+      dateOfVisit: 'Date Of Visit',
+      diagnosis: 'Diagnosis',
+      severity: 'Severity',
+      totalVisitsCount: 'Total Visits',
+      documents: 'Documents',
+      download: 'Download',
+      cured: 'Cured',
+      underTreatment: 'Under Treatment',
+      clientNotFound: 'Client not found',
+      clientDeleted: 'Client deleted',
+    },
+    notFound: {
+      title: '404',
+      subtitle: 'Page Not Found',
+      message: "The page you're looking for doesn't exist.",
+      goToDashboard: 'Go to Dashboard',
     },
   },
   vi: {
@@ -364,6 +460,52 @@ export const translations: Record<Language, Translations> = {
       dueDate: 'Ngày đến hạn',
       titleLabel: 'Tiêu đề',
       description: 'Mô tả',
+      allStatus: 'Tất cả trạng thái',
+      done: 'đã xong',
+      markDone: 'Đánh dấu đã xong',
+      reminderUpdated: 'Đã cập nhật nhắc nhở',
+      reminderDeleted: 'Đã xóa nhắc nhở',
+      confirmDelete: 'Bạn có chắc chắn muốn xóa nhắc nhở này?',
+    },
+    clientDetail: {
+      patient: 'Bệnh nhân',
+      patientDetails: 'Chi tiết bệnh nhân',
+      inPatientCounselling: 'Tư vấn bệnh nhân nội trú',
+      editProfile: 'Sửa hồ sơ',
+      sex: 'Giới tính',
+      age: 'Tuổi',
+      blood: 'Nhóm máu',
+      status: 'Trạng thái',
+      department: 'Khoa',
+      registeredDate: 'Ngày đăng ký',
+      appointment: 'Cuộc hẹn',
+      bedNumber: 'Số giường',
+      bloodPressure: 'Huyết áp',
+      heartRate: 'Nhịp tim',
+      glucose: 'Đường huyết',
+      cholesterol: 'Cholesterol',
+      inTheNorm: 'Bình thường',
+      aboveTheNorm: 'Vượt mức bình thường',
+      patientHistory: 'Lịch sử bệnh nhân',
+      totalVisits: 'Tổng {count} lần thăm khám',
+      noReportsYet: 'Chưa có báo cáo thính lực',
+      createFirstReport: 'Tạo báo cáo đầu tiên',
+      dateOfVisit: 'Ngày thăm khám',
+      diagnosis: 'Chẩn đoán',
+      severity: 'Mức độ',
+      totalVisitsCount: 'Tổng số lần thăm khám',
+      documents: 'Tài liệu',
+      download: 'Tải xuống',
+      cured: 'Đã khỏi',
+      underTreatment: 'Đang điều trị',
+      clientNotFound: 'Không tìm thấy khách hàng',
+      clientDeleted: 'Đã xóa khách hàng',
+    },
+    notFound: {
+      title: '404',
+      subtitle: 'Không tìm thấy trang',
+      message: 'Trang bạn đang tìm kiếm không tồn tại.',
+      goToDashboard: 'Về Bảng điều khiển',
     },
   },
 }

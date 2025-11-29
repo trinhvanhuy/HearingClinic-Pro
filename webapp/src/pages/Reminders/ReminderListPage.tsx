@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { reminderService } from '../../api/reminderService'
+import { useI18n } from '../../i18n/I18nContext'
 import { ReminderStatus } from '@hearing-clinic/shared/src/models/reminder'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import toast from 'react-hot-toast'
 
 export default function ReminderListPage() {
+  const { t } = useI18n()
   const [searchParams, setSearchParams] = useSearchParams()
   const clientId = searchParams.get('clientId')
   const [statusFilter, setStatusFilter] = useState<ReminderStatus | 'all'>(
@@ -28,22 +30,22 @@ export default function ReminderListPage() {
       return reminderService.update(id, { status })
     },
     onSuccess: () => {
-      toast.success('Reminder updated')
+      toast.success(t.reminders.reminderUpdated)
       queryClient.invalidateQueries({ queryKey: ['reminders'] })
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update reminder')
+      toast.error(error.message || t.reminders.reminderUpdated)
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => reminderService.delete(id),
     onSuccess: () => {
-      toast.success('Reminder deleted')
+      toast.success(t.reminders.reminderDeleted)
       queryClient.invalidateQueries({ queryKey: ['reminders'] })
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete reminder')
+      toast.error(error.message || t.reminders.reminderDeleted)
     },
   })
 
@@ -54,9 +56,9 @@ export default function ReminderListPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Reminders</h1>
+        <h1 className="text-3xl font-bold">{t.reminders.title}</h1>
         <Link to="/reminders/new" className="btn btn-primary">
-          New Reminder
+          {t.reminders.newReminder}
         </Link>
       </div>
 
@@ -71,17 +73,17 @@ export default function ReminderListPage() {
               setSearchParams({ ...Object.fromEntries(searchParams), status: value })
             }}
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="overdue">Overdue</option>
-            <option value="done">Done</option>
+            <option value="all">{t.reminders.allStatus}</option>
+            <option value="pending">{t.reminders.pending}</option>
+            <option value="overdue">{t.reminders.overdue}</option>
+            <option value="done">{t.reminders.done}</option>
           </select>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8">Loading...</div>
+          <div className="text-center py-8">{t.common.loading}</div>
         ) : reminders.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No reminders found</div>
+          <div className="text-center py-8 text-gray-500">{t.reminders.noReminders}</div>
         ) : (
           <div className="space-y-2">
             {reminders.map((reminder) => {
@@ -105,7 +107,7 @@ export default function ReminderListPage() {
                               : 'bg-yellow-100 text-yellow-800'
                           }`}
                         >
-                          {status}
+                          {t.reminders[status as keyof typeof t.reminders] || status}
                         </span>
                       </div>
                       {reminder.get('description') && (
@@ -113,7 +115,7 @@ export default function ReminderListPage() {
                       )}
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <span>
-                          Client:{' '}
+                          {t.dashboard.client}:{' '}
                           <Link
                             to={`/clients/${client?.id}`}
                             className="text-primary-600 hover:underline"
@@ -121,7 +123,7 @@ export default function ReminderListPage() {
                             {client?.get('fullName')}
                           </Link>
                         </span>
-                        <span>Due: {formatDate(reminder.get('dueAt'))}</span>
+                        <span>{t.dashboard.due}: {formatDate(reminder.get('dueAt'))}</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -130,18 +132,18 @@ export default function ReminderListPage() {
                           onClick={() => handleStatusChange(reminder.id, 'done')}
                           className="btn btn-secondary text-sm"
                         >
-                          Mark Done
+                          {t.reminders.markDone}
                         </button>
                       )}
                       <button
                         onClick={() => {
-                          if (confirm('Are you sure you want to delete this reminder?')) {
+                          if (confirm(t.reminders.confirmDelete)) {
                             deleteMutation.mutate(reminder.id)
                           }
                         }}
                         className="btn btn-danger text-sm"
                       >
-                        Delete
+                        {t.common.delete}
                       </button>
                     </div>
                   </div>

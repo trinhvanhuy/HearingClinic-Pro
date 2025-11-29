@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { clientService } from '../../api/clientService'
 import { hearingReportService } from '../../api/hearingReportService'
 import { reminderService } from '../../api/reminderService'
+import { useI18n } from '../../i18n/I18nContext'
 import { formatDate, formatPhone } from '@hearing-clinic/shared/src/utils/formatting'
 import toast from 'react-hot-toast'
 
 export default function ClientDetailPage() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -32,21 +34,21 @@ export default function ClientDetailPage() {
   const deleteMutation = useMutation({
     mutationFn: () => clientService.delete(id!),
     onSuccess: () => {
-      toast.success('Client deleted')
+      toast.success(t.clientDetail.clientDeleted)
       queryClient.invalidateQueries({ queryKey: ['clients'] })
       navigate('/clients')
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete client')
+      toast.error(error.message || t.common.delete)
     },
   })
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading...</div>
+    return <div className="text-center py-8">{t.common.loading}</div>
   }
 
   if (!client) {
-    return <div className="text-center py-8">Client not found</div>
+    return <div className="text-center py-8">{t.clientDetail.clientNotFound}</div>
   }
 
   const phone = client.get('phone')
@@ -63,9 +65,9 @@ export default function ClientDetailPage() {
     <div className="space-y-6 bg-gray-50 min-h-screen p-6">
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-        <Link to="/clients" className="hover:text-blue-600">Patient</Link>
+        <Link to="/clients" className="hover:text-blue-600">{t.clientDetail.patient}</Link>
         <span>/</span>
-        <span>Patient Details</span>
+        <span>{t.clientDetail.patientDetails}</span>
         <span>/</span>
         <span className="text-gray-900 font-medium">{fullName}</span>
       </div>
@@ -78,7 +80,7 @@ export default function ClientDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">In Patient Counselling</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.clientDetail.inPatientCounselling}</h1>
         </div>
         <div className="flex items-center gap-4">
           <button className="p-2 hover:bg-gray-100 rounded-lg">
@@ -115,46 +117,46 @@ export default function ClientDetailPage() {
               to={`/clients/${id}/edit`}
               className="inline-block px-4 py-2 border-2 border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
             >
-              Edit Profile
+              {t.clientDetail.editProfile}
             </Link>
           </div>
 
           {/* Demographics Grid */}
           <div className="grid grid-cols-2 gap-4 flex-1">
             <div>
-              <p className="text-sm text-gray-500">Sex:</p>
-              <p className="font-medium">{gender ? (gender === 'male' ? 'Male' : gender === 'female' ? 'Female' : gender) : '-'}</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.sex}:</p>
+              <p className="font-medium">{gender ? (gender === 'male' ? t.clients.male : gender === 'female' ? t.clients.female : gender) : '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Age:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.age}:</p>
               <p className="font-medium">{age !== null ? `${age}` : '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Blood:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.blood}:</p>
               <p className="font-medium">-</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Status:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.status}:</p>
               <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                 isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
               }`}>
-                {isActive ? 'Active' : 'Inactive'}
+                {isActive ? t.clients.isActive : t.clients.inactiveOnly}
               </span>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Department:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.department}:</p>
               <p className="font-medium">Hearing Clinic</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Registered Date:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.registeredDate}:</p>
               <p className="font-medium">{client.get('createdAt') ? formatDate(client.get('createdAt')) : '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Appointment:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.appointment}:</p>
               <p className="font-medium">{reports.length}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Bed Number:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.bedNumber}:</p>
               <p className="font-medium">-</p>
             </div>
           </div>
@@ -175,8 +177,8 @@ export default function ClientDetailPage() {
               <p className="text-xs text-gray-500">mm/hg</p>
             </div>
           </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">Blood Pressure</p>
-          <p className="text-xs text-green-600">In the norm</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">{t.clientDetail.bloodPressure}</p>
+          <p className="text-xs text-green-600">{t.clientDetail.inTheNorm}</p>
         </div>
 
         <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -191,8 +193,8 @@ export default function ClientDetailPage() {
               <p className="text-xs text-gray-500">BPM</p>
             </div>
           </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">Heart rate</p>
-          <p className="text-xs text-red-600">Above the norm</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">{t.clientDetail.heartRate}</p>
+          <p className="text-xs text-red-600">{t.clientDetail.aboveTheNorm}</p>
         </div>
 
         <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -207,8 +209,8 @@ export default function ClientDetailPage() {
               <p className="text-xs text-gray-500">mg/dl</p>
             </div>
           </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">Glucose</p>
-          <p className="text-xs text-green-600">In the norm</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">{t.clientDetail.glucose}</p>
+          <p className="text-xs text-green-600">{t.clientDetail.inTheNorm}</p>
         </div>
 
         <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -223,26 +225,26 @@ export default function ClientDetailPage() {
               <p className="text-xs text-gray-500">mg/dl</p>
             </div>
           </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">Cholesterol</p>
-          <p className="text-xs text-green-600">In the norm</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">{t.clientDetail.cholesterol}</p>
+          <p className="text-xs text-green-600">{t.clientDetail.inTheNorm}</p>
         </div>
       </div>
 
       {/* Patient History */}
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Patient History</h2>
-          <span className="text-sm text-gray-600">Total {reports.length} Visits</span>
+          <h2 className="text-xl font-bold text-gray-900">{t.clientDetail.patientHistory}</h2>
+          <span className="text-sm text-gray-600">{t.clientDetail.totalVisitsCount}: {reports.length}</span>
         </div>
         
         {reports.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            <p>No hearing reports yet</p>
+            <p>{t.clientDetail.noReportsYet}</p>
             <Link
               to={`/hearing-reports/new?clientId=${id}`}
               className="mt-4 inline-block btn btn-primary"
             >
-              Create First Report
+              {t.clientDetail.createFirstReport}
             </Link>
           </div>
         ) : (
@@ -250,12 +252,12 @@ export default function ClientDetailPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Date Of Visit</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Diagnosis</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Severity</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Total Visits</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Documents</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.dateOfVisit}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.diagnosis}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.severity}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.totalVisitsCount}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.status}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.documents}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -283,7 +285,7 @@ export default function ClientDetailPage() {
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                           isCured ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {isCured ? 'Cured' : 'Under Treatment'}
+                          {isCured ? t.clientDetail.cured : t.clientDetail.underTreatment}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -294,7 +296,7 @@ export default function ClientDetailPage() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                           </svg>
-                          Download
+                          {t.clientDetail.download}
                         </Link>
                       </td>
                     </tr>

@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import Parse, { ensureParseInitialized } from '../api/parseClient'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { offlineStorage } from '../services/offlineStorage'
+import { clientService } from '../api/clientService'
+import { hearingReportService } from '../api/hearingReportService'
+import { reminderService } from '../api/reminderService'
 
 export function useAuth() {
   const [user, setUser] = useState<Parse.User | null>(null)
@@ -53,10 +57,26 @@ export function useAuth() {
         const user = await Parse.User.logIn(username, password)
         setUser(user)
         
-        // Note: Parse SDK automatically handles session persistence
-        // When rememberMe is true, the session token is stored in localStorage
-        // When rememberMe is false, we could use sessionStorage, but Parse SDK uses localStorage by default
-        // For now, we rely on Parse SDK's default behavior which stores in localStorage
+        // Initialize offline storage and cache data
+        try {
+          await offlineStorage.init()
+          
+          // Cache all data for offline use
+          const [clients, reports, reminders] = await Promise.all([
+            clientService.getAll({ limit: 1000 }).catch(() => []),
+            hearingReportService.getAll({ limit: 1000 }).catch(() => []),
+            reminderService.getAll({ limit: 1000 }).catch(() => []),
+          ])
+          
+          await Promise.all([
+            offlineStorage.cacheData('clients', clients.map(c => c.toJSON())),
+            offlineStorage.cacheData('hearingReports', reports.map(r => r.toJSON())),
+            offlineStorage.cacheData('reminders', reminders.map(r => r.toJSON())),
+            offlineStorage.cacheData('lastSync', Date.now()),
+          ])
+        } catch (error) {
+          console.warn('Failed to cache data:', error)
+        }
         
         return user
       } catch (error: any) {
