@@ -1,4 +1,4 @@
-import Parse from 'parse'
+import Parse from './parseClient'
 import { Client } from '@hearing-clinic/shared/src/models/client'
 
 export interface ClientSearchParams {

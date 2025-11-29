@@ -1,4 +1,4 @@
-import Parse from 'parse'
+import Parse from './parseClient'
 import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
 import { Client } from '@hearing-clinic/shared/src/models/client'
 

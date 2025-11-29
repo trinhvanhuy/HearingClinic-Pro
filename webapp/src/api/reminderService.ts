@@ -1,4 +1,4 @@
-import Parse from 'parse'
+import Parse from './parseClient'
 import { Reminder, ReminderStatus } from '@hearing-clinic/shared/src/models/reminder'
 
 export interface ReminderSearchParams {

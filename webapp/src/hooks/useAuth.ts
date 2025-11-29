@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import Parse from 'parse'
+import Parse from '../api/parseClient'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 export function useAuth() {

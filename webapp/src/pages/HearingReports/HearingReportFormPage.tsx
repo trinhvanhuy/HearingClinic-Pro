@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { hearingReportService } from '../../api/hearingReportService'
 import { clientService } from '../../api/clientService'
 import { HearingReport, EarThresholds } from '@hearing-clinic/shared/src/models/hearingReport'
-import Parse from 'parse'
+import Parse from '../../api/parseClient'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 

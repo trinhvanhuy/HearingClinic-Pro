@@ -15,7 +15,8 @@
     "parse": "^4.1.0",
     "@tanstack/react-query": "^5.12.2",
     "date-fns": "^2.30.0",
-    "react-hot-toast": "^2.4.1"
+    "react-hot-toast": "^2.4.1",
+    "@hearing-clinic/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
