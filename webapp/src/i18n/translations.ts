@@ -36,8 +36,7 @@ export interface Translations {
   // Login
   login: {
     title: string
-    accountName: string
-    userId: string
+    username: string
     password: string
     rememberMe: string
     forgotPassword: string
@@ -213,8 +212,7 @@ export const translations: Record<Language, Translations> = {
     },
     login: {
       title: 'Sign In',
-      accountName: 'Account Name',
-      userId: 'User ID',
+      username: 'Username',
       password: 'Password',
       rememberMe: 'Remember me',
       forgotPassword: 'Forgot Password?',
@@ -376,8 +374,7 @@ export const translations: Record<Language, Translations> = {
     },
     login: {
       title: 'Đăng nhập',
-      accountName: 'Tên tài khoản',
-      userId: 'Mã người dùng',
+      username: 'Tên đăng nhập',
       password: 'Mật khẩu',
       rememberMe: 'Ghi nhớ đăng nhập',
       forgotPassword: 'Quên mật khẩu?',

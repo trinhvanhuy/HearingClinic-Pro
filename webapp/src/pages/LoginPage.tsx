@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../i18n/I18nContext'
+import Logo from '../components/Logo'
 import toast from 'react-hot-toast'
 
 const REMEMBER_ME_KEY = 'hearing_clinic_remember_me'
 const REMEMBERED_USERNAME_KEY = 'hearing_clinic_username'
 
 export default function LoginPage() {
-  const [accountName, setAccountName] = useState('')
-  const [userId, setUserId] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(() => {
     // Load rememberMe preference from localStorage
@@ -28,7 +28,7 @@ export default function LoginPage() {
     if (rememberMe) {
       const rememberedUsername = localStorage.getItem(REMEMBERED_USERNAME_KEY)
       if (rememberedUsername) {
-        setUserId(rememberedUsername)
+        setUsername(rememberedUsername)
       }
     }
   }, [rememberMe])
@@ -57,13 +57,12 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      // Use userId as username for login
-      await login({ username: userId, password, rememberMe })
+      await login({ username, password, rememberMe })
       
       // Save username to localStorage if rememberMe is checked
       if (rememberMe) {
         localStorage.setItem(REMEMBER_ME_KEY, 'true')
-        localStorage.setItem(REMEMBERED_USERNAME_KEY, userId)
+        localStorage.setItem(REMEMBERED_USERNAME_KEY, username)
       } else {
         localStorage.removeItem(REMEMBER_ME_KEY)
         localStorage.removeItem(REMEMBERED_USERNAME_KEY)
@@ -89,49 +88,39 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600">
-      {/* Left Section - Login Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 lg:px-16 py-12">
-        {/* Logo */}
-        <div className="mb-12">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex items-center gap-1">
-              <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-                <span className="text-white text-xl font-bold">+</span>
-              </div>
-              <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
-                <span className="text-white text-xl font-bold">+</span>
-              </div>
-            </div>
-            <h1 className="text-2xl font-bold text-white">Hearing Clinic</h1>
+    <div className="min-h-screen flex bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 relative overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+        style={{ backgroundImage: 'url(/assets/background.png)' }}
+      />
+      
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600" />
+      
+      {/* Content Container */}
+      <div className="relative z-10 w-full flex">
+        {/* Left Section - Login Form */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 lg:px-16 py-12">
+          {/* Logo */}
+          <div className="mb-12">
+            <Logo variant="full" size="lg" className="mb-2" />
           </div>
-        </div>
 
-        {/* Login Panel */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-300 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-3xl font-bold text-white text-center mb-8">{t.login.title}</h2>
+          {/* Login Panel */}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-300 rounded-2xl p-8 shadow-2xl">
+            <h2 className="text-3xl font-bold text-white text-center mb-8">{t.login.title}</h2>
 
           {!showForgotPassword ? (
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label className="block text-white text-sm font-medium mb-2">{t.login.accountName}</label>
+                <label className="block text-white text-sm font-medium mb-2">{t.login.username}</label>
                 <input
                   type="text"
                   className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  placeholder={t.login.accountName}
-                />
-              </div>
-
-              <div>
-                <label className="block text-white text-sm font-medium mb-2">{t.login.userId}</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  placeholder={t.login.userId}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={t.login.username}
                   required
                   autoFocus
                 />
@@ -231,75 +220,75 @@ export default function LoginPage() {
               </button>
             </form>
           )}
-        </div>
-      </div>
-
-      {/* Right Section - Promotional */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Background geometric shapes */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 right-20 w-64 h-64 bg-orange-400 rounded-full opacity-20 blur-3xl"></div>
-          <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-400 rounded-full opacity-20 blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-orange-300 rounded-full opacity-10 blur-3xl"></div>
-        </div>
-
-        {/* Language Selector */}
-        <div className="absolute top-8 right-8 z-10">
-          <button 
-            onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
-            className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-orange-600 transition-colors"
-          >
-            {language === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center h-full px-12">
-          {/* Doctor Illustration Placeholder */}
-          <div className="mb-8 relative">
-            <div className="w-64 h-64 bg-white rounded-full flex items-center justify-center shadow-2xl">
-              <svg className="w-32 h-32 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            {/* Stethoscope icon */}
-            <div className="absolute -bottom-4 right-4 bg-orange-500 p-3 rounded-full shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
           </div>
+        </div>
 
-          {/* Customers Card */}
-          <div className="bg-white rounded-xl p-4 shadow-xl mb-6 w-full max-w-xs">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-2xl font-bold text-gray-800">50k+</span>
-              <span className="text-gray-600 text-sm">Customers</span>
+        {/* Right Section - Promotional */}
+        <div className="hidden lg:flex lg:w-1/2 relative">
+            {/* Background geometric shapes */}
+            <div className="absolute inset-0">
+              <div className="absolute top-20 right-20 w-64 h-64 bg-orange-400 rounded-full opacity-20 blur-3xl"></div>
+              <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-400 rounded-full opacity-20 blur-3xl"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-orange-300 rounded-full opacity-10 blur-3xl"></div>
             </div>
-            <div className="flex items-center -space-x-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border-2 border-white"></div>
-              ))}
-              <div className="w-8 h-8 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
-                +
-              </div>
-            </div>
-          </div>
 
-          {/* Connect with Doctor Card */}
-          <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-xs">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            {/* Language Selector */}
+            <div className="absolute top-8 right-8 z-20">
+              <button 
+                onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+                className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-orange-600 transition-colors shadow-lg"
+              >
+                {language === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 flex flex-col items-center justify-center h-full px-12 w-full">
+              {/* Doctor Image */}
+              <div className="mb-8 relative flex items-center justify-center">
+                <img 
+                  src="/assets/background.png" 
+                  alt="Doctor"
+                  className="max-w-md w-auto h-auto object-contain"
+                  style={{ 
+                    maxHeight: '500px',
+                    filter: 'drop-shadow(0 25px 50px -12px rgba(0, 0, 0, 0.25))'
+                  }}
+                />
+                
+                {/* Customers Card - Positioned near doctor */}
+                <div className="absolute top-20 right-0 bg-white rounded-xl p-4 shadow-xl w-48">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-2xl font-bold text-gray-800">50k+</span>
+                    <span className="text-gray-600 text-sm">{language === 'vi' ? 'Khách hàng' : 'Customers'}</span>
+                  </div>
+                  <div className="flex items-center -space-x-2">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border-2 border-white"></div>
+                    ))}
+                    <div className="w-8 h-8 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+                      +
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-800">Connect with a Doctor</h3>
-                <p className="text-sm text-gray-500">Schedule your appointment today</p>
+
+              {/* Connect with Doctor Card */}
+              <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800">{language === 'vi' ? 'Kết nối với Bác sĩ' : 'Connect with a Doctor'}</h3>
+                    <p className="text-sm text-gray-500">{language === 'vi' ? 'Đặt lịch hẹn ngay hôm nay' : 'Schedule your appointment today'}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

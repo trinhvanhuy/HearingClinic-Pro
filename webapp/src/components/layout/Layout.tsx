@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useI18n } from '../../i18n/I18nContext'
 import { connectionStatus } from '../../services/connectionStatus'
 import { syncService } from '../../services/syncService'
+import Logo from '../Logo'
 import { useState, useEffect } from 'react'
 
 export default function Layout() {
@@ -56,7 +57,7 @@ export default function Layout() {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 border-b">
-            <h1 className="text-xl font-bold text-primary-600">Hearing Clinic</h1>
+            <Logo variant="full" size="md" />
           </div>
           <nav className="flex-1 p-4">
             <ul className="space-y-2">

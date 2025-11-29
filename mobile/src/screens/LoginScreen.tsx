@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 import Parse from 'parse'
 import { useNavigation } from '@react-navigation/native'
+import Logo from '../components/Logo'
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('')
@@ -41,7 +42,9 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Hearing Clinic System</Text>
+        <View style={styles.logoContainer}>
+          <Logo variant="full" size="lg" />
+        </View>
         <Text style={styles.subtitle}>Sign in to your account</Text>
 
         <View style={styles.form}>
@@ -84,6 +87,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
     fontSize: 32,
