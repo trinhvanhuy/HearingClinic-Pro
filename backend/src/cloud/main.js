@@ -68,8 +68,53 @@ Parse.Cloud.beforeSave("HearingReport", async (request) => {
   }
 
   // Validate required fields
-  if (!report.get("client")) {
+  let client = report.get("client");
+  if (!client) {
     throw new Parse.Error(Parse.Error.VALIDATION_ERROR, "Client is required");
+  }
+  
+  // Ensure client is a Pointer, not an embedded Object
+  // Parse schema may expect Object, but we need to convert to Pointer
+  let objectId = null;
+  
+  if (client instanceof Parse.Object) {
+    // It's already a Parse Object, get its ID
+    objectId = client.id || client._id || client.objectId;
+  } else if (client && typeof client === 'object') {
+    // It's a plain object (from serialization or embedded)
+    // Check if it's a Pointer JSON format
+    if (client.__type === 'Pointer') {
+      objectId = client.objectId;
+    } else {
+      objectId = client._id || client.id || client.objectId;
+    }
+  }
+  
+  // Handle the case where objectId is "Client" (wrong serialization)
+  // This happens when Parse SDK serializes incorrectly
+  if (objectId === 'Client' || objectId === 'client') {
+    // Try to get objectId from the original client object
+    if (client instanceof Parse.Object) {
+      const clientObj = client as any;
+      // Check if there's a cached _id or if we can get it from attributes
+      objectId = clientObj._id || clientObj.id || clientObj.objectId;
+      // If still "Client", this is a bug in Parse SDK serialization
+      // We'll need to reject it and let the client fix it
+      if (objectId === 'Client' || objectId === 'client') {
+        throw new Parse.Error(Parse.Error.VALIDATION_ERROR, `Invalid client pointer: objectId is "${objectId}" instead of a valid client ID`);
+      }
+    } else {
+      throw new Parse.Error(Parse.Error.VALIDATION_ERROR, `Invalid client reference: objectId is "${objectId}"`);
+    }
+  }
+  
+  if (objectId && objectId !== 'Client' && objectId !== 'client') {
+    // Create a proper Pointer - this will work even if schema expects Object
+    // Parse will automatically update schema when it sees a Pointer
+    const clientPointer = Parse.Object.createWithoutData('Client', objectId);
+    report.set('client', clientPointer);
+  } else {
+    throw new Parse.Error(Parse.Error.VALIDATION_ERROR, "Invalid client reference: missing or invalid objectId");
   }
   
   if (!report.get("testDate")) {

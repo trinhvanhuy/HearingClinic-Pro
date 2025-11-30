@@ -132,6 +132,18 @@ export interface Translations {
     speechAudiometry: string
     tympanometry: string
     recommendations: string
+    discriminationLoss: string
+    tympanograms: string
+    results: string
+    signature: string
+    printName: string
+    licenseNo: string
+    signatureDate: string
+    enterResults: string
+    enterRecommendations: string
+    enterSignatureName: string
+    enterPrintName: string
+    enterLicenseNumber: string
   }
 
   // Reminders
@@ -333,6 +345,18 @@ export const translations: Record<Language, Translations> = {
       speechAudiometry: 'Speech Audiometry',
       tympanometry: 'Tympanometry',
       recommendations: 'Recommendations',
+      discriminationLoss: 'Discrimination Loss',
+      tympanograms: 'Tympanograms (Pressure mmH20)',
+      results: 'Results',
+      signature: 'Signature',
+      printName: 'Print Name',
+      licenseNo: 'Lic. No',
+      signatureDate: 'Date',
+      enterResults: 'Enter results summary...',
+      enterRecommendations: 'Enter recommendations...',
+      enterSignatureName: 'Enter signature name',
+      enterPrintName: 'Enter print name',
+      enterLicenseNumber: 'Enter license number',
     },
     reminders: {
       title: 'Reminders',

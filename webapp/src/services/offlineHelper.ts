@@ -4,6 +4,38 @@ import { offlineStorage } from './offlineStorage'
 import { connectionStatus } from './connectionStatus'
 import Parse from 'parse'
 
+/**
+ * Normalize data before storing in sync queue
+ * Converts Parse Objects (like client pointer) to just their objectId
+ */
+function normalizeDataForQueue(data: any): any {
+  if (!data || typeof data !== 'object') {
+    return data
+  }
+  
+  const normalized: any = {}
+  
+  for (const key in data) {
+    const value = data[key]
+    
+    if (value instanceof Parse.Object) {
+      // Convert Parse Object to just its objectId
+      normalized[key] = value.id || value._id || value.objectId
+    } else if (value && typeof value === 'object' && value.__type === 'Pointer') {
+      // Already a Pointer JSON, extract objectId
+      normalized[key] = value.objectId
+    } else if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+      // Recursively normalize nested objects
+      normalized[key] = normalizeDataForQueue(value)
+    } else {
+      // Primitive values, arrays, dates - keep as is
+      normalized[key] = value
+    }
+  }
+  
+  return normalized
+}
+
 export async function handleOfflineOperation<T extends Parse.Object>(
   entityType: 'Client' | 'HearingReport' | 'Reminder',
   operation: 'create' | 'update' | 'delete',
@@ -15,19 +47,22 @@ export async function handleOfflineOperation<T extends Parse.Object>(
 
   if (isOnline) {
     try {
+      // Call online operation with original data (Parse Objects preserved)
       const result = await onlineOperation()
       
-      // Update cache after successful operation
-      await updateCacheAfterOperation(entityType, operation, result, entityId)
+      // Only update cache for read operations or when explicitly needed
+      // Don't cache every write operation - only cache when offline or on error
+      // Cache is mainly for reading data when offline
       
       return result
     } catch (error) {
-      // If operation fails, add to sync queue
+      // If operation fails while online, add to sync queue for retry later
+      // This handles cases where network fails mid-operation
       await offlineStorage.addToSyncQueue({
         type: operation,
         entityType,
         entityId,
-        data: data || {},
+        data: normalizeDataForQueue(data || {}),
       })
       throw error
     }
@@ -37,7 +72,7 @@ export async function handleOfflineOperation<T extends Parse.Object>(
       type: operation,
       entityType,
       entityId,
-      data: data || {},
+      data: normalizeDataForQueue(data || {}),
     })
 
     // Update cache

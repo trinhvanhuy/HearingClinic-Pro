@@ -9,32 +9,47 @@ import Parse from '../../api/parseClient'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 import AudiogramChart from '../../components/AudiogramChart'
+import SpeechAudiometryChart, { SpeechAudiometryPoint, SpeechAudiometryData } from '../../components/SpeechAudiometryChart'
+import DiscriminationLossChart, { DiscriminationLossData } from '../../components/DiscriminationLossChart'
+import TympanogramChart, { TympanogramPoint, TympanogramData } from '../../components/TympanogramChart'
+import { useI18n } from '../../i18n/I18nContext'
 
 interface SpeechAudiometry {
+  // Legacy format (for backward compatibility)
   SAT?: { R?: number; L?: number; Bi?: number }
   SRT?: { R?: number; L?: number; Bi?: number }
   Mask?: { R?: number; L?: number; Bi?: number }
   MCL?: { R?: number; L?: number; Bi?: number }
   UCL?: { R?: number; L?: number; Bi?: number }
+  // New format for chart
+  points?: SpeechAudiometryPoint[]
 }
 
 interface DiscriminationLoss {
+  // Legacy format (for backward compatibility)
   WR?: { R?: number; L?: number; Bi?: number }
   WRLevel?: { R?: number; L?: number; Bi?: number }
   WRMask?: { R?: number; L?: number; Bi?: number }
   WRN?: { R?: number; L?: number; Bi?: number }
   WRNLevel?: { R?: number; L?: number; Bi?: number }
   WRNMask?: { R?: number; L?: number; Bi?: number }
+  // New format for chart
+  rightCorrectPercent?: number
+  leftCorrectPercent?: number
 }
 
 interface Tympanogram {
+  // Legacy format (for backward compatibility)
   type?: string
   pressure?: number
   compliance?: number
   volume?: number
+  // New format for chart
+  points?: TympanogramPoint[]
 }
 
 export default function HearingReportFormPage() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const clientId = searchParams.get('clientId')
@@ -67,10 +82,10 @@ export default function HearingReportFormPage() {
     leftEarThresholds: {} as EarThresholds,
     rightEarThresholds: {} as EarThresholds,
     caseHistory: '',
-    speechAudiometry: {} as SpeechAudiometry,
-    discriminationLoss: {} as DiscriminationLoss,
-    leftTympanogram: {} as Tympanogram,
-    rightTympanogram: {} as Tympanogram,
+    speechAudiometry: { points: [] } as SpeechAudiometry,
+    discriminationLoss: { rightCorrectPercent: 0, leftCorrectPercent: 0 } as DiscriminationLoss,
+    leftTympanogram: { points: [] } as Tympanogram,
+    rightTympanogram: { points: [] } as Tympanogram,
     results: '',
     recommendations: '',
     signature: '',
@@ -80,11 +95,9 @@ export default function HearingReportFormPage() {
   })
 
   const [activeEar, setActiveEar] = useState<'left' | 'right'>('right')
-  const [expandedSections, setExpandedSections] = useState({
-    speechAudiometry: false,
-    discriminationLoss: false,
-    tympanograms: false,
-  })
+  const [activeTestTab, setActiveTestTab] = useState<'pureTone' | 'speech' | 'discrimination' | 'tympanogram'>('pureTone')
+  const [speechAudiometryMode, setSpeechAudiometryMode] = useState<'R' | 'L'>('R')
+  const [tympanogramMode, setTympanogramMode] = useState<'R' | 'L'>('R')
   const [showFloatingMenu, setShowFloatingMenu] = useState(false)
   const { user } = useAuth()
 
@@ -122,10 +135,14 @@ export default function HearingReportFormPage() {
         leftEarThresholds: report.get('leftEarThresholds') || {},
         rightEarThresholds: report.get('rightEarThresholds') || {},
         caseHistory: (report as any).get('caseHistory') || '',
-        speechAudiometry: (report as any).get('speechAudiometry') || {},
-        discriminationLoss: (report as any).get('discriminationLoss') || {},
-        leftTympanogram: (report as any).get('leftTympanogram') || {},
-        rightTympanogram: (report as any).get('rightTympanogram') || {},
+        speechAudiometry: (report as any).get('speechAudiometry') || { points: [] },
+        discriminationLoss: {
+          ...((report as any).get('discriminationLoss') || {}),
+          rightCorrectPercent: (report as any).get('discriminationLoss')?.rightCorrectPercent || 0,
+          leftCorrectPercent: (report as any).get('discriminationLoss')?.leftCorrectPercent || 0,
+        },
+        leftTympanogram: (report as any).get('leftTympanogram') || { points: [] },
+        rightTympanogram: (report as any).get('rightTympanogram') || { points: [] },
         results: report.get('diagnosis') || '',
         recommendations: report.get('recommendations') || '',
         signature: (report as any).get('signature') || '',
@@ -147,36 +164,45 @@ export default function HearingReportFormPage() {
   }, [report, user])
 
   const mutation = useMutation({
+    retry: false, // Don't retry on error
     mutationFn: async (data: any) => {
+      console.log('Mutation started at:', new Date().toISOString())
+      
       if (!data.clientId || data.clientId.trim() === '') {
         throw new Error('Client is required')
       }
       
       // Validate clientId is a valid Parse object ID
       const clientIdStr = String(data.clientId).trim()
-      if (!clientIdStr || clientIdStr === 'Client' || clientIdStr === 'client' || clientIdStr.length === 0) {
+      if (!clientIdStr || clientIdStr === 'Client' || clientIdStr === 'client' || clientIdStr.length < 5) {
         throw new Error('Invalid client ID. Please select a valid client.')
       }
       
-      // Create client pointer - Parse will validate the ID when saving
+      // Create client pointer - use the simplest approach
       let client: Parse.Object
       try {
+        // Create pointer using createWithoutData - this is the standard way
         client = Parse.Object.createWithoutData('Client', clientIdStr)
-        // Verify the pointer was created correctly
-        // Note: Parse.Object.createWithoutData doesn't set id immediately,
-        // but it will be validated when the object is saved
-        if (!client || client.className !== 'Client') {
-          throw new Error('Failed to create valid client pointer')
+        
+        // Verify the pointer has the correct ID
+        if (!client.id || client.id !== clientIdStr) {
+          // Force set the ID if needed
+          const clientObj = client as any
+          if (clientObj.id !== clientIdStr) {
+            clientObj.id = clientIdStr
+          }
+          if (clientObj._id !== clientIdStr) {
+            clientObj._id = clientIdStr
+          }
         }
       } catch (error: any) {
         console.error('Error creating client pointer:', error, 'clientId:', clientIdStr)
         throw new Error(`Invalid client ID: ${error.message || 'Client ID is not valid'}`)
       }
       
-      // Prepare report data, excluding fields that shouldn't be sent
-      // Ensure client pointer is properly set
+      // Prepare report data
       const reportData: any = {
-        client: client, // Use the Parse Object pointer
+        client: client, // Parse Object pointer
         testDate: new Date(data.testDate),
         typeOfTest: data.typeOfTest,
         leftEarThresholds: data.leftEarThresholds,
@@ -185,12 +211,10 @@ export default function HearingReportFormPage() {
         recommendations: data.recommendations || '',
       }
       
-      // Debug: log the client pointer to verify it's correct
-      console.log('Creating report with client:', {
-        clientId: clientIdStr,
-        clientObjectId: client.id,
-        clientClassName: client.className
-      })
+      // Add caseHistory if provided
+      if (data.caseHistory) {
+        reportData.caseHistory = data.caseHistory
+      }
       
       // Add optional fields
       if (data.speechAudiometry && Object.keys(data.speechAudiometry).length > 0) {
@@ -232,23 +256,32 @@ export default function HearingReportFormPage() {
       }
       
       if (isEdit) {
+        console.log('Calling update...')
         return hearingReportService.update(id!, reportData)
       } else {
+        console.log('Calling create...')
         return hearingReportService.create(reportData)
       }
     },
     onSuccess: () => {
+      console.log('Mutation succeeded')
       toast.success(isEdit ? 'Report updated' : 'Report created')
       queryClient.invalidateQueries({ queryKey: ['hearing-reports'] })
       navigate('/hearing-reports')
     },
     onError: (error: any) => {
+      console.error('Mutation error:', error)
       toast.error(error.message || 'Failed to save report')
     },
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Prevent multiple submissions
+    if (mutation.isPending) {
+      return
+    }
     
     // Validate client is selected
     if (!formData.clientId || formData.clientId.trim() === '') {
@@ -315,6 +348,124 @@ export default function HearingReportFormPage() {
         [field]: field === 'type' ? value : (value ? parseFloat(value) : undefined),
       },
     })
+  }
+
+  // Speech Audiometry points management
+  const addSpeechAudiometryPoint = () => {
+    const newPoint: SpeechAudiometryPoint = { ear: 'R', dbHL: 0, recognitionPercent: 0 }
+    setFormData({
+      ...formData,
+      speechAudiometry: {
+        ...formData.speechAudiometry,
+        points: [...(formData.speechAudiometry.points || []), newPoint],
+      },
+    })
+  }
+
+  const updateSpeechAudiometryPoint = (index: number, field: keyof SpeechAudiometryPoint, value: string | number) => {
+    const points = [...(formData.speechAudiometry.points || [])]
+    points[index] = { ...points[index], [field]: value }
+    setFormData({
+      ...formData,
+      speechAudiometry: {
+        ...formData.speechAudiometry,
+        points,
+      },
+    })
+  }
+
+  const removeSpeechAudiometryPoint = (index: number) => {
+    const points = [...(formData.speechAudiometry.points || [])]
+    points.splice(index, 1)
+    setFormData({
+      ...formData,
+      speechAudiometry: {
+        ...formData.speechAudiometry,
+        points,
+      },
+    })
+  }
+
+  // Discrimination Loss management
+  const updateDiscriminationLossPercent = (ear: 'right' | 'left', value: string) => {
+    const percent = value ? parseFloat(value) : 0
+    setFormData({
+      ...formData,
+      discriminationLoss: {
+        ...formData.discriminationLoss,
+        [ear === 'right' ? 'rightCorrectPercent' : 'leftCorrectPercent']: percent,
+      },
+    })
+  }
+
+  // Tympanogram points management
+  const addTympanogramPoint = (ear: 'left' | 'right') => {
+    const newPoint: TympanogramPoint = { ear: ear === 'right' ? 'R' : 'L', pressure: 0, admittance: 0 }
+    const earKey = ear === 'right' ? 'rightTympanogram' : 'leftTympanogram'
+    setFormData({
+      ...formData,
+      [earKey]: {
+        ...formData[earKey],
+        points: [...(formData[earKey].points || []), newPoint],
+      },
+    })
+  }
+
+  const updateTympanogramPoint = (ear: 'left' | 'right', index: number, field: 'pressure' | 'admittance', value: string) => {
+    const earKey = ear === 'right' ? 'rightTympanogram' : 'leftTympanogram'
+    const points = [...(formData[earKey].points || [])]
+    points[index] = { ...points[index], [field]: value ? parseFloat(value) : 0 }
+    setFormData({
+      ...formData,
+      [earKey]: {
+        ...formData[earKey],
+        points,
+      },
+    })
+  }
+
+  const removeTympanogramPoint = (ear: 'left' | 'right', index: number) => {
+    const earKey = ear === 'right' ? 'rightTympanogram' : 'leftTympanogram'
+    const points = [...(formData[earKey].points || [])]
+    points.splice(index, 1)
+    setFormData({
+      ...formData,
+      [earKey]: {
+        ...formData[earKey],
+        points,
+      },
+    })
+  }
+
+  // Prepare chart data
+  const getSpeechAudiometryChartData = (): SpeechAudiometryData => {
+    const points = formData.speechAudiometry.points || []
+    return {
+      rightEar: points.filter(p => p.ear === 'R'),
+      leftEar: points.filter(p => p.ear === 'L'),
+    }
+  }
+
+  const getDiscriminationLossChartData = (): DiscriminationLossData => {
+    const rightPercent = formData.discriminationLoss.rightCorrectPercent || 0
+    const leftPercent = formData.discriminationLoss.leftCorrectPercent || 0
+    return {
+      rightEar: {
+        correctPercent: rightPercent,
+        lossPercent: 100 - rightPercent,
+      },
+      leftEar: {
+        correctPercent: leftPercent,
+        lossPercent: 100 - leftPercent,
+      },
+    }
+  }
+
+  const getTympanogramChartData = (): TympanogramData => {
+    return {
+      rightEar: formData.rightTympanogram.points || [],
+      leftEar: formData.leftTympanogram.points || [],
+    }
   }
 
   const frequencies = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000]
@@ -422,11 +573,11 @@ export default function HearingReportFormPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Patient Information */}
-        <div className="border rounded-lg p-6">
+        <div className="rounded-lg">
           <h2 className="text-lg font-bold mb-4">Patient Information</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Patient (Last Name) *</label>
+              <label className="block text-sm font-medium mb-1">Last Name *</label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded"
@@ -494,428 +645,489 @@ export default function HearingReportFormPage() {
           </div>
         </div>
 
-        {/* Puretone Audiometry */}
-        <div className="border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Puretone Audiometry</h2>
-          
-          {/* Interactive Audiogram */}
-          <div className="mb-6">
-            <AudiogramChart
-              leftEar={formData.leftEarThresholds}
-              rightEar={formData.rightEarThresholds}
-              mode={activeEar}
-              onModeChange={setActiveEar}
-              onChangeRight={(frequency, value) => {
-                updateThreshold('rightEarThresholds', frequency, value)
-              }}
-              onChangeLeft={(frequency, value) => {
-                updateThreshold('leftEarThresholds', frequency, value)
-              }}
-            />
+        {/* Audiometry Tests - Tabbed Interface */}
+        <div className="rounded-lg bg-white border border-gray-200">
+          {/* Tab Headers */}
+          <div className="border-b border-gray-200">
+            <div className="flex space-x-1 px-4">
+              <button
+                type="button"
+                onClick={() => setActiveTestTab('pureTone')}
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTestTab === 'pureTone'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Puretone Audiometry
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTestTab('speech')}
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTestTab === 'speech'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Speech Audiometry
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTestTab('discrimination')}
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTestTab === 'discrimination'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Discrimination Loss
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTestTab('tympanogram')}
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTestTab === 'tympanogram'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Tympanograms (Pressure mmH₂O)
+              </button>
+            </div>
           </div>
 
-          {/* Data Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border px-4 py-2 text-left">Frequency (Hz)</th>
-                  {frequencies.map((freq) => (
-                    <th key={freq} className="border px-4 py-2">
-                      {freq}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>Right</td>
-                  {frequencies.map((freq) => (
-                    <td key={freq} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        className="w-full px-2 py-1 border rounded text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        value={formData.rightEarThresholds[freq as keyof EarThresholds] || ''}
-                        onChange={(e) => updateThreshold('rightEarThresholds', freq, e.target.value)}
-                        placeholder="-"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 font-medium" style={{ color: '#1E88E5' }}>Left</td>
-                  {frequencies.map((freq) => (
-                    <td key={freq} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        className="w-full px-2 py-1 border rounded text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        value={formData.leftEarThresholds[freq as keyof EarThresholds] || ''}
-                        onChange={(e) => updateThreshold('leftEarThresholds', freq, e.target.value)}
-                        placeholder="-"
-                      />
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+          {/* Tab Content */}
+          <div className="p-6">
+            {/* Puretone Audiometry Tab */}
+            {activeTestTab === 'pureTone' && (
+              <div>
+                {/* Interactive Audiogram */}
+                <div className="mb-6">
+                  <AudiogramChart
+                    leftEar={formData.leftEarThresholds}
+                    rightEar={formData.rightEarThresholds}
+                    mode={activeEar}
+                    onModeChange={setActiveEar}
+                    onChangeRight={(frequency, value) => {
+                      updateThreshold('rightEarThresholds', frequency, value)
+                    }}
+                    onChangeLeft={(frequency, value) => {
+                      updateThreshold('leftEarThresholds', frequency, value)
+                    }}
+                  />
+                </div>
 
-        {/* Speech Audiometry */}
-        <div className="border rounded-lg p-6">
-          <button
-            type="button"
-            onClick={() => setExpandedSections(prev => ({ ...prev, speechAudiometry: !prev.speechAudiometry }))}
-            className="flex items-center justify-between w-full text-left"
-          >
-            <h2 className="text-lg font-bold">Speech Audiometry</h2>
-            <svg
-              className={`w-5 h-5 transition-transform ${expandedSections.speechAudiometry ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          {expandedSections.speechAudiometry && (
-            <div className="mt-4">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border px-4 py-2 text-left">Test</th>
-                      <th className="border px-4 py-2">R</th>
-                      <th className="border px-4 py-2">L</th>
-                      <th className="border px-4 py-2">Bi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(['SAT', 'SRT', 'Mask', 'MCL', 'UCL'] as const).map((test) => (
-                      <tr key={test}>
-                        <td className="border px-4 py-2 font-medium">{test}</td>
-                        {(['R', 'L', 'Bi'] as const).map((ear) => (
-                          <td key={ear} className="border px-4 py-2">
+                {/* Data Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="border px-4 py-2 text-left">Frequency (Hz)</th>
+                        {frequencies.map((freq) => (
+                          <th key={freq} className="border px-4 py-2">
+                            {freq}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>Right</td>
+                        {frequencies.map((freq) => (
+                          <td key={freq} className="border px-4 py-2">
                             <input
                               type="number"
-                              className="w-full px-2 py-1 border rounded text-sm"
-                              value={formData.speechAudiometry[test]?.[ear] || ''}
-                              onChange={(e) => updateSpeechAudiometry(test, ear, e.target.value)}
+                              className="w-full px-2 py-1 border rounded text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              value={formData.rightEarThresholds[freq as keyof EarThresholds] || ''}
+                              onChange={(e) => updateThreshold('rightEarThresholds', freq, e.target.value)}
                               placeholder="-"
                             />
                           </td>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      <tr>
+                        <td className="border px-4 py-2 font-medium" style={{ color: '#1E88E5' }}>Left</td>
+                        {frequencies.map((freq) => (
+                          <td key={freq} className="border px-4 py-2">
+                            <input
+                              type="number"
+                              className="w-full px-2 py-1 border rounded text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              value={formData.leftEarThresholds[freq as keyof EarThresholds] || ''}
+                              onChange={(e) => updateThreshold('leftEarThresholds', freq, e.target.value)}
+                              placeholder="-"
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* Discrimination Loss */}
-        <div className="border rounded-lg p-6">
-          <button
-            type="button"
-            onClick={() => setExpandedSections(prev => ({ ...prev, discriminationLoss: !prev.discriminationLoss }))}
-            className="flex items-center justify-between w-full text-left"
-          >
-            <h2 className="text-lg font-bold">Discrimination Loss</h2>
-            <svg
-              className={`w-5 h-5 transition-transform ${expandedSections.discriminationLoss ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          {expandedSections.discriminationLoss && (
-            <div className="mt-4">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border px-4 py-2 text-left">Test</th>
-                      <th className="border px-4 py-2">R</th>
-                      <th className="border px-4 py-2">L</th>
-                      <th className="border px-4 py-2">Bi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                <tr>
-                  <td className="border px-4 py-2 font-medium">WR %</td>
-                  {(['R', 'L', 'Bi'] as const).map((ear) => (
-                    <td key={ear} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        className="w-full px-2 py-1 border rounded text-sm"
-                        value={formData.discriminationLoss.WR?.[ear] || ''}
-                        onChange={(e) => updateDiscriminationLoss('WR', ear, e.target.value)}
-                        placeholder="-"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 font-medium">WR Level</td>
-                  {(['R', 'L', 'Bi'] as const).map((ear) => (
-                    <td key={ear} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        className="w-full px-2 py-1 border rounded text-sm"
-                        value={formData.discriminationLoss.WRLevel?.[ear] || ''}
-                        onChange={(e) => updateDiscriminationLoss('WRLevel', ear, e.target.value)}
-                        placeholder="-"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 font-medium">WR Mask</td>
-                  {(['R', 'L', 'Bi'] as const).map((ear) => (
-                    <td key={ear} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        className="w-full px-2 py-1 border rounded text-sm"
-                        value={formData.discriminationLoss.WRMask?.[ear] || ''}
-                        onChange={(e) => updateDiscriminationLoss('WRMask', ear, e.target.value)}
-                        placeholder="-"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 font-medium">WRN %</td>
-                  {(['R', 'L', 'Bi'] as const).map((ear) => (
-                    <td key={ear} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        className="w-full px-2 py-1 border rounded text-sm"
-                        value={formData.discriminationLoss.WRN?.[ear] || ''}
-                        onChange={(e) => updateDiscriminationLoss('WRN', ear, e.target.value)}
-                        placeholder="-"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 font-medium">WRN Level</td>
-                  {(['R', 'L', 'Bi'] as const).map((ear) => (
-                    <td key={ear} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        className="w-full px-2 py-1 border rounded text-sm"
-                        value={formData.discriminationLoss.WRNLevel?.[ear] || ''}
-                        onChange={(e) => updateDiscriminationLoss('WRNLevel', ear, e.target.value)}
-                        placeholder="-"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 font-medium">WRN Mask</td>
-                  {(['R', 'L', 'Bi'] as const).map((ear) => (
-                    <td key={ear} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        className="w-full px-2 py-1 border rounded text-sm"
-                        value={formData.discriminationLoss.WRNMask?.[ear] || ''}
-                        onChange={(e) => updateDiscriminationLoss('WRNMask', ear, e.target.value)}
-                        placeholder="-"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
+            {/* Speech Audiometry Tab */}
+            {activeTestTab === 'speech' && (
+              <div>
+                {/* Speech Audiometry Chart */}
+                <div className="mb-6">
+                  <SpeechAudiometryChart 
+                    data={getSpeechAudiometryChartData()} 
+                    mode={speechAudiometryMode}
+                    onModeChange={setSpeechAudiometryMode}
+                    onAddPoint={(point) => {
+                      setFormData({
+                        ...formData,
+                        speechAudiometry: {
+                          ...formData.speechAudiometry,
+                          points: [...(formData.speechAudiometry.points || []), point],
+                        },
+                      })
+                    }}
+                  />
+                </div>
 
-        {/* Tympanograms */}
-        <div className="border rounded-lg p-6">
-          <button
-            type="button"
-            onClick={() => setExpandedSections(prev => ({ ...prev, tympanograms: !prev.tympanograms }))}
-            className="flex items-center justify-between w-full text-left"
-          >
-            <h2 className="text-lg font-bold">Tympanograms (Pressure mmH20)</h2>
-            <svg
-              className={`w-5 h-5 transition-transform ${expandedSections.tympanograms ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          {expandedSections.tympanograms && (
-            <div className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Left Ear</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Type</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded"
-                    value={formData.leftTympanogram.type || ''}
-                    onChange={(e) => updateTympanogram('leftTympanogram', 'type', e.target.value)}
-                    placeholder="A, B, C, etc."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Pressure</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 border rounded"
-                    value={formData.leftTympanogram.pressure || ''}
-                    onChange={(e) => updateTympanogram('leftTympanogram', 'pressure', e.target.value)}
-                    placeholder="-"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Compliance</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="w-full px-3 py-2 border rounded"
-                    value={formData.leftTympanogram.compliance || ''}
-                    onChange={(e) => updateTympanogram('leftTympanogram', 'compliance', e.target.value)}
-                    placeholder="-"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Volume</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="w-full px-3 py-2 border rounded"
-                    value={formData.leftTympanogram.volume || ''}
-                    onChange={(e) => updateTympanogram('leftTympanogram', 'volume', e.target.value)}
-                    placeholder="-"
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Note: Graph visualization can be added here</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-3">Right Ear</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Type</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded"
-                    value={formData.rightTympanogram.type || ''}
-                    onChange={(e) => updateTympanogram('rightTympanogram', 'type', e.target.value)}
-                    placeholder="A, B, C, etc."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Pressure</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 border rounded"
-                    value={formData.rightTympanogram.pressure || ''}
-                    onChange={(e) => updateTympanogram('rightTympanogram', 'pressure', e.target.value)}
-                    placeholder="-"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Compliance</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="w-full px-3 py-2 border rounded"
-                    value={formData.rightTympanogram.compliance || ''}
-                    onChange={(e) => updateTympanogram('rightTympanogram', 'compliance', e.target.value)}
-                    placeholder="-"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Volume</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="w-full px-3 py-2 border rounded"
-                    value={formData.rightTympanogram.volume || ''}
-                    onChange={(e) => updateTympanogram('rightTympanogram', 'volume', e.target.value)}
-                    placeholder="-"
-                  />
+                {/* Data Input Table */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-md font-semibold">Data Points</h3>
+                    <button
+                      type="button"
+                      onClick={addSpeechAudiometryPoint}
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
+                    >
+                      + Add Row
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="border px-4 py-2 text-left">Ear</th>
+                          <th className="border px-4 py-2">dB HL</th>
+                          <th className="border px-4 py-2">% Recognition</th>
+                          <th className="border px-4 py-2 w-20">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(formData.speechAudiometry.points || []).map((point, index) => (
+                          <tr key={index}>
+                            <td className="border px-4 py-2">
+                              <select
+                                className="w-full px-2 py-1 border rounded text-sm"
+                                value={point.ear}
+                                onChange={(e) => updateSpeechAudiometryPoint(index, 'ear', e.target.value as 'R' | 'L')}
+                              >
+                                <option value="R">Right</option>
+                                <option value="L">Left</option>
+                              </select>
+                            </td>
+                            <td className="border px-4 py-2">
+                              <input
+                                type="number"
+                                className="w-full px-2 py-1 border rounded text-sm"
+                                value={point.dbHL || ''}
+                                onChange={(e) => updateSpeechAudiometryPoint(index, 'dbHL', parseFloat(e.target.value) || 0)}
+                                placeholder="0-120"
+                                min="0"
+                                max="120"
+                              />
+                            </td>
+                            <td className="border px-4 py-2">
+                              <input
+                                type="number"
+                                className="w-full px-2 py-1 border rounded text-sm"
+                                value={point.recognitionPercent || ''}
+                                onChange={(e) => updateSpeechAudiometryPoint(index, 'recognitionPercent', parseFloat(e.target.value) || 0)}
+                                placeholder="0-100"
+                                min="0"
+                                max="100"
+                              />
+                            </td>
+                            <td className="border px-4 py-2 text-center">
+                              <button
+                                type="button"
+                                onClick={() => removeSpeechAudiometryPoint(index)}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              >
+                                Xóa
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {(!formData.speechAudiometry.points || formData.speechAudiometry.points.length === 0) && (
+                          <tr>
+                            <td colSpan={4} className="border px-4 py-8 text-center text-gray-500">
+                              No data points. Click "+ Add Row" to add data.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-2">Note: Graph visualization can be added here</p>
-            </div>
+            )}
+
+            {/* Discrimination Loss Tab */}
+            {activeTestTab === 'discrimination' && (
+              <div>
+                {/* Discrimination Loss Chart */}
+                <div className="mb-6">
+                  <DiscriminationLossChart data={getDiscriminationLossChartData()} />
+                </div>
+
+                {/* Data Input */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-md font-semibold mb-3">Right Ear</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Correct %</label>
+                        <input
+                          type="number"
+                          className="w-full px-3 py-2 border rounded"
+                          value={formData.discriminationLoss.rightCorrectPercent || ''}
+                          onChange={(e) => updateDiscriminationLossPercent('right', e.target.value)}
+                          placeholder="0-100"
+                          min="0"
+                          max="100"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Loss: {100 - (formData.discriminationLoss.rightCorrectPercent || 0)}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-md font-semibold mb-3">Left Ear</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Correct %</label>
+                        <input
+                          type="number"
+                          className="w-full px-3 py-2 border rounded"
+                          value={formData.discriminationLoss.leftCorrectPercent || ''}
+                          onChange={(e) => updateDiscriminationLossPercent('left', e.target.value)}
+                          placeholder="0-100"
+                          min="0"
+                          max="100"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Loss: {100 - (formData.discriminationLoss.leftCorrectPercent || 0)}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Tympanograms Tab */}
+            {activeTestTab === 'tympanogram' && (
+              <div>
+                {/* Tympanogram Chart */}
+                <div className="mb-6">
+                  <TympanogramChart 
+                    data={getTympanogramChartData()} 
+                    mode={tympanogramMode}
+                    onModeChange={setTympanogramMode}
+                    onAddPoint={(point) => {
+                      const earKey = point.ear === 'R' ? 'rightTympanogram' : 'leftTympanogram'
+                      setFormData({
+                        ...formData,
+                        [earKey]: {
+                          ...formData[earKey],
+                          points: [...(formData[earKey].points || []), point],
+                        },
+                      })
+                    }}
+                  />
+                </div>
+
+                {/* Data Input Tables */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left Ear */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-md font-semibold">Left Ear</h3>
+                      <button
+                        type="button"
+                        onClick={() => addTympanogramPoint('left')}
+                        className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
+                      >
+                        + Add Row
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            <th className="border px-3 py-2 text-left">Pressure (mmH₂O)</th>
+                            <th className="border px-3 py-2 text-left">Admittance</th>
+                            <th className="border px-3 py-2 w-16">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(formData.leftTympanogram.points || []).map((point, index) => (
+                            <tr key={index}>
+                              <td className="border px-3 py-2">
+                                <input
+                                  type="number"
+                                  className="w-full px-2 py-1 border rounded text-sm"
+                                  value={point.pressure || ''}
+                                  onChange={(e) => updateTympanogramPoint('left', index, 'pressure', e.target.value)}
+                                  placeholder="-400 to +200"
+                                  min="-400"
+                                  max="200"
+                                />
+                              </td>
+                              <td className="border px-3 py-2">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="w-full px-2 py-1 border rounded text-sm"
+                                  value={point.admittance || ''}
+                                  onChange={(e) => updateTympanogramPoint('left', index, 'admittance', e.target.value)}
+                                  placeholder="Admittance"
+                                />
+                              </td>
+                              <td className="border px-3 py-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => removeTympanogramPoint('left', index)}
+                                  className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                >
+                                  Xóa
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {(!formData.leftTympanogram.points || formData.leftTympanogram.points.length === 0) && (
+                            <tr>
+                              <td colSpan={3} className="border px-3 py-4 text-center text-gray-500 text-sm">
+                                No data points. Click "+ Add Row" to add data.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Right Ear */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-md font-semibold">Right Ear</h3>
+                      <button
+                        type="button"
+                        onClick={() => addTympanogramPoint('right')}
+                        className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
+                      >
+                        + Add Row
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            <th className="border px-3 py-2 text-left">Pressure (mmH₂O)</th>
+                            <th className="border px-3 py-2 text-left">Admittance</th>
+                            <th className="border px-3 py-2 w-16">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(formData.rightTympanogram.points || []).map((point, index) => (
+                            <tr key={index}>
+                              <td className="border px-3 py-2">
+                                <input
+                                  type="number"
+                                  className="w-full px-2 py-1 border rounded text-sm"
+                                  value={point.pressure || ''}
+                                  onChange={(e) => updateTympanogramPoint('right', index, 'pressure', e.target.value)}
+                                  placeholder="-400 to +200"
+                                  min="-400"
+                                  max="200"
+                                />
+                              </td>
+                              <td className="border px-3 py-2">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="w-full px-2 py-1 border rounded text-sm"
+                                  value={point.admittance || ''}
+                                  onChange={(e) => updateTympanogramPoint('right', index, 'admittance', e.target.value)}
+                                  placeholder="Admittance"
+                                />
+                              </td>
+                              <td className="border px-3 py-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => removeTympanogramPoint('right', index)}
+                                  className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                >
+                                  Xóa
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {(!formData.rightTympanogram.points || formData.rightTympanogram.points.length === 0) && (
+                            <tr>
+                              <td colSpan={3} className="border px-3 py-4 text-center text-gray-500 text-sm">
+                                No data points. Click "+ Add Row" to add data.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Results */}
-        <div className="border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Results</h2>
+        <div className="rounded-lg">
+          <h2 className="text-lg font-bold mb-4">{t.hearingReports.results}</h2>
           <textarea
             className="w-full px-3 py-2 border rounded"
             rows={4}
             value={formData.results}
             onChange={(e) => setFormData({ ...formData, results: e.target.value })}
-            placeholder="Enter results summary..."
+            placeholder={t.hearingReports.enterResults}
           />
         </div>
 
         {/* Recommendations */}
-        <div className="border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Recommendations</h2>
+        <div className="rounded-lg">
+          <h2 className="text-lg font-bold mb-4">{t.hearingReports.recommendations}</h2>
           <textarea
             className="w-full px-3 py-2 border rounded"
             rows={4}
             value={formData.recommendations}
             onChange={(e) => setFormData({ ...formData, recommendations: e.target.value })}
-            placeholder="Enter recommendations..."
+            placeholder={t.hearingReports.enterRecommendations}
           />
         </div>
 
         {/* Signature */}
-        <div className="border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Signature</h2>
+        <div className="rounded-lg">
+          <h2 className="text-lg font-bold mb-4">{t.hearingReports.signature}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Signature</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border rounded"
-                value={formData.signature}
-                onChange={(e) => setFormData({ ...formData, signature: e.target.value })}
-                placeholder="Enter signature name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Print Name</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.printName}</label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded"
                 value={formData.printName}
                 onChange={(e) => setFormData({ ...formData, printName: e.target.value })}
-                placeholder="Enter print name"
+                placeholder={t.hearingReports.enterPrintName}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Lic. No</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border rounded"
-                value={formData.licenseNo}
-                onChange={(e) => setFormData({ ...formData, licenseNo: e.target.value })}
-                placeholder="Enter license number"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Date</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.signatureDate}</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border rounded"

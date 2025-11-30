@@ -6,45 +6,45 @@ import { clientService } from '../api/clientService'
 import { hearingReportService } from '../api/hearingReportService'
 import { reminderService } from '../api/reminderService'
 
+// Shared user query - this will be cached and only fetched once
+const fetchCurrentUser = async (): Promise<Parse.User | null> => {
+  ensureParseInitialized()
+  const currentUser = Parse.User.current()
+  
+  if (!currentUser) {
+    return null
+  }
+  
+  try {
+    // Verify session by fetching current user data
+    await currentUser.fetch()
+    return currentUser
+  } catch (error) {
+    // Session is invalid, clear it
+    await Parse.User.logOut()
+    return null
+  }
+}
+
 export function useAuth() {
-  const [user, setUser] = useState<Parse.User | null>(null)
-  const [loading, setLoading] = useState(true)
-
+  // Use React Query to cache the user fetch - this ensures it only happens once
+  const { data: user, isLoading: loading, refetch } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: fetchCurrentUser,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: false,
+  })
+  
+  const [userState, setUserState] = useState<Parse.User | null>(user || null)
+  
+  // Sync userState with query data
   useEffect(() => {
-    // Ensure Parse is initialized before checking current user
-    ensureParseInitialized()
-    
-    // Check if there's a current user (from persisted session)
-    // Parse SDK automatically restores session from localStorage
-    const checkCurrentUser = async () => {
-      try {
-        const currentUser = Parse.User.current()
-        
-        // If there's a current user, verify the session is still valid
-        if (currentUser) {
-          try {
-            // Verify session by fetching current user data
-            await currentUser.fetch()
-            setUser(currentUser)
-          } catch (error) {
-            // Session is invalid, clear it
-            await Parse.User.logOut()
-            setUser(null)
-          }
-        } else {
-          setUser(null)
-        }
-      } catch (error) {
-        // Error checking user, assume not logged in
-        setUser(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    checkCurrentUser()
-  }, [])
+    setUserState(user || null)
+  }, [user])
 
+  const queryClient = useQueryClient()
+  
   const loginMutation = useMutation({
     mutationFn: async ({ username, password, rememberMe = true }: { username: string; password: string; rememberMe?: boolean }) => {
       // Ensure Parse is initialized before login
@@ -55,7 +55,9 @@ export function useAuth() {
         // Parse SDK automatically persists session in localStorage
         // The session token is stored automatically and will persist across page reloads
         const user = await Parse.User.logIn(username, password)
-        setUser(user)
+        setUserState(user)
+        // Update React Query cache
+        queryClient.setQueryData(['currentUser'], user)
         
         // Initialize offline storage and cache data
         try {
@@ -87,7 +89,8 @@ export function useAuth() {
             Parse.serverURL = (import.meta as any).env?.VITE_PARSE_SERVER_URL || 'http://localhost:1338/parse'
             // Retry login
             const user = await Parse.User.logIn(username, password)
-            setUser(user)
+            setUserState(user)
+            queryClient.setQueryData(['currentUser'], user)
             return user
           } catch (retryError: any) {
             throw retryError
@@ -101,7 +104,9 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await Parse.User.logOut()
-      setUser(null)
+      setUserState(null)
+      // Clear React Query cache
+      queryClient.setQueryData(['currentUser'], null)
       // Clear remembered username when logging out
       localStorage.removeItem('hearing_clinic_remember_me')
       localStorage.removeItem('hearing_clinic_username')
@@ -115,7 +120,7 @@ export function useAuth() {
   })
 
   return {
-    user,
+    user: userState,
     loading,
     login: loginMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,

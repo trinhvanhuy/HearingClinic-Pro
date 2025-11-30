@@ -17,7 +17,10 @@ interface SyncQueueItem {
   entityId?: string
   data: any
   timestamp: number
+  retryCount?: number
 }
+
+const MAX_RETRY_COUNT = 3
 
 class SyncService {
   private isSyncing = false
@@ -63,7 +66,18 @@ class SyncService {
           await offlineStorage.removeFromSyncQueue(item.id)
         } catch (error) {
           console.error(`Failed to sync item ${item.id}:`, error)
-          // Keep item in queue for retry
+          
+          // Increment retry count
+          const retryCount = (item.retryCount || 0) + 1
+          
+          if (retryCount >= MAX_RETRY_COUNT) {
+            // Max retries reached, remove from queue
+            console.error(`Max retries (${MAX_RETRY_COUNT}) reached for item ${item.id}, removing from queue`)
+            await offlineStorage.removeFromSyncQueue(item.id)
+          } else {
+            // Update retry count in queue
+            await offlineStorage.updateSyncQueueItem(item.id, { retryCount })
+          }
         }
       }
     } catch (error) {

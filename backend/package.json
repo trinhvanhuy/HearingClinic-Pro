@@ -10,7 +10,8 @@
     "seed": "node src/seed.js",
     "import-excel": "node src/importExcel.js",
     "create-admin": "node src/createAdmin.js",
-    "seed-appointments": "node src/seedAppointments.js"
+    "seed-appointments": "node src/seedAppointments.js",
+    "fix-schema": "node src/fixSchema.js"
   },
   "dependencies": {
     "express": "^4.18.2",

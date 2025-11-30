@@ -18,6 +18,7 @@ interface SyncQueueItem {
   entityId?: string
   data: any
   timestamp: number
+  retryCount?: number
 }
 
 class OfflineStorageService {
@@ -121,6 +122,30 @@ class OfflineStorageService {
       const request = store.delete(id)
       request.onsuccess = () => resolve()
       request.onerror = () => reject(request.error)
+    })
+  }
+
+  async updateSyncQueueItem(id: string, updates: Partial<SyncQueueItem>): Promise<void> {
+    if (!this.db) await this.init()
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['syncQueue'], 'readwrite')
+      const store = transaction.objectStore('syncQueue')
+      const getRequest = store.get(id)
+      
+      getRequest.onsuccess = () => {
+        const item = getRequest.result
+        if (!item) {
+          reject(new Error(`Sync queue item ${id} not found`))
+          return
+        }
+        
+        const updatedItem = { ...item, ...updates }
+        const putRequest = store.put(updatedItem)
+        putRequest.onsuccess = () => resolve()
+        putRequest.onerror = () => reject(putRequest.error)
+      }
+      
+      getRequest.onerror = () => reject(getRequest.error)
     })
   }
 
