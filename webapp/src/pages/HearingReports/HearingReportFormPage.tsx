@@ -6,7 +6,7 @@ import { HearingReport, EarThresholds } from '@hearing-clinic/shared/src/models/
 import Parse from '../../api/parseClient'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
-import Audiogram from '../../components/Audiogram'
+import AudiogramChart from '../../components/AudiogramChart'
 
 interface SpeechAudiometry {
   SAT?: { R?: number; L?: number; Bi?: number }
@@ -329,14 +329,17 @@ export default function HearingReportFormPage() {
           
           {/* Interactive Audiogram */}
           <div className="mb-6">
-            <Audiogram
-              leftEarThresholds={formData.leftEarThresholds}
-              rightEarThresholds={formData.rightEarThresholds}
-              onThresholdChange={(ear, frequency, value) => {
-                updateThreshold(ear, frequency, value)
+            <AudiogramChart
+              leftEar={formData.leftEarThresholds}
+              rightEar={formData.rightEarThresholds}
+              mode={activeEar}
+              onModeChange={setActiveEar}
+              onChangeRight={(frequency, value) => {
+                updateThreshold('rightEarThresholds', frequency, value)
               }}
-              activeEar={activeEar}
-              onEarChange={setActiveEar}
+              onChangeLeft={(frequency, value) => {
+                updateThreshold('leftEarThresholds', frequency, value)
+              }}
             />
           </div>
 
@@ -709,7 +712,7 @@ export default function HearingReportFormPage() {
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 disabled:opacity-50"
             disabled={mutation.isPending}
           >
             {mutation.isPending ? 'Saving...' : isEdit ? 'Update Report' : 'Create Report'}

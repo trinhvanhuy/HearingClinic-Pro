@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n/I18nContext'
 import { ReminderStatus } from '@hearing-clinic/shared/src/models/reminder'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import toast from 'react-hot-toast'
+import ConfirmDeleteModal from '../../components/ConfirmDeleteModal'
 
 export default function ReminderListPage() {
   const { t } = useI18n()
@@ -14,6 +15,8 @@ export default function ReminderListPage() {
   const [statusFilter, setStatusFilter] = useState<ReminderStatus | 'all'>(
     (searchParams.get('status') as ReminderStatus | 'all') || 'all'
   )
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [reminderToDelete, setReminderToDelete] = useState<{ id: string; title: string } | null>(null)
   const queryClient = useQueryClient()
 
   const { data: reminders = [], isLoading } = useQuery({
@@ -92,19 +95,19 @@ export default function ReminderListPage() {
               return (
                 <div
                   key={reminder.id}
-                  className="p-4 bg-gray-50 rounded-lg border border-gray-200"
+                  className="card-reminder"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-medium text-lg">{reminder.get('title')}</h3>
                         <span
-                          className={`px-2 py-1 text-xs rounded ${
+                          className={`px-2 py-1 text-xs rounded font-medium ${
                             status === 'done'
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-secondary-100 text-secondary-800'
                               : status === 'overdue'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
+                              ? 'bg-danger-100 text-danger-800'
+                              : 'bg-accent-100 text-accent-800'
                           }`}
                         >
                           {t.reminders[status as keyof typeof t.reminders] || status}
@@ -118,7 +121,7 @@ export default function ReminderListPage() {
                           {t.dashboard.client}:{' '}
                           <Link
                             to={`/clients/${client?.id}`}
-                            className="text-primary-600 hover:underline"
+                            className="text-primary hover:underline"
                           >
                             {client?.get('fullName')}
                           </Link>
@@ -137,9 +140,8 @@ export default function ReminderListPage() {
                       )}
                       <button
                         onClick={() => {
-                          if (confirm(t.reminders.confirmDelete)) {
-                            deleteMutation.mutate(reminder.id)
-                          }
+                          setReminderToDelete({ id: reminder.id, title: reminder.get('title') })
+                          setDeleteModalOpen(true)
                         }}
                         className="btn btn-danger text-sm"
                       >
@@ -153,6 +155,23 @@ export default function ReminderListPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false)
+          setReminderToDelete(null)
+        }}
+        onConfirm={() => {
+          if (reminderToDelete) {
+            deleteMutation.mutate(reminderToDelete.id)
+          }
+        }}
+        title={t.reminders.deleteReminder}
+        message={t.reminders.confirmDelete}
+        itemName={reminderToDelete?.title}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

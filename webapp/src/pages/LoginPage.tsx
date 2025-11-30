@@ -88,7 +88,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 relative overflow-hidden">
+    <div className="min-h-screen flex bg-gradient-to-br from-primary-400 via-primary to-primary-600 relative overflow-hidden">
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
@@ -96,7 +96,7 @@ export default function LoginPage() {
       />
       
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-400 via-primary to-primary-600" />
       
       {/* Content Container */}
       <div className="relative z-10 w-full flex">
@@ -108,7 +108,7 @@ export default function LoginPage() {
           </div>
 
           {/* Login Panel */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-300 rounded-2xl p-8 shadow-2xl">
+          <div className="bg-gradient-to-br from-primary-500 to-primary-300 rounded-2xl p-8 shadow-2xl">
             <h2 className="text-3xl font-bold text-white text-center mb-8">{t.login.title}</h2>
 
           {!showForgotPassword ? (
@@ -117,7 +117,7 @@ export default function LoginPage() {
                 <label className="block text-white text-sm font-medium mb-2">{t.login.username}</label>
                 <input
                   type="text"
-                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder={t.login.username}
@@ -131,7 +131,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 pr-12"
+                    className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary pr-12 text-gray-900"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t.login.password}
@@ -162,7 +162,7 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary mr-2"
                   />
                   <span className="text-sm">{t.login.rememberMe}</span>
                 </label>
@@ -178,7 +178,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoggingIn}
-                className="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white text-primary py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoggingIn ? t.login.loggingIn : t.login.login}
               </button>
@@ -197,7 +197,7 @@ export default function LoginPage() {
                 <label className="block text-white text-sm font-medium mb-2">{t.clients.email}</label>
                 <input
                   type="email"
-                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t.clients.email}
@@ -205,7 +205,7 @@ export default function LoginPage() {
                   autoFocus
                 />
               </div>
-              <button type="submit" className="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+              <button type="submit" className="w-full bg-white text-primary py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                 {t.login.sendResetEmail}
               </button>
               <button
@@ -228,7 +228,7 @@ export default function LoginPage() {
             {/* Background geometric shapes */}
             <div className="absolute inset-0">
               <div className="absolute top-20 right-20 w-64 h-64 bg-orange-400 rounded-full opacity-20 blur-3xl"></div>
-              <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-400 rounded-full opacity-20 blur-3xl"></div>
+              <div className="absolute bottom-20 left-20 w-96 h-96 bg-primary-400 rounded-full opacity-20 blur-3xl"></div>
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-orange-300 rounded-full opacity-10 blur-3xl"></div>
             </div>
 

@@ -62,10 +62,10 @@ export default function ClientDetailPage() {
   const age = dateOfBirth ? Math.floor((new Date().getTime() - new Date(dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
 
   return (
-    <div className="space-y-6 bg-gray-50 min-h-screen p-6">
+    <div className="space-y-6 bg-gray-100 min-h-screen p-6">
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-        <Link to="/clients" className="hover:text-blue-600">{t.clientDetail.patient}</Link>
+      <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+        <Link to="/clients" className="hover:text-primary">{t.clientDetail.patient}</Link>
         <span>/</span>
         <span>{t.clientDetail.patientDetails}</span>
         <span>/</span>
@@ -75,8 +75,8 @@ export default function ClientDetailPage() {
       {/* Header with Icons */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
@@ -199,8 +199,8 @@ export default function ClientDetailPage() {
 
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
@@ -215,8 +215,8 @@ export default function ClientDetailPage() {
 
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
@@ -249,18 +249,18 @@ export default function ClientDetailPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+            <table className="table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.dateOfVisit}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.diagnosis}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.severity}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.totalVisitsCount}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.status}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clientDetail.documents}</th>
+                  <th>{t.clientDetail.dateOfVisit}</th>
+                  <th>{t.clientDetail.diagnosis}</th>
+                  <th>{t.clientDetail.severity}</th>
+                  <th>{t.clientDetail.totalVisitsCount}</th>
+                  <th>{t.clientDetail.status}</th>
+                  <th>{t.clientDetail.documents}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody>
                 {reports.map((report, index) => {
                   const testDate = report.get('testDate')
                   const diagnosis = report.get('diagnosis') || report.get('typeOfTest') || 'Hearing Test'
@@ -270,28 +270,28 @@ export default function ClientDetailPage() {
                   const isCured = status.toLowerCase().includes('cured') || status.toLowerCase().includes('completed')
                   
                   return (
-                    <tr key={report.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm">{testDate ? formatDate(testDate) : '-'}</td>
-                      <td className="px-4 py-3 text-sm font-medium">{diagnosis}</td>
-                      <td className="px-4 py-3">
+                    <tr key={report.id}>
+                      <td>{testDate ? formatDate(testDate) : '-'}</td>
+                      <td className="font-medium">{diagnosis}</td>
+                      <td>
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          isHigh ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                          isHigh ? 'bg-danger-100 text-danger-800' : 'bg-secondary-100 text-secondary-800'
                         }`}>
                           {severity}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm">{index + 1}</td>
-                      <td className="px-4 py-3">
+                      <td>{index + 1}</td>
+                      <td>
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          isCured ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          isCured ? 'bg-secondary-100 text-secondary-800' : 'bg-danger-100 text-danger-800'
                         }`}>
                           {isCured ? t.clientDetail.cured : t.clientDetail.underTreatment}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         <Link
                           to={`/hearing-reports/${report.id}`}
-                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="flex items-center gap-2 text-primary hover:text-primary-600 text-sm font-medium"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

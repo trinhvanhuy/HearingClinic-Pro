@@ -29,7 +29,7 @@ export default function ClientListPage() {
           <input
             type="text"
             placeholder={t.clients.searchPlaceholder}
-            className="input flex-1"
+            className="input-search flex-1"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -53,47 +53,47 @@ export default function ClientListPage() {
           <div className="text-center py-8 text-gray-500">{t.clients.noClientsFound}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+            <table className="table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.name}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.dob}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.phone}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.email}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.clients.lastVisitDate}</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">{t.common.actions}</th>
+                  <th>{t.clients.name}</th>
+                  <th>{t.clients.dob}</th>
+                  <th>{t.clients.phone}</th>
+                  <th>{t.clients.email}</th>
+                  <th>{t.clients.lastVisitDate}</th>
+                  <th>{t.common.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody>
                 {clients.map((client) => (
-                  <tr key={client.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                  <tr key={client.id}>
+                    <td>
                       <Link
                         to={`/clients/${client.id}`}
-                        className="text-primary-600 hover:underline font-medium"
+                        className="text-primary hover:underline font-medium"
                       >
                         {client.get('fullName')}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-sm">
+                    <td>
                       {client.get('dateOfBirth') ? formatDate(client.get('dateOfBirth')) : '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm">{formatPhone(client.get('phone'))}</td>
-                    <td className="px-4 py-3 text-sm">{client.get('email') || '-'}</td>
-                    <td className="px-4 py-3 text-sm">
+                    <td>{formatPhone(client.get('phone'))}</td>
+                    <td>{client.get('email') || '-'}</td>
+                    <td>
                       {client.get('lastVisitDate') ? formatDate(client.get('lastVisitDate')) : '-'}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <div className="flex gap-2">
                         <Link
                           to={`/clients/${client.id}`}
-                          className="text-primary-600 hover:underline text-sm"
+                          className="text-primary hover:underline text-sm"
                         >
                           {t.common.view}
                         </Link>
                         <Link
                           to={`/clients/${client.id}/edit`}
-                          className="text-primary-600 hover:underline text-sm"
+                          className="text-primary hover:underline text-sm"
                         >
                           {t.common.edit}
                         </Link>

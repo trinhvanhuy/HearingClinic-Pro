@@ -332,7 +332,7 @@ export default function Audiogram({
           <div className="flex items-center gap-2">
             <div className="relative w-4 h-4">
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-blue-600 font-bold text-xs">X</span>
+                <span className="text-primary font-bold text-xs">X</span>
               </div>
             </div>
             <span className="text-sm font-medium">Left Ear (X)</span>
@@ -353,7 +353,7 @@ export default function Audiogram({
             onClick={() => onEarChange?.('left')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeEar === 'left'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-primary text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >

@@ -1,13 +1,16 @@
+import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { hearingReportService } from '../../api/hearingReportService'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import toast from 'react-hot-toast'
+import ConfirmDeleteModal from '../../components/ConfirmDeleteModal'
 
 export default function HearingReportDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
   const { data: report, isLoading } = useQuery({
     queryKey: ['hearing-report', id],
@@ -49,11 +52,7 @@ export default function HearingReportDetailPage() {
             Print
           </Link>
           <button
-            onClick={() => {
-              if (confirm('Are you sure you want to delete this report?')) {
-                deleteMutation.mutate()
-              }
-            }}
+            onClick={() => setDeleteModalOpen(true)}
             className="btn btn-danger"
           >
             Delete
@@ -68,7 +67,7 @@ export default function HearingReportDetailPage() {
             <p className="text-lg">
               <Link
                 to={`/clients/${client?.id}`}
-                className="text-primary-600 hover:underline"
+                className="text-primary hover:underline"
               >
                 {client?.get('fullName')}
               </Link>
@@ -100,7 +99,7 @@ export default function HearingReportDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-gray-100">
                   <th className="border px-4 py-2">Frequency (Hz)</th>
                   {frequencies.map((freq) => (
                     <th key={freq} className="border px-4 py-2">
@@ -152,6 +151,15 @@ export default function HearingReportDetailPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={() => deleteMutation.mutate()}
+        title="Delete Hearing Report"
+        message="Are you sure you want to delete this report? This action cannot be undone."
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

@@ -7,36 +7,42 @@ const PARSE_SERVER_URL = (import.meta as any).env?.VITE_PARSE_SERVER_URL || 'htt
 
 // Simple initialization - only initialize if not already done
 function initParse() {
-  // Always set serverURL (safe to do multiple times)
-  Parse.serverURL = PARSE_SERVER_URL
-
-  // Check if already initialized
   try {
+    // Always set serverURL first (safe to do multiple times)
+    Parse.serverURL = PARSE_SERVER_URL
+
+    // Check if already initialized
     const coreManager = (Parse as any).CoreManager
     if (coreManager) {
       const appId = coreManager.get('APPLICATION_ID')
-      if (appId) {
-        // Already initialized, just return
+      if (appId && appId === PARSE_APP_ID) {
+        // Already initialized with correct app ID, just ensure serverURL is set
         return
       }
     }
-  } catch (e) {
-    // Can't check, try to initialize
-  }
 
-  // Try to initialize - catch and ignore "already initialized" errors
-  try {
+    // Initialize Parse
     Parse.initialize(PARSE_APP_ID)
+    
+    // Verify initialization
+    console.log('Parse initialized:', {
+      appId: PARSE_APP_ID,
+      serverURL: PARSE_SERVER_URL
+    })
   } catch (error: any) {
-    // Silently ignore "already initialized" errors
-    // This is expected in development with hot reload
+    // Handle "already initialized" errors gracefully
     if (
-      error?.code !== 1 &&
-      !error?.message?.includes('initialized') &&
-      !error?.message?.includes('Invalid server state')
+      error?.code === 1 ||
+      error?.message?.includes('initialized') ||
+      error?.message?.includes('Invalid server state')
     ) {
-      // Only log non-initialization errors
-      console.warn('Parse initialization warning:', error)
+      // This is expected in development with hot reload
+      // Just ensure serverURL is set
+      Parse.serverURL = PARSE_SERVER_URL
+    } else {
+      // Log other errors
+      console.error('Parse initialization error:', error)
+      throw error
     }
   }
 }

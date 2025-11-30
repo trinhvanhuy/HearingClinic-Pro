@@ -52,12 +52,12 @@ export default function DashboardPage() {
               {todayReminders.map((reminder) => (
                 <li
                   key={reminder.id}
-                  className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  className="card-reminder"
                 >
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="font-medium">{reminder.get('title')}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-500">
                         {t.dashboard.client}: {reminder.get('client')?.get('fullName') || 'N/A'}
                       </p>
                       <p className="text-xs text-gray-500">
@@ -65,10 +65,10 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <span
-                      className={`px-2 py-1 text-xs rounded ${
+                      className={`px-2 py-1 text-xs rounded font-medium ${
                         reminder.get('status') === 'overdue'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-danger-100 text-danger-800'
+                          : 'bg-accent-100 text-accent-800'
                       }`}
                     >
                       {t.reminders[reminder.get('status') as keyof typeof t.reminders] || reminder.get('status')}
@@ -80,7 +80,7 @@ export default function DashboardPage() {
           )}
           <Link
             to="/reminders"
-            className="mt-4 text-primary-600 hover:underline text-sm font-medium"
+            className="mt-4 text-primary hover:underline text-sm font-medium"
           >
             {t.dashboard.viewAllReminders} →
           </Link>
@@ -96,14 +96,14 @@ export default function DashboardPage() {
               {recentClients.map((client) => (
                 <li
                   key={client.id}
-                  className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  className="card-client"
                 >
                   <Link
                     to={`/clients/${client.id}`}
-                    className="block hover:text-primary-600"
+                    className="block hover:text-primary"
                   >
                     <p className="font-medium">{client.get('fullName')}</p>
-                    <p className="text-sm text-gray-600">{client.get('phone')}</p>
+                    <p className="text-sm text-gray-500">{client.get('phone')}</p>
                     {client.get('lastVisitDate') && (
                       <p className="text-xs text-gray-500">
                         {t.dashboard.lastVisit}: {formatDate(client.get('lastVisitDate'))}
@@ -116,7 +116,7 @@ export default function DashboardPage() {
           )}
           <Link
             to="/clients"
-            className="mt-4 text-primary-600 hover:underline text-sm font-medium"
+            className="mt-4 text-primary hover:underline text-sm font-medium"
           >
             {t.dashboard.viewAllClients} →
           </Link>
