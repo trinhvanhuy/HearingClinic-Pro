@@ -122,6 +122,8 @@ export interface Translations {
     editReport: string
     reportDetails: string
     print: string
+    normalHearingAbility: string
+    decreasedHearingAbility: string
     noReports: string
     client: string
     date: string
@@ -314,6 +316,15 @@ export const translations: Record<Language, Translations> = {
       editReport: 'Edit Hearing Report',
       reportDetails: 'Hearing Report Details',
       print: 'Print',
+      normalHearingAbility: 'Normal hearing ability',
+      decreasedHearingAbility: 'Decreased hearing ability',
+      mildHearingLoss: 'Mild Hearing Loss',
+      moderateHearingLoss: 'Moderate Hearing Loss',
+      severeHearingLoss: 'Severe Hearing Loss',
+      profoundHearingLoss: 'Profound Hearing Loss',
+      chartInstructions: 'Click on the grid to add/remove hearing threshold points. Drag existing points to adjust values. Right-click on points to delete.',
+      rightEar: 'Right Ear',
+      leftEar: 'Left Ear',
       noReports: 'No reports found',
       client: 'Client',
       date: 'Date',
@@ -529,6 +540,15 @@ export const translations: Record<Language, Translations> = {
       editReport: 'Sửa báo cáo thính lực',
       reportDetails: 'Chi tiết báo cáo thính lực',
       print: 'In',
+      normalHearingAbility: 'Khả năng nghe bình thường',
+      decreasedHearingAbility: 'Khả năng nghe giảm',
+      mildHearingLoss: 'Mất thính lực nhẹ',
+      moderateHearingLoss: 'Mất thính lực trung bình',
+      severeHearingLoss: 'Mất thính lực nặng',
+      profoundHearingLoss: 'Mất thính lực sâu',
+      chartInstructions: 'Nhấp vào lưới để thêm/xóa điểm ngưỡng thính lực. Kéo các điểm hiện có để điều chỉnh giá trị. Nhấp chuột phải vào điểm để xóa.',
+      rightEar: 'Tai phải',
+      leftEar: 'Tai trái',
       noReports: 'Không tìm thấy báo cáo',
       client: 'Khách hàng',
       date: 'Ngày',

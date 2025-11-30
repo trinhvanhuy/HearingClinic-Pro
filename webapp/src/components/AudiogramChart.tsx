@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { EarThresholds } from '@hearing-clinic/shared/src/models/hearingReport'
+import { useI18n } from '../i18n/I18nContext'
 
 interface AudiogramChartProps {
   rightEar?: EarThresholds
@@ -16,14 +17,18 @@ const FREQUENCIES = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 800
 // Hearing levels in dB HL (from -10 to 120, in 10 dB steps)
 const HEARING_LEVELS = Array.from({ length: 14 }, (_, i) => -10 + i * 10)
 
-// Normal hearing range (-10 to 20 dB HL)
-const NORMAL_HEARING_MIN = -10
-const NORMAL_HEARING_MAX = 20
+// Hearing loss zones
+const HEARING_ZONES = [
+  { min: -10, max: 20, color: '#FFFFFF', name: 'normal' }, // Normal hearing - white
+  { min: 20, max: 40, color: '#FFF9C4', name: 'mild' }, // Mild Hearing loss - light yellow
+  { min: 40, max: 70, color: '#FFC107', name: 'moderate' }, // Moderate Hearing loss - darker yellow
+  { min: 70, max: 90, color: '#FFCDD2', name: 'severe' }, // Severe Hearing loss - light red
+  { min: 90, max: 120, color: '#D32F2F', name: 'profound' }, // Profound Hearing loss - darker red
+]
 
 // Colors according to Audiology standards
 const RIGHT_EAR_COLOR = '#E53935' // Red
 const LEFT_EAR_COLOR = '#1E88E5' // Blue
-const NORMAL_HEARING_COLOR = '#E3F2FD' // Light blue
 
 export default function AudiogramChart({
   rightEar = {},
@@ -33,6 +38,7 @@ export default function AudiogramChart({
   onChangeLeft,
   onModeChange,
 }: AudiogramChartProps) {
+  const { t } = useI18n()
   const svgRef = useRef<SVGSVGElement>(null)
   const [dragging, setDragging] = useState<{ ear: 'right' | 'left'; frequency: number } | null>(null)
   const [contextMenu, setContextMenu] = useState<{ ear: 'right' | 'left'; frequency: number; x: number; y: number } | null>(null)
@@ -60,12 +66,13 @@ export default function AudiogramChart({
     return padding.left + normalized * chartWidth
   }, [padding.left, chartWidth])
 
-  // Convert hearing level to y position (inverted - higher dB at bottom)
+  // Convert hearing level to y position (-10 dB at top, 120 dB at bottom)
   const hearingLevelToY = useCallback((level: number): number => {
-    const minLevel = HEARING_LEVELS[0]
-    const maxLevel = HEARING_LEVELS[HEARING_LEVELS.length - 1]
+    const minLevel = HEARING_LEVELS[0] // -10
+    const maxLevel = HEARING_LEVELS[HEARING_LEVELS.length - 1] // 120
     const normalized = (level - minLevel) / (maxLevel - minLevel)
-    return padding.top + (1 - normalized) * chartHeight
+    // -10 dB should be at top (padding.top), 120 dB at bottom (height - padding.bottom)
+    return padding.top + normalized * chartHeight
   }, [padding.top, chartHeight])
 
   // Convert x position to frequency
@@ -81,10 +88,10 @@ export default function AudiogramChart({
 
   // Convert y position to hearing level (snap to 10 dB increments)
   const yToHearingLevel = useCallback((y: number): number => {
-    const minLevel = HEARING_LEVELS[0]
-    const maxLevel = HEARING_LEVELS[HEARING_LEVELS.length - 1]
+    const minLevel = HEARING_LEVELS[0] // -10
+    const maxLevel = HEARING_LEVELS[HEARING_LEVELS.length - 1] // 120
     const normalized = Math.max(0, Math.min(1, (y - padding.top) / chartHeight))
-    const level = minLevel + (1 - normalized) * (maxLevel - minLevel)
+    const level = minLevel + normalized * (maxLevel - minLevel)
     // Snap to nearest 10 dB
     return Math.round(level / 10) * 10
   }, [padding.top, chartHeight])
@@ -228,10 +235,14 @@ export default function AudiogramChart({
   // Render grid lines
   const renderGrid = () => {
     const gridLines = []
+    
+    // Frequencies that should have dashed lines (non-standard frequencies)
+    const dashedFrequencies = [750, 1500, 3000, 6000]
 
     // Vertical lines (frequencies) - major lines
     FREQUENCIES.forEach((freq) => {
       const x = frequencyToX(freq)
+      const isDashed = dashedFrequencies.includes(freq)
       gridLines.push(
         <line
           key={`v-${freq}`}
@@ -241,6 +252,7 @@ export default function AudiogramChart({
           y2={height - padding.bottom}
           stroke="#9CA3AF"
           strokeWidth={1.5}
+          strokeDasharray={isDashed ? "5,5" : "none"}
         />
       )
     })
@@ -264,23 +276,26 @@ export default function AudiogramChart({
     return gridLines
   }
 
-  // Render normal hearing zone
-  const renderNormalHearingZone = () => {
-    const yTop = hearingLevelToY(NORMAL_HEARING_MIN)
-    const yBottom = hearingLevelToY(NORMAL_HEARING_MAX)
-    const zoneHeight = Math.abs(yBottom - yTop)
-    // Ensure height is positive
-    if (zoneHeight <= 0) return null
-    return (
-      <rect
-        x={padding.left}
-        y={Math.min(yTop, yBottom)}
-        width={chartWidth}
-        height={zoneHeight}
-        fill={NORMAL_HEARING_COLOR}
-        opacity={0.3}
-      />
-    )
+  // Render hearing loss zones
+  const renderHearingZones = () => {
+    return HEARING_ZONES.map((zone) => {
+      const yTop = hearingLevelToY(zone.min)
+      const yBottom = hearingLevelToY(zone.max)
+      const zoneHeight = Math.abs(yBottom - yTop)
+      if (zoneHeight <= 0) return null
+      
+      return (
+        <rect
+          key={zone.name}
+          x={padding.left}
+          y={Math.min(yTop, yBottom)}
+          width={chartWidth}
+          height={zoneHeight}
+          fill={zone.color}
+          opacity={zone.name === 'normal' ? 1 : 0.4}
+        />
+      )
+    }).filter(Boolean)
   }
 
   // Render connection lines for right ear
@@ -361,7 +376,7 @@ export default function AudiogramChart({
                 fontWeight="bold"
                 textAnchor="middle"
               >
-                {threshold} dB
+                {threshold} dB | {freq} Hz
               </text>
             )}
           </g>
@@ -412,7 +427,7 @@ export default function AudiogramChart({
                 fontWeight="bold"
                 textAnchor="middle"
               >
-                {threshold} dB
+                {threshold} dB | {freq} Hz
               </text>
             )}
           </g>
@@ -430,13 +445,13 @@ export default function AudiogramChart({
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: RIGHT_EAR_COLOR, border: '2px solid white', boxShadow: '0 0 0 1px #E5E7EB' }}></div>
-            <span className="text-sm font-medium text-gray-900">Right Ear (O)</span>
+            <span className="text-sm font-medium text-gray-900">{t.hearingReports.rightEar} (O)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative w-4 h-4 flex items-center justify-center">
               <span className="text-sm font-bold" style={{ color: LEFT_EAR_COLOR }}>X</span>
             </div>
-            <span className="text-sm font-medium text-gray-900">Left Ear (X)</span>
+            <span className="text-sm font-medium text-gray-900">{t.hearingReports.leftEar} (X)</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -449,7 +464,7 @@ export default function AudiogramChart({
             }`}
             style={mode === 'right' ? { backgroundColor: RIGHT_EAR_COLOR } : {}}
           >
-            Right Ear
+            {t.hearingReports.rightEar}
           </button>
           <button
             onClick={() => onModeChange?.('left')}
@@ -460,14 +475,14 @@ export default function AudiogramChart({
             }`}
             style={mode === 'left' ? { backgroundColor: LEFT_EAR_COLOR } : {}}
           >
-            Left Ear
+            {t.hearingReports.leftEar}
           </button>
         </div>
       </div>
 
       {/* Instructions */}
       <p className="text-xs text-gray-500 mb-4">
-        Click on the grid to add/remove hearing threshold points. Drag existing points to adjust values. Right-click on points to delete.
+        {t.hearingReports.chartInstructions}
       </p>
 
       {/* Audiogram SVG */}
@@ -505,7 +520,7 @@ export default function AudiogramChart({
             textAnchor="end"
             fontWeight="600"
           >
-            Normal hearing ability
+            {t.hearingReports.normalHearingAbility}
           </text>
           <text
             x={width - padding.right - 10}
@@ -515,7 +530,7 @@ export default function AudiogramChart({
             textAnchor="end"
             fontWeight="600"
           >
-            Decreased hearing ability
+            {t.hearingReports.decreasedHearingAbility}
           </text>
 
           {/* Connection lines */}

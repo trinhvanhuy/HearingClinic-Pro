@@ -148,13 +148,68 @@ export default function HearingReportFormPage() {
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
-      const client = Parse.Object.createWithoutData('Client', data.clientId)
-      const reportData = {
-        ...data,
+      if (!data.clientId || data.clientId.trim() === '') {
+        throw new Error('Client is required')
+      }
+      
+      // Create client pointer - Parse will validate the ID
+      let client: Parse.Object
+      try {
+        client = Parse.Object.createWithoutData('Client', data.clientId)
+      } catch (error: any) {
+        throw new Error(`Invalid client ID: ${error.message || 'Client ID is not valid'}`)
+      }
+      
+      // Prepare report data, excluding fields that shouldn't be sent
+      const reportData: any = {
         client,
         testDate: new Date(data.testDate),
-        signatureDate: data.signatureDate ? new Date(data.signatureDate) : undefined,
+        typeOfTest: data.typeOfTest,
+        leftEarThresholds: data.leftEarThresholds,
+        rightEarThresholds: data.rightEarThresholds,
+        diagnosis: data.results,
+        recommendations: data.recommendations,
       }
+      
+      // Add optional fields
+      if (data.speechAudiometry && Object.keys(data.speechAudiometry).length > 0) {
+        reportData.speechAudiometry = data.speechAudiometry
+      }
+      if (data.discriminationLoss && Object.keys(data.discriminationLoss).length > 0) {
+        reportData.discriminationLoss = data.discriminationLoss
+      }
+      if (data.leftTympanogram && Object.keys(data.leftTympanogram).length > 0) {
+        reportData.leftTympanogram = data.leftTympanogram
+      }
+      if (data.rightTympanogram && Object.keys(data.rightTympanogram).length > 0) {
+        reportData.rightTympanogram = data.rightTympanogram
+      }
+      if (data.signature) {
+        reportData.signature = data.signature
+      }
+      if (data.printName) {
+        reportData.printName = data.printName
+      }
+      if (data.licenseNo) {
+        reportData.licenseNo = data.licenseNo
+      }
+      if (data.signatureDate) {
+        reportData.signatureDate = new Date(data.signatureDate)
+      }
+      if (data.audiologist) {
+        // If audiologist is a string (ID), create pointer, otherwise use as is
+        if (typeof data.audiologist === 'string' && data.audiologist.trim() !== '') {
+          try {
+            reportData.audiologist = Parse.Object.createWithoutData('_User', data.audiologist)
+          } catch (error) {
+            // If invalid, skip audiologist
+            console.warn('Invalid audiologist ID:', error)
+          }
+        } else if (data.audiologist) {
+          reportData.audiologist = data.audiologist
+        }
+      }
+      
       if (isEdit) {
         return hearingReportService.update(id!, reportData)
       } else {
@@ -173,6 +228,13 @@ export default function HearingReportFormPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate client is selected
+    if (!formData.clientId) {
+      toast.error('Please select a client')
+      return
+    }
+    
     mutation.mutate(formData)
   }
 
