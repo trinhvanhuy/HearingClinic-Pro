@@ -80,6 +80,11 @@ export default function TympanogramChart({
     return Math.round(admittance * 100) / 100 // Snap to 0.01 increments
   }, [padding.top, chartHeight, yMin, yMax])
 
+  // Sort data points by pressure for smooth line drawing
+  // Keep original indices for hover detection
+  const sortedRight = data.rightEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.pressure - b.pressure)
+  const sortedLeft = data.leftEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.pressure - b.pressure)
+
   // Handle click on chart
   const handleClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (!svgRef.current || !onAddPoint) return
@@ -134,10 +139,14 @@ export default function TympanogramChart({
     }
 
     // Check if hovering over existing points
+    // Recalculate sorted arrays here to avoid stale closure
+    const currentSortedRight = data.rightEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.pressure - b.pressure)
+    const currentSortedLeft = data.leftEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.pressure - b.pressure)
+    
     const threshold = 10 // pixels
     const allPoints = [
-      ...sortedRight.map((p) => ({ ...p, ear: 'R' as const })),
-      ...sortedLeft.map((p) => ({ ...p, ear: 'L' as const })),
+      ...currentSortedRight.map((p) => ({ ...p, ear: 'R' as const })),
+      ...currentSortedLeft.map((p) => ({ ...p, ear: 'L' as const })),
     ]
 
     for (const point of allPoints) {
@@ -150,12 +159,7 @@ export default function TympanogramChart({
     }
 
     setHoveredPoint(null)
-  }, [padding, width, height, sortedRight, sortedLeft, pressureToX, admittanceToY])
-
-  // Sort data points by pressure for smooth line drawing
-  // Keep original indices for hover detection
-  const sortedRight = data.rightEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.pressure - b.pressure)
-  const sortedLeft = data.leftEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.pressure - b.pressure)
+  }, [padding, width, height, data.rightEar, data.leftEar, pressureToX, admittanceToY])
 
   // Render grid lines
   const renderGrid = () => {

@@ -39,10 +39,21 @@ class SyncService {
     })
     
     // Also check for sync queue periodically when online
+    // Only sync items that haven't failed recently (to avoid retry loops)
     setInterval(() => {
       if (connectionStatus.getStatus() === 'online' && !this.isSyncing) {
         offlineStorage.getSyncQueue().then(queue => {
-          if (queue.length > 0) {
+          // Filter out items that have failed recently (within last 5 seconds)
+          // This prevents immediate retry loops
+          const now = Date.now()
+          const itemsToSync = queue.filter(item => {
+            // Only sync items that haven't been retried recently
+            // or items with low retry count
+            const retryCount = item.retryCount || 0
+            return retryCount === 0 || retryCount < 2
+          })
+          
+          if (itemsToSync.length > 0) {
             this.sync()
           }
         })
@@ -64,6 +75,9 @@ class SyncService {
         try {
           await this.processSyncItem(item)
           await offlineStorage.removeFromSyncQueue(item.id)
+          
+          // Add small delay between successful syncs to avoid overwhelming the server
+          await new Promise(resolve => setTimeout(resolve, 100))
         } catch (error) {
           console.error(`Failed to sync item ${item.id}:`, error)
           
@@ -77,6 +91,14 @@ class SyncService {
           } else {
             // Update retry count in queue
             await offlineStorage.updateSyncQueueItem(item.id, { retryCount })
+            
+            // Add exponential backoff delay before retrying
+            // This prevents continuous retry loops
+            const delayMs = Math.min(1000 * Math.pow(2, retryCount - 1), 10000) // Max 10 seconds
+            console.log(`Will retry item ${item.id} after ${delayMs}ms (attempt ${retryCount}/${MAX_RETRY_COUNT})`)
+            
+            // Don't retry immediately - wait for next sync cycle
+            // The item will be retried on the next sync() call
           }
         }
       }

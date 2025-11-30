@@ -73,6 +73,11 @@ export default function SpeechAudiometryChart({
     return Math.round(percent / 5) * 5 // Snap to 5% increments
   }, [padding.top, chartHeight, yMin, yMax])
 
+  // Sort data points by dB HL for line drawing
+  // Keep original indices for hover detection
+  const sortedRight = data.rightEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.dbHL - b.dbHL)
+  const sortedLeft = data.leftEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.dbHL - b.dbHL)
+
   // Handle click on chart
   const handleClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (!svgRef.current || !onAddPoint) return
@@ -127,10 +132,14 @@ export default function SpeechAudiometryChart({
     }
 
     // Check if hovering over existing points
+    // Recalculate sorted arrays here to avoid stale closure
+    const currentSortedRight = data.rightEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.dbHL - b.dbHL)
+    const currentSortedLeft = data.leftEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.dbHL - b.dbHL)
+    
     const threshold = 10 // pixels
     const allPoints = [
-      ...sortedRight.map((p) => ({ ...p, ear: 'R' as const })),
-      ...sortedLeft.map((p) => ({ ...p, ear: 'L' as const })),
+      ...currentSortedRight.map((p) => ({ ...p, ear: 'R' as const })),
+      ...currentSortedLeft.map((p) => ({ ...p, ear: 'L' as const })),
     ]
 
     for (const point of allPoints) {
@@ -143,12 +152,7 @@ export default function SpeechAudiometryChart({
     }
 
     setHoveredPoint(null)
-  }, [padding, width, height, sortedRight, sortedLeft, dbHLToX, percentToY])
-
-  // Sort data points by dB HL for line drawing
-  // Keep original indices for hover detection
-  const sortedRight = data.rightEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.dbHL - b.dbHL)
-  const sortedLeft = data.leftEar.map((p, i) => ({ ...p, originalIndex: i })).sort((a, b) => a.dbHL - b.dbHL)
+  }, [padding, width, height, data.rightEar, data.leftEar, dbHLToX, percentToY])
 
   // Render grid lines
   const renderGrid = () => {

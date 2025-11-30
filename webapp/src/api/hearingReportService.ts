@@ -55,8 +55,8 @@ export const hearingReportService = {
           const client = data.client as any
           clientObjectId = client.id || client._id || client.objectId
         } else if (typeof data.client === 'string') {
-          // Client is just an objectId string
-          clientObjectId = data.client
+          // Client is just an objectId string (from sync queue or direct input)
+          clientObjectId = data.client.trim()
         } else if (data.client && typeof data.client === 'object') {
           // Client is a plain object (from offline sync or serialized)
           const clientObj = data.client as any
@@ -67,32 +67,93 @@ export const hearingReportService = {
           if (!clientObjectId && clientObj.__type === 'Pointer') {
             clientObjectId = clientObj.objectId
           }
+          
+          // Convert to string if it's a number or other type
+          if (clientObjectId && typeof clientObjectId !== 'string') {
+            clientObjectId = String(clientObjectId)
+          }
         }
         
-        // Validate objectId
-        if (!clientObjectId || typeof clientObjectId !== 'string' || 
-            clientObjectId === 'Client' || clientObjectId === 'client' || 
-            clientObjectId.length < 5) {
-          console.error('Invalid client objectId:', clientObjectId, 'client:', data.client)
+        // Validate objectId - be more lenient for sync operations
+        if (!clientObjectId || typeof clientObjectId !== 'string') {
+          console.error('Invalid client objectId:', clientObjectId, 'client:', data.client, 'data:', data)
           throw new Error(`Invalid client ID: ${clientObjectId || 'missing'}`)
+        }
+        
+        // Trim and validate length (Parse objectIds are typically 10 characters)
+        clientObjectId = clientObjectId.trim()
+        
+        // Check for invalid values
+        if (clientObjectId === 'Client' || clientObjectId === 'client' || clientObjectId.length < 5) {
+          console.error('Invalid client objectId (validation failed):', {
+            objectId: clientObjectId,
+            length: clientObjectId.length,
+            client: data.client,
+            fullData: data
+          })
+          throw new Error(`Invalid client ID: ${clientObjectId} (too short or invalid value)`)
         }
         
         // Create a fresh Parse Object pointer using createWithoutData
         // This creates an unfetched pointer that should serialize correctly
-        const clientPointer = Parse.Object.createWithoutData('Client', clientObjectId)
+        console.log('Creating pointer with:', {
+          className: 'Client',
+          objectId: clientObjectId,
+          objectIdType: typeof clientObjectId,
+          objectIdLength: clientObjectId.length
+        })
         
-        // Verify the pointer was created correctly
-        if (!clientPointer || !clientPointer.id || clientPointer.id !== clientObjectId) {
-          console.error('Failed to create client pointer:', {
-            requestedId: clientObjectId,
-            actualId: clientPointer?.id,
-            className: clientPointer?.className
-          })
-          throw new Error(`Failed to create valid client pointer for ID: ${clientObjectId}`)
+        let clientPointer: Parse.Object
+        try {
+          // Parse SDK's createWithoutData takes (className, objectId)
+          // But it may not set the id property correctly, so we need to manually ensure it
+          clientPointer = Parse.Object.createWithoutData('Client', clientObjectId)
+          
+          // Parse SDK stores objectId in _localId or _id for unfetched objects
+          // We need to manually set id to ensure it's correct
+          const pointerObj = clientPointer as any
+          
+          // Force set the objectId in all possible properties
+          // Parse SDK may use different internal properties
+          pointerObj.id = clientObjectId
+          pointerObj._id = clientObjectId
+          pointerObj.objectId = clientObjectId
+          pointerObj._localId = clientObjectId
+          
+          // Ensure className is set
+          pointerObj.className = 'Client'
+          
+          // Verify it was set correctly
+          if (pointerObj.id !== clientObjectId && pointerObj._id !== clientObjectId) {
+            console.warn('Pointer ID may not be set correctly, but continuing...', {
+              id: pointerObj.id,
+              _id: pointerObj._id,
+              objectId: pointerObj.objectId,
+              _localId: pointerObj._localId
+            })
+          }
+        } catch (error: any) {
+          console.error('createWithoutData threw error:', error)
+          throw new Error(`Failed to create pointer: ${error.message || error}`)
         }
         
-        // Use _encode to check how Parse SDK will encode this pointer
+        // Verify the pointer was created
+        if (!clientPointer) {
+          console.error('clientPointer is null/undefined')
+          throw new Error(`Failed to create client pointer: pointer is null`)
+        }
+        
         const pointerObj = clientPointer as any
+        console.log('Pointer created and configured:', {
+          requestedId: clientObjectId,
+          id: pointerObj.id,
+          _id: pointerObj._id,
+          objectId: pointerObj.objectId,
+          className: pointerObj.className,
+          isParseObject: clientPointer instanceof Parse.Object
+        })
+        
+        // Use _encode to check how Parse SDK will encode this pointer
         let encodedPointer = null
         if (pointerObj._encode) {
           encodedPointer = pointerObj._encode()
@@ -109,32 +170,55 @@ export const hearingReportService = {
           throw new Error('Failed to set client pointer in report')
         }
         
+        // Force Parse SDK to recognize this as a pointer by using _set directly
+        // Sometimes set() doesn't work correctly for pointers
+        const reportObj = report as any
+        if (reportObj._set) {
+          // Use internal _set method which may work better for pointers
+          reportObj._set('client', clientPointer, {})
+        }
+        
+        // Also try using the pointer's toPointer() method if available
+        if ((clientPointer as any).toPointer) {
+          const pointerJSON = (clientPointer as any).toPointer()
+          console.log('Pointer toPointer() result:', pointerJSON)
+          // Set it as a plain object with Pointer format
+          if (pointerJSON && pointerJSON.__type === 'Pointer') {
+            report.set('client', pointerJSON)
+          }
+        }
+        
         // Check how the report will serialize the client before save
-        // Use _getServerData to see what will be sent to server
-        const reportServerData = (report as any)._getServerData ? (report as any)._getServerData() : null
-        const clientInServerData = reportServerData?.client
-        console.log('Client in report _getServerData:', {
-          type: typeof clientInServerData,
-          value: clientInServerData,
-          isPointer: clientInServerData?.__type === 'Pointer',
-          className: clientInServerData?.className,
-          objectId: clientInServerData?.objectId
+        // Use toJSON() to see what will be sent
+        const reportJSON = report.toJSON()
+        const clientInJSON = reportJSON.client
+        console.log('Client in report toJSON():', {
+          type: typeof clientInJSON,
+          value: clientInJSON,
+          isPointer: clientInJSON?.__type === 'Pointer',
+          className: clientInJSON?.className,
+          objectId: clientInJSON?.objectId
         })
         
-        // If client is not in Pointer format, try to fix it
-        if (clientInServerData && typeof clientInServerData === 'object' && clientInServerData.__type !== 'Pointer') {
-          console.error('Client is NOT serialized as Pointer! Attempting to fix...', clientInServerData)
-          // Try setting it again with a fresh pointer
-          const freshPointer = Parse.Object.createWithoutData('Client', clientObjectId)
-          report.set('client', freshPointer)
-          console.log('Re-set client pointer, checking again...')
+        // If client is not in Pointer format in JSON, we have a problem
+        if (!clientInJSON || (typeof clientInJSON === 'object' && clientInJSON.__type !== 'Pointer')) {
+          console.error('Client is NOT serialized as Pointer in toJSON()!', clientInJSON)
           
-          // Check again
-          const newServerData = (report as any)._getServerData ? (report as any)._getServerData() : null
-          const newClientInServerData = newServerData?.client
-          console.log('Client after re-set:', {
-            isPointer: newClientInServerData?.__type === 'Pointer',
-            objectId: newClientInServerData?.objectId
+          // Last resort: set it as a Pointer JSON object directly
+          const pointerJSON = {
+            __type: 'Pointer',
+            className: 'Client',
+            objectId: clientObjectId
+          }
+          console.log('Setting client as Pointer JSON directly:', pointerJSON)
+          report.set('client', pointerJSON)
+          
+          // Verify it's now correct
+          const finalJSON = report.toJSON()
+          const finalClient = finalJSON.client
+          console.log('Client after setting Pointer JSON:', {
+            isPointer: finalClient?.__type === 'Pointer',
+            objectId: finalClient?.objectId
           })
         }
         
@@ -156,23 +240,20 @@ export const hearingReportService = {
           }
         })
         
-        // Before saving, check what Parse SDK will serialize
-        const reportJSON = report.toJSON()
-        const clientInJSON = reportJSON.client
-        console.log('Report JSON before save:', {
-          clientType: typeof clientInJSON,
-          clientValue: clientInJSON,
-          isPointer: clientInJSON?.__type === 'Pointer',
-          objectId: clientInJSON?.objectId || clientInJSON?.id || clientInJSON?._id
+        // Before saving, check what Parse SDK will serialize (final check)
+        const finalReportJSON = report.toJSON()
+        const finalClientInJSON = finalReportJSON.client
+        console.log('Report JSON before save (final check):', {
+          clientType: typeof finalClientInJSON,
+          clientValue: finalClientInJSON,
+          isPointer: finalClientInJSON?.__type === 'Pointer',
+          objectId: finalClientInJSON?.objectId || finalClientInJSON?.id || finalClientInJSON?._id
         })
         
-        // If client is not in Pointer format in JSON, there's a problem
-        if (clientInJSON && typeof clientInJSON === 'object' && clientInJSON.__type !== 'Pointer') {
-          console.error('Client is not serialized as Pointer!', clientInJSON)
-          // Try to force it by recreating the pointer
-          const freshPointer = Parse.Object.createWithoutData('Client', clientObjectId)
-          report.set('client', freshPointer)
-          console.log('Recreated pointer and set again')
+        // If client is still not in Pointer format, log warning but continue
+        if (finalClientInJSON && typeof finalClientInJSON === 'object' && finalClientInJSON.__type !== 'Pointer') {
+          console.warn('Warning: Client may not be serialized as Pointer in final check:', finalClientInJSON)
+          // Don't throw error here - let Parse server handle validation
         }
         
         console.log('About to call report.save() at:', new Date().toISOString())
