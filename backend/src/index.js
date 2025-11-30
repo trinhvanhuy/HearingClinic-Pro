@@ -75,6 +75,13 @@ const api = new ParseServer({
       create: { requiresAuthentication: true },
       update: { requiresAuthentication: true },
       delete: { requiresAuthentication: true }
+    },
+    Config: {
+      find: { requiresAuthentication: true },
+      get: { requiresAuthentication: true },
+      create: { requiresAuthentication: true },
+      update: { requiresAuthentication: true },
+      delete: { requiresAuthentication: true }
     }
   }
 });

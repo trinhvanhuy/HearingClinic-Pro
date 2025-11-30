@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { hearingReportService } from '../../api/hearingReportService'
+import { configService } from '../../api/configService'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import { useEffect } from 'react'
 
@@ -11,6 +12,11 @@ export default function HearingReportPrintPage() {
     queryKey: ['hearing-report', id],
     queryFn: () => hearingReportService.getById(id!),
     enabled: !!id,
+  })
+
+  const { data: clinicConfig } = useQuery({
+    queryKey: ['clinic-config'],
+    queryFn: () => configService.getConfig(),
   })
 
   useEffect(() => {
@@ -45,8 +51,15 @@ export default function HearingReportPrintPage() {
       <div className="space-y-6">
         {/* Clinic Header */}
         <div className="text-center border-b pb-4 mb-6">
-          <h1 className="text-3xl font-bold mb-2">Hearing Clinic System</h1>
-          <p className="text-gray-600">Hearing Test Report</p>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <img src="/assets/logo-transparent.png" alt="Logo" className="h-16" />
+            <h1 className="text-3xl font-bold">Hearing Loss Assessment</h1>
+          </div>
+          <div className="text-sm text-gray-600">
+            <p className="font-semibold">{clinicConfig?.clinicName || 'Hearing Clinic Pro'}</p>
+            <p>{clinicConfig?.clinicAddress || ''}</p>
+            {clinicConfig?.clinicPhone && <p>Tel: {clinicConfig.clinicPhone}</p>}
+          </div>
         </div>
 
         {/* Client Info */}

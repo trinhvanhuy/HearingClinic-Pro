@@ -2,6 +2,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { hearingReportService } from '../../api/hearingReportService'
 import { clientService } from '../../api/clientService'
+import { configService } from '../../api/configService'
+import { useAuth } from '../../hooks/useAuth'
 import { HearingReport, EarThresholds } from '@hearing-clinic/shared/src/models/hearingReport'
 import Parse from '../../api/parseClient'
 import toast from 'react-hot-toast'
@@ -78,6 +80,32 @@ export default function HearingReportFormPage() {
   })
 
   const [activeEar, setActiveEar] = useState<'left' | 'right'>('right')
+  const [expandedSections, setExpandedSections] = useState({
+    speechAudiometry: false,
+    discriminationLoss: false,
+    tympanograms: false,
+  })
+  const [showFloatingMenu, setShowFloatingMenu] = useState(false)
+  const { user } = useAuth()
+
+  const { data: clinicConfig } = useQuery({
+    queryKey: ['clinic-config'],
+    queryFn: () => configService.getConfig(),
+  })
+
+  useEffect(() => {
+    // Close floating menu when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.floating-menu-container')) {
+        setShowFloatingMenu(false)
+      }
+    }
+    if (showFloatingMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showFloatingMenu])
 
   useEffect(() => {
     if (report) {
@@ -107,8 +135,16 @@ export default function HearingReportFormPage() {
           ? new Date((report as any).get('signatureDate')).toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0],
       })
+    } else if (user) {
+      // Set default signature to current user's name
+      const userName = user.get('fullName') || user.get('username') || ''
+      setFormData(prev => ({
+        ...prev,
+        signature: userName,
+        printName: userName,
+      }))
     }
-  }, [report])
+  }, [report, user])
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
@@ -199,15 +235,98 @@ export default function HearingReportFormPage() {
 
   const client = selectedClient || clients.find(c => c.id === formData.clientId)
 
+  const handlePrint = () => {
+    if (id) {
+      window.open(`/hearing-reports/${id}/print`, '_blank')
+    } else {
+      toast.error('Please save the report first')
+    }
+  }
+
+  const handleShareEmail = () => {
+    if (id && client) {
+      const email = client.get('email')
+      if (email) {
+        window.location.href = `mailto:${email}?subject=Hearing Report&body=Please find attached your hearing report.`
+      } else {
+        toast.error('Client email not found')
+      }
+    } else {
+      toast.error('Please save the report first')
+    }
+  }
+
+  const handleDownloadPDF = () => {
+    if (id) {
+      window.open(`/hearing-reports/${id}/print`, '_blank')
+      setTimeout(() => {
+        window.print()
+      }, 500)
+    } else {
+      toast.error('Please save the report first')
+    }
+  }
+
   return (
-    <div className="max-w-6xl mx-auto bg-white p-8">
+    <div className="max-w-6xl mx-auto bg-white p-8 relative">
+      {/* Floating Action Button */}
+      {id && (
+        <div className="fixed bottom-8 right-8 z-50 floating-menu-container">
+          <button
+            type="button"
+            onClick={() => setShowFloatingMenu(!showFloatingMenu)}
+            className="w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-primary-600 transition-colors flex items-center justify-center"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            </svg>
+          </button>
+          {showFloatingMenu && (
+            <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl border p-2 min-w-[180px]">
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
+              </button>
+              <button
+                type="button"
+                onClick={handleShareEmail}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Share Email
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download PDF
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       {/* Header */}
       <div className="text-center mb-8 border-b pb-4">
-        <h1 className="text-2xl font-bold mb-2">Hearing Loss Assessment</h1>
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <img src="/assets/logo-transparent.png" alt="Logo" className="h-16" />
+          <h1 className="text-2xl font-bold">Hearing Loss Assessment</h1>
+        </div>
         <div className="text-sm text-gray-600">
-          <p className="font-semibold">Hearing Clinic System</p>
-          <p>Address: [Your Clinic Address]</p>
-          <p>Tel: [Phone] | Fax: [Fax]</p>
+          <p className="font-semibold">{clinicConfig?.clinicName || 'Hearing Clinic Pro'}</p>
+          <p>{clinicConfig?.clinicAddress || ''}</p>
+          {clinicConfig?.clinicPhone && <p>Tel: {clinicConfig.clinicPhone}</p>}
         </div>
       </div>
 
@@ -237,23 +356,6 @@ export default function HearingReportFormPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Client *</label>
-              <select
-                className="w-full px-3 py-2 border rounded"
-                value={formData.clientId}
-                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                required
-                disabled={!!clientId}
-              >
-                <option value="">Select client...</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.get('fullName')}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label className="block text-sm font-medium mb-1">Address (Street)</label>
               <input
                 type="text"
@@ -268,15 +370,6 @@ export default function HearingReportFormPage() {
                 type="text"
                 className="w-full px-3 py-2 border rounded"
                 value={client?.get('city') || ''}
-                disabled
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Postal Code</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border rounded"
-                value={client?.get('postalCode') || ''}
                 disabled
               />
             </div>
@@ -309,18 +402,6 @@ export default function HearingReportFormPage() {
               />
             </div>
           </div>
-        </div>
-
-        {/* Case History */}
-        <div className="border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Case History</h2>
-          <textarea
-            className="w-full px-3 py-2 border rounded"
-            rows={4}
-            value={formData.caseHistory}
-            onChange={(e) => setFormData({ ...formData, caseHistory: e.target.value })}
-            placeholder="Enter case history..."
-          />
         </div>
 
         {/* Puretone Audiometry */}
@@ -392,53 +473,87 @@ export default function HearingReportFormPage() {
 
         {/* Speech Audiometry */}
         <div className="border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Speech Audiometry</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border px-4 py-2 text-left">Test</th>
-                  <th className="border px-4 py-2">R</th>
-                  <th className="border px-4 py-2">L</th>
-                  <th className="border px-4 py-2">Bi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(['SAT', 'SRT', 'Mask', 'MCL', 'UCL'] as const).map((test) => (
-                  <tr key={test}>
-                    <td className="border px-4 py-2 font-medium">{test}</td>
-                    {(['R', 'L', 'Bi'] as const).map((ear) => (
-                      <td key={ear} className="border px-4 py-2">
-                        <input
-                          type="number"
-                          className="w-full px-2 py-1 border rounded text-sm"
-                          value={formData.speechAudiometry[test]?.[ear] || ''}
-                          onChange={(e) => updateSpeechAudiometry(test, ear, e.target.value)}
-                          placeholder="-"
-                        />
-                      </td>
+          <button
+            type="button"
+            onClick={() => setExpandedSections(prev => ({ ...prev, speechAudiometry: !prev.speechAudiometry }))}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h2 className="text-lg font-bold">Speech Audiometry</h2>
+            <svg
+              className={`w-5 h-5 transition-transform ${expandedSections.speechAudiometry ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {expandedSections.speechAudiometry && (
+            <div className="mt-4">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border px-4 py-2 text-left">Test</th>
+                      <th className="border px-4 py-2">R</th>
+                      <th className="border px-4 py-2">L</th>
+                      <th className="border px-4 py-2">Bi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(['SAT', 'SRT', 'Mask', 'MCL', 'UCL'] as const).map((test) => (
+                      <tr key={test}>
+                        <td className="border px-4 py-2 font-medium">{test}</td>
+                        {(['R', 'L', 'Bi'] as const).map((ear) => (
+                          <td key={ear} className="border px-4 py-2">
+                            <input
+                              type="number"
+                              className="w-full px-2 py-1 border rounded text-sm"
+                              value={formData.speechAudiometry[test]?.[ear] || ''}
+                              onChange={(e) => updateSpeechAudiometry(test, ear, e.target.value)}
+                              placeholder="-"
+                            />
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Discrimination Loss */}
         <div className="border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Discrimination Loss</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border px-4 py-2 text-left">Test</th>
-                  <th className="border px-4 py-2">R</th>
-                  <th className="border px-4 py-2">L</th>
-                  <th className="border px-4 py-2">Bi</th>
-                </tr>
-              </thead>
-              <tbody>
+          <button
+            type="button"
+            onClick={() => setExpandedSections(prev => ({ ...prev, discriminationLoss: !prev.discriminationLoss }))}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h2 className="text-lg font-bold">Discrimination Loss</h2>
+            <svg
+              className={`w-5 h-5 transition-transform ${expandedSections.discriminationLoss ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {expandedSections.discriminationLoss && (
+            <div className="mt-4">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border px-4 py-2 text-left">Test</th>
+                      <th className="border px-4 py-2">R</th>
+                      <th className="border px-4 py-2">L</th>
+                      <th className="border px-4 py-2">Bi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                 <tr>
                   <td className="border px-4 py-2 font-medium">WR %</td>
                   {(['R', 'L', 'Bi'] as const).map((ear) => (
@@ -523,15 +638,33 @@ export default function HearingReportFormPage() {
                     </td>
                   ))}
                 </tr>
-              </tbody>
-            </table>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tympanograms */}
         <div className="border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Tympanograms (Pressure mmH20)</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <button
+            type="button"
+            onClick={() => setExpandedSections(prev => ({ ...prev, tympanograms: !prev.tympanograms }))}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h2 className="text-lg font-bold">Tympanograms (Pressure mmH20)</h2>
+            <svg
+              className={`w-5 h-5 transition-transform ${expandedSections.tympanograms ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {expandedSections.tympanograms && (
+            <div className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold mb-3">Left Ear</h3>
               <div className="space-y-3">
@@ -628,7 +761,9 @@ export default function HearingReportFormPage() {
               </div>
               <p className="text-xs text-gray-500 mt-2">Note: Graph visualization can be added here</p>
             </div>
-          </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Results */}

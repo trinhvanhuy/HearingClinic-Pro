@@ -92,7 +92,10 @@ export default function Layout() {
     { path: '/dashboard', label: t.nav.dashboard, icon: LayoutGridIcon },
     { path: '/clients', label: t.nav.clients, icon: UsersRoundIcon },
     { path: '/reminders', label: t.nav.reminders, icon: AlarmClockIcon },
-    ...(isUserAdmin ? [{ path: '/staff', label: t.nav.staff, icon: UserCogIcon }] : []),
+    ...(isUserAdmin ? [
+      { path: '/staff', label: t.nav.staff, icon: UserCogIcon },
+      { path: '/config', label: t.nav.config, icon: SettingsIcon },
+    ] : []),
   ]
 
   return (

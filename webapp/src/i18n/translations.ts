@@ -32,8 +32,18 @@ export interface Translations {
     clients: string
     reminders: string
     staff: string
+    config: string
     logout: string
     language: string
+  }
+
+  // Config
+  config: {
+    title: string
+    clinicName: string
+    clinicAddress: string
+    clinicPhone: string
+    configUpdated: string
   }
 
   // Login
@@ -224,8 +234,16 @@ export const translations: Record<Language, Translations> = {
       clients: 'Clients',
       reminders: 'Reminders',
       staff: 'Staff',
+      config: 'Config',
       logout: 'Logout',
       language: 'Language',
+    },
+    config: {
+      title: 'Clinic Configuration',
+      clinicName: 'Clinic Name',
+      clinicAddress: 'Clinic Address',
+      clinicPhone: 'Clinic Phone',
+      configUpdated: 'Configuration updated successfully',
     },
     login: {
       title: 'Sign In',
@@ -430,8 +448,17 @@ export const translations: Record<Language, Translations> = {
       dashboard: 'Bảng điều khiển',
       clients: 'Khách hàng',
       reminders: 'Nhắc nhở',
+      staff: 'Nhân viên',
+      config: 'Cấu hình',
       logout: 'Đăng xuất',
       language: 'Ngôn ngữ',
+    },
+    config: {
+      title: 'Cấu hình Phòng khám',
+      clinicName: 'Tên phòng khám',
+      clinicAddress: 'Địa chỉ phòng khám',
+      clinicPhone: 'Số điện thoại',
+      configUpdated: 'Cập nhật cấu hình thành công',
     },
     login: {
       title: 'Đăng nhập',

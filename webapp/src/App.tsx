@@ -12,6 +12,7 @@ import HearingReportPrintPage from './pages/HearingReports/HearingReportPrintPag
 import ReminderListPage from './pages/Reminders/ReminderListPage'
 import StaffListPage from './pages/Staff/StaffListPage'
 import StaffFormPage from './pages/Staff/StaffFormPage'
+import ConfigPage from './pages/Config/ConfigPage'
 import Layout from './components/layout/Layout'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -60,6 +61,7 @@ function App() {
             <Route path="staff" element={<StaffListPage />} />
             <Route path="staff/new" element={<StaffFormPage />} />
             <Route path="staff/:id/edit" element={<StaffFormPage />} />
+            <Route path="config" element={<ConfigPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
