@@ -62,9 +62,11 @@ export const configService = {
     configObj.set('clinicAddress', config.clinicAddress)
     if (config.clinicPhone) {
       configObj.set('clinicPhone', config.clinicPhone)
+    } else {
+      configObj.unset('clinicPhone')
     }
     
-    await configObj.save(null, { useMasterKey: true })
+    await configObj.save()
   },
 }
 

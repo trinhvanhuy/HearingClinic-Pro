@@ -227,7 +227,7 @@ export default function HearingReportFormPage() {
     })
   }
 
-  const frequencies = [125, 250, 500, 1000, 2000, 4000, 8000]
+  const frequencies = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000]
 
   if (isEdit && isLoading) {
     return <div className="text-center py-8">Loading...</div>
@@ -439,7 +439,7 @@ export default function HearingReportFormPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td className="border px-4 py-2 font-medium">Right Ear (Red Circle O)</td>
+                  <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>Right</td>
                   {frequencies.map((freq) => (
                     <td key={freq} className="border px-4 py-2">
                       <input
@@ -453,7 +453,7 @@ export default function HearingReportFormPage() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="border px-4 py-2 font-medium">Left Ear (Blue X)</td>
+                  <td className="border px-4 py-2 font-medium" style={{ color: '#1E88E5' }}>Left</td>
                   {frequencies.map((freq) => (
                     <td key={freq} className="border px-4 py-2">
                       <input

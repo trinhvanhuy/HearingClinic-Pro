@@ -10,8 +10,8 @@ interface AudiogramChartProps {
   onModeChange?: (mode: 'right' | 'left') => void
 }
 
-// Standard frequencies in Hz (excluding 125 Hz for simplicity)
-const FREQUENCIES = [250, 500, 1000, 2000, 4000, 8000]
+// Standard frequencies in Hz
+const FREQUENCIES = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000]
 
 // Hearing levels in dB HL (from -10 to 120, in 10 dB steps)
 const HEARING_LEVELS = Array.from({ length: 14 }, (_, i) => -10 + i * 10)
@@ -268,12 +268,15 @@ export default function AudiogramChart({
   const renderNormalHearingZone = () => {
     const yTop = hearingLevelToY(NORMAL_HEARING_MIN)
     const yBottom = hearingLevelToY(NORMAL_HEARING_MAX)
+    const zoneHeight = Math.abs(yBottom - yTop)
+    // Ensure height is positive
+    if (zoneHeight <= 0) return null
     return (
       <rect
         x={padding.left}
-        y={yTop}
+        y={Math.min(yTop, yBottom)}
         width={chartWidth}
-        height={yBottom - yTop}
+        height={zoneHeight}
         fill={NORMAL_HEARING_COLOR}
         opacity={0.3}
       />

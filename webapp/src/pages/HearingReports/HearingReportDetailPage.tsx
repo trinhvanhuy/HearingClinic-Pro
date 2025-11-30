@@ -41,7 +41,7 @@ export default function HearingReportDetailPage() {
   const client = report.get('client')
   const leftEar = report.get('leftEarThresholds') || {}
   const rightEar = report.get('rightEarThresholds') || {}
-  const frequencies = [250, 500, 1000, 2000, 4000, 8000]
+  const frequencies = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000]
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -109,22 +109,22 @@ export default function HearingReportDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="border px-4 py-2 font-medium">Left Ear</td>
-                  {frequencies.map((freq) => (
-                    <td key={freq} className="border px-4 py-2 text-center">
-                      {leftEar[freq as keyof typeof leftEar] ?? '-'}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 font-medium">Right Ear</td>
-                  {frequencies.map((freq) => (
-                    <td key={freq} className="border px-4 py-2 text-center">
-                      {rightEar[freq as keyof typeof rightEar] ?? '-'}
-                    </td>
-                  ))}
-                </tr>
+              <tr>
+                <td className="border px-4 py-2 font-medium" style={{ color: '#1E88E5' }}>Left</td>
+                {frequencies.map((freq) => (
+                  <td key={freq} className="border px-4 py-2 text-center">
+                    {leftEar[freq as keyof typeof leftEar] ?? '-'}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>Right</td>
+                {frequencies.map((freq) => (
+                  <td key={freq} className="border px-4 py-2 text-center">
+                    {rightEar[freq as keyof typeof rightEar] ?? '-'}
+                  </td>
+                ))}
+              </tr>
               </tbody>
             </table>
           </div>
