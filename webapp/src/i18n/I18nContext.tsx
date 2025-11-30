@@ -13,9 +13,13 @@ const LANGUAGE_KEY = 'hearing_clinic_language'
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    // Load language from localStorage or default to Vietnamese
+    // Load language from localStorage or default to Vietnamese (vi)
     const saved = localStorage.getItem(LANGUAGE_KEY) as Language
-    return saved && (saved === 'vi' || saved === 'en') ? saved : 'vi'
+    // Default language is Vietnamese ('vi')
+    if (!saved || (saved !== 'vi' && saved !== 'en')) {
+      return 'vi'
+    }
+    return saved
   })
 
   const setLanguage = (lang: Language) => {

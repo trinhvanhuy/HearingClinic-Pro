@@ -27,9 +27,24 @@ class SyncService {
     // Listen to connection status changes
     connectionStatus.subscribe((status) => {
       if (status === 'online' && !this.isSyncing) {
-        this.sync()
+        // Auto-sync when connection is restored
+        // Small delay to ensure connection is stable
+        setTimeout(() => {
+          this.sync()
+        }, 1000)
       }
     })
+    
+    // Also check for sync queue periodically when online
+    setInterval(() => {
+      if (connectionStatus.getStatus() === 'online' && !this.isSyncing) {
+        offlineStorage.getSyncQueue().then(queue => {
+          if (queue.length > 0) {
+            this.sync()
+          }
+        })
+      }
+    }, 30000) // Check every 30 seconds
   }
 
   async sync(): Promise<void> {

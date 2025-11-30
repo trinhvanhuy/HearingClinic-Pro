@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../i18n/I18nContext'
-import Logo from '../components/Logo'
 import toast from 'react-hot-toast'
 
 const REMEMBER_ME_KEY = 'hearing_clinic_remember_me'
@@ -43,7 +42,7 @@ export default function LoginPage() {
   // Show loading while checking session
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E14D4D' }}>
         <div className="text-white text-lg">{t.common.loading}</div>
       </div>
     )
@@ -88,36 +87,67 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-primary-400 via-primary to-primary-600 relative overflow-hidden">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
-        style={{ backgroundImage: 'url(/assets/background.png)' }}
-      />
-      
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-400 via-primary to-primary-600" />
-      
-      {/* Content Container */}
-      <div className="relative z-10 w-full flex">
-        {/* Left Section - Login Form */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 lg:px-16 py-12">
-          {/* Logo */}
-          <div className="mb-12">
-            <Logo variant="full" size="lg" className="mb-2" />
-          </div>
+    <div className="min-h-screen flex">
+      {/* Left Section - Background Image */}
+      <div className="hidden lg:block lg:w-1/2 relative">
+        <img
+          src="/assets/login_background.jpeg"
+          alt="Hearing Clinic"
+          className="w-full h-full object-cover"
+        />
+        {/* Language Selector - Overlay on image */}
+        <div className="absolute top-8 right-8 z-20">
+          <button 
+            onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+            className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors shadow-lg"
+            style={{ color: '#E14D4D' }}
+          >
+            {language === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      </div>
 
-          {/* Login Panel */}
-          <div className="bg-gradient-to-br from-primary-500 to-primary-300 rounded-2xl p-8 shadow-2xl">
-            <h2 className="text-3xl font-bold text-white text-center mb-8">{t.login.title}</h2>
+      {/* Right Section - Login Form */}
+      <div className="w-full lg:w-1/2 bg-white flex flex-col justify-center px-8 lg:px-16 py-12 relative">
+        {/* Language Selector - Mobile */}
+        <div className="lg:hidden absolute top-8 right-8 z-20">
+          <button 
+            onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+            className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors shadow-lg"
+            style={{ color: '#E14D4D' }}
+          >
+            {language === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Logo and App Name */}
+        <div className="mb-12 flex items-center gap-4">
+          <img
+            src="/assets/logo-transparent.png"
+            alt="Hearing Clinic Pro"
+            className="h-16"
+          />
+          <h1 className="text-3xl font-bold" style={{ color: '#E14D4D' }}>Hearing Clinic Pro</h1>
+        </div>
+
+        {/* Login Panel */}
+        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+            <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#E14D4D' }}>{t.login.title}</h2>
 
           {!showForgotPassword ? (
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label className="block text-white text-sm font-medium mb-2">{t.login.username}</label>
+                <label className="block text-gray-700 text-sm font-medium mb-2">{t.login.username}</label>
                 <input
                   type="text"
-                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 text-gray-900"
+                  style={{ '--tw-ring-color': '#E14D4D' } as React.CSSProperties}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder={t.login.username}
@@ -127,11 +157,12 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-white text-sm font-medium mb-2">{t.login.password}</label>
+                <label className="block text-gray-700 text-sm font-medium mb-2">{t.login.password}</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary pr-12 text-gray-900"
+                    className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 pr-12 text-gray-900"
+                    style={{ '--tw-ring-color': '#E14D4D' } as React.CSSProperties}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t.login.password}
@@ -157,19 +188,21 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="flex items-center text-white">
+                <label className="flex items-center text-gray-700">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary mr-2"
+                    className="w-4 h-4 rounded border-gray-300 focus:ring-2 mr-2"
+                  style={{ accentColor: '#E14D4D' }}
                   />
                   <span className="text-sm">{t.login.rememberMe}</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="text-sm text-white hover:underline"
+                  className="text-sm hover:underline"
+                  style={{ color: '#E14D4D' }}
                 >
                   {t.login.forgotPassword}
                 </button>
@@ -178,7 +211,8 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoggingIn}
-                className="w-full bg-white text-primary py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 rounded-lg font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white"
+                style={{ backgroundColor: '#E14D4D' }}
               >
                 {isLoggingIn ? t.login.loggingIn : t.login.login}
               </button>
@@ -186,7 +220,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
-                className="w-full text-center text-white text-sm hover:underline"
+                className="w-full text-center text-gray-600 text-sm hover:underline"
               >
                 {t.login.cantAccessAccount}
               </button>
@@ -194,10 +228,11 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleForgotPassword} className="space-y-6">
               <div>
-                <label className="block text-white text-sm font-medium mb-2">{t.clients.email}</label>
+                <label className="block text-gray-700 text-sm font-medium mb-2">{t.clients.email}</label>
                 <input
                   type="email"
-                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 text-gray-900"
+                  style={{ '--tw-ring-color': '#E14D4D' } as React.CSSProperties}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t.clients.email}
@@ -205,7 +240,7 @@ export default function LoginPage() {
                   autoFocus
                 />
               </div>
-              <button type="submit" className="w-full bg-white text-primary py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+              <button type="submit" className="w-full py-3 rounded-lg font-semibold hover:opacity-90 transition-colors text-white" style={{ backgroundColor: '#E14D4D' }}>
                 {t.login.sendResetEmail}
               </button>
               <button
@@ -214,52 +249,12 @@ export default function LoginPage() {
                   setShowForgotPassword(false)
                   setEmail('')
                 }}
-                className="w-full text-center text-white text-sm hover:underline"
+                className="w-full text-center text-gray-600 text-sm hover:underline"
               >
                 {t.login.backToLogin}
               </button>
             </form>
           )}
-          </div>
-        </div>
-
-        {/* Right Section - Promotional */}
-        <div className="hidden lg:flex lg:w-1/2 relative">
-            {/* Background geometric shapes */}
-            <div className="absolute inset-0">
-              <div className="absolute top-20 right-20 w-64 h-64 bg-orange-400 rounded-full opacity-20 blur-3xl"></div>
-              <div className="absolute bottom-20 left-20 w-96 h-96 bg-primary-400 rounded-full opacity-20 blur-3xl"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-orange-300 rounded-full opacity-10 blur-3xl"></div>
-            </div>
-
-            {/* Language Selector */}
-            <div className="absolute top-8 right-8 z-20">
-              <button 
-                onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
-                className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-orange-600 transition-colors shadow-lg"
-              >
-                {language === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="relative z-10 flex flex-col items-center justify-center h-full px-12 w-full">
-              {/* Doctor Image */}
-              <div className="flex items-center justify-center">
-                <img 
-                  src="/assets/background.png" 
-                  alt="Doctor"
-                  className="max-w-md w-auto h-auto object-contain"
-                  style={{ 
-                    maxHeight: '500px',
-                    filter: 'drop-shadow(0 25px 50px -12px rgba(0, 0, 0, 0.25))'
-                  }}
-                />
-              </div>
-            </div>
         </div>
       </div>
     </div>

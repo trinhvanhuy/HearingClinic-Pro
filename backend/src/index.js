@@ -5,6 +5,30 @@ require('dotenv').config();
 
 const app = express();
 
+// CORS middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Allow specific origins in production, or all in development
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? (process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'])
+    : '*';
+  
+  if (allowedOrigins === '*' || (origin && allowedOrigins.includes(origin))) {
+    res.header('Access-Control-Allow-Origin', allowedOrigins === '*' ? '*' : origin);
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Parse-Application-Id, X-Parse-REST-API-Key, X-Parse-Session-Token, X-Parse-Revocable-Session');
+  res.header('Access-Control-Expose-Headers', 'X-Parse-Session-Token, X-Parse-Revocable-Session');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Parse Server Configuration
 const api = new ParseServer({
   databaseURI: process.env.DATABASE_URI || 'mongodb://mongo:27017/hearing-clinic-db',
