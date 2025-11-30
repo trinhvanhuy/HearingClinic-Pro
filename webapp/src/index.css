@@ -81,5 +81,16 @@
   .table tr {
     @apply hover:bg-gray-100 transition-colors duration-150;
   }
+  
+  /* Hide number input spinners */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 

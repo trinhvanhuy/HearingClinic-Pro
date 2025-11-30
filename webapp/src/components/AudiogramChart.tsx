@@ -456,6 +456,7 @@ export default function AudiogramChart({
         </div>
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => onModeChange?.('right')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               mode === 'right'
@@ -467,6 +468,7 @@ export default function AudiogramChart({
             {t.hearingReports.rightEar}
           </button>
           <button
+            type="button"
             onClick={() => onModeChange?.('left')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               mode === 'left'
@@ -505,33 +507,41 @@ export default function AudiogramChart({
           {/* Background */}
           <rect width={width} height={height} fill="#FFFFFF" />
 
-          {/* Normal hearing zone */}
-          {renderNormalHearingZone()}
+          {/* Hearing loss zones */}
+          {renderHearingZones()}
 
           {/* Grid lines */}
           {renderGrid()}
 
           {/* Zone labels */}
-          <text
-            x={width - padding.right - 10}
-            y={hearingLevelToY((NORMAL_HEARING_MIN + NORMAL_HEARING_MAX) / 2)}
-            fill="#1976D2"
-            fontSize="11"
-            textAnchor="end"
-            fontWeight="600"
-          >
-            {t.hearingReports.normalHearingAbility}
-          </text>
-          <text
-            x={width - padding.right - 10}
-            y={hearingLevelToY((NORMAL_HEARING_MAX + 120) / 2)}
-            fill="#6B7280"
-            fontSize="11"
-            textAnchor="end"
-            fontWeight="600"
-          >
-            {t.hearingReports.decreasedHearingAbility}
-          </text>
+          {HEARING_ZONES.map((zone, index) => {
+            const centerY = hearingLevelToY((zone.min + zone.max) / 2)
+            const labelText = 
+              zone.name === 'normal' ? t.hearingReports.normalHearingAbility :
+              zone.name === 'mild' ? t.hearingReports.mildHearingLoss :
+              zone.name === 'moderate' ? t.hearingReports.moderateHearingLoss :
+              zone.name === 'severe' ? t.hearingReports.severeHearingLoss :
+              t.hearingReports.profoundHearingLoss
+            
+            const textColor = 
+              zone.name === 'normal' ? '#1976D2' :
+              zone.name === 'mild' || zone.name === 'moderate' ? '#F57C00' :
+              '#D32F2F'
+            
+            return (
+              <text
+                key={`zone-label-${zone.name}`}
+                x={width - padding.right - 10}
+                y={centerY}
+                fill={textColor}
+                fontSize="11"
+                textAnchor="end"
+                fontWeight="600"
+              >
+                {labelText}
+              </text>
+            )
+          })}
 
           {/* Connection lines */}
           {renderRightEarLine()}

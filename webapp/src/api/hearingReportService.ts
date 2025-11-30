@@ -43,7 +43,14 @@ export const hearingReportService = {
       'HearingReport',
       'create',
       async () => {
-        const report = new HearingReport(data)
+        const report = new HearingReport()
+        // Set each field individually to ensure pointers are set correctly
+        Object.keys(data).forEach(key => {
+          const value = (data as any)[key]
+          if (value !== undefined && value !== null) {
+            report.set(key, value)
+          }
+        })
         return report.save()
       },
       data

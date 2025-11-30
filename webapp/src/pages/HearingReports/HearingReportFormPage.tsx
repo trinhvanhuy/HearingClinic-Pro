@@ -152,24 +152,45 @@ export default function HearingReportFormPage() {
         throw new Error('Client is required')
       }
       
-      // Create client pointer - Parse will validate the ID
+      // Validate clientId is a valid Parse object ID
+      const clientIdStr = String(data.clientId).trim()
+      if (!clientIdStr || clientIdStr === 'Client' || clientIdStr === 'client' || clientIdStr.length === 0) {
+        throw new Error('Invalid client ID. Please select a valid client.')
+      }
+      
+      // Create client pointer - Parse will validate the ID when saving
       let client: Parse.Object
       try {
-        client = Parse.Object.createWithoutData('Client', data.clientId)
+        client = Parse.Object.createWithoutData('Client', clientIdStr)
+        // Verify the pointer was created correctly
+        // Note: Parse.Object.createWithoutData doesn't set id immediately,
+        // but it will be validated when the object is saved
+        if (!client || client.className !== 'Client') {
+          throw new Error('Failed to create valid client pointer')
+        }
       } catch (error: any) {
+        console.error('Error creating client pointer:', error, 'clientId:', clientIdStr)
         throw new Error(`Invalid client ID: ${error.message || 'Client ID is not valid'}`)
       }
       
       // Prepare report data, excluding fields that shouldn't be sent
+      // Ensure client pointer is properly set
       const reportData: any = {
-        client,
+        client: client, // Use the Parse Object pointer
         testDate: new Date(data.testDate),
         typeOfTest: data.typeOfTest,
         leftEarThresholds: data.leftEarThresholds,
         rightEarThresholds: data.rightEarThresholds,
-        diagnosis: data.results,
-        recommendations: data.recommendations,
+        diagnosis: data.results || '',
+        recommendations: data.recommendations || '',
       }
+      
+      // Debug: log the client pointer to verify it's correct
+      console.log('Creating report with client:', {
+        clientId: clientIdStr,
+        clientObjectId: client.id,
+        clientClassName: client.className
+      })
       
       // Add optional fields
       if (data.speechAudiometry && Object.keys(data.speechAudiometry).length > 0) {
@@ -230,8 +251,15 @@ export default function HearingReportFormPage() {
     e.preventDefault()
     
     // Validate client is selected
-    if (!formData.clientId) {
+    if (!formData.clientId || formData.clientId.trim() === '') {
       toast.error('Please select a client')
+      return
+    }
+    
+    // Additional validation: ensure clientId is not just "Client" string
+    const clientIdStr = String(formData.clientId).trim()
+    if (clientIdStr === 'Client' || clientIdStr === 'client' || clientIdStr.length < 10) {
+      toast.error('Invalid client. Please select a valid client from the list.')
       return
     }
     
@@ -506,7 +534,7 @@ export default function HearingReportFormPage() {
                     <td key={freq} className="border px-4 py-2">
                       <input
                         type="number"
-                        className="w-full px-2 py-1 border rounded text-sm"
+                        className="w-full px-2 py-1 border rounded text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         value={formData.rightEarThresholds[freq as keyof EarThresholds] || ''}
                         onChange={(e) => updateThreshold('rightEarThresholds', freq, e.target.value)}
                         placeholder="-"
@@ -520,7 +548,7 @@ export default function HearingReportFormPage() {
                     <td key={freq} className="border px-4 py-2">
                       <input
                         type="number"
-                        className="w-full px-2 py-1 border rounded text-sm"
+                        className="w-full px-2 py-1 border rounded text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         value={formData.leftEarThresholds[freq as keyof EarThresholds] || ''}
                         onChange={(e) => updateThreshold('leftEarThresholds', freq, e.target.value)}
                         placeholder="-"
