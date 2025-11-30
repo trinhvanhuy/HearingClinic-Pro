@@ -1,49 +1,64 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { clientService } from '../../api/clientService'
-import { hearingReportService } from '../../api/hearingReportService'
-import { reminderService } from '../../api/reminderService'
+import { appointmentService } from '../../api/appointmentService'
 import { useI18n } from '../../i18n/I18nContext'
-import { formatDate, formatPhone } from '@hearing-clinic/shared/src/utils/formatting'
-import toast from 'react-hot-toast'
+import { formatDate, formatPhone, formatDateTime } from '@hearing-clinic/shared/src/utils/formatting'
+import { AppointmentType } from '@hearing-clinic/shared/src/models/appointment'
+import { useState } from 'react'
+
+const APPOINTMENT_TYPE_LABELS: Record<AppointmentType, { en: string; vi: string }> = {
+  REPAIR: { en: 'Repair', vi: 'Sửa máy' },
+  PURCHASE: { en: 'Purchase', vi: 'Mua máy' },
+  AUDIOGRAM: { en: 'Audiogram', vi: 'Đo thính lực' },
+  COUNSELING: { en: 'Counseling', vi: 'Tư vấn thính học' },
+}
+
+const STATUS_LABELS: Record<string, { en: string; vi: string }> = {
+  COMPLETED: { en: 'Completed', vi: 'Hoàn thành' },
+  CANCELED: { en: 'Canceled', vi: 'Đã hủy' },
+  SCHEDULED: { en: 'Scheduled', vi: 'Đang chờ' },
+}
 
 export default function ClientDetailPage() {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const [selectedType, setSelectedType] = useState<AppointmentType | 'ALL'>('ALL')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 20
 
-  const { data: client, isLoading } = useQuery({
+  const { data: client, isLoading: clientLoading } = useQuery({
     queryKey: ['client', id],
     queryFn: () => clientService.getById(id!),
     enabled: !!id,
   })
 
-  const { data: reports = [] } = useQuery({
-    queryKey: ['hearing-reports', 'client', id],
-    queryFn: () => hearingReportService.getAll({ clientId: id }),
+  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery({
+    queryKey: ['appointments', 'client', id, selectedType, currentPage],
+    queryFn: () =>
+      appointmentService.getAll({
+        clientId: id,
+        type: selectedType !== 'ALL' ? selectedType : undefined,
+        limit: pageSize,
+        skip: (currentPage - 1) * pageSize,
+      }),
     enabled: !!id,
   })
 
-  const { data: reminders = [] } = useQuery({
-    queryKey: ['reminders', 'client', id],
-    queryFn: () => reminderService.getAll({ clientId: id }),
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: ['appointments', 'count', id, selectedType],
+    queryFn: async () => {
+      const allAppointments = await appointmentService.getAll({
+        clientId: id,
+        type: selectedType !== 'ALL' ? selectedType : undefined,
+      })
+      return allAppointments.length
+    },
     enabled: !!id,
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: () => clientService.delete(id!),
-    onSuccess: () => {
-      toast.success(t.clientDetail.clientDeleted)
-      queryClient.invalidateQueries({ queryKey: ['clients'] })
-      navigate('/clients')
-    },
-    onError: (error: any) => {
-      toast.error(error.message || t.common.delete)
-    },
-  })
-
-  if (isLoading) {
+  if (clientLoading) {
     return <div className="text-center py-8">{t.common.loading}</div>
   }
 
@@ -52,80 +67,99 @@ export default function ClientDetailPage() {
   }
 
   const phone = client.get('phone')
-  const email = client.get('email')
   const fullName = client.get('fullName')
   const gender = client.get('gender')
   const dateOfBirth = client.get('dateOfBirth')
-  const isActive = client.get('isActive') !== false
 
   // Calculate age from date of birth
-  const age = dateOfBirth ? Math.floor((new Date().getTime() - new Date(dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
+  const age = dateOfBirth
+    ? Math.floor((new Date().getTime() - new Date(dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    : null
+
+  const totalPages = Math.ceil(totalCount / pageSize)
+
+  const getTypeLabel = (type: AppointmentType): string => {
+    return APPOINTMENT_TYPE_LABELS[type]?.[language] || type
+  }
+
+  const getStatusLabel = (status: string): string => {
+    return STATUS_LABELS[status]?.[language] || status
+  }
+
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-800'
+      case 'CANCELED':
+        return 'bg-gray-100 text-gray-800'
+      case 'SCHEDULED':
+        return 'bg-orange-100 text-orange-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const handleRowClick = (appointment: any) => {
+    const hearingReport = appointment.get('hearingReport')
+    if (hearingReport) {
+      const reportId = hearingReport.id || hearingReport.objectId
+      navigate(`/hearing-reports/${reportId}`)
+    }
+  }
 
   return (
-    <div className="space-y-6 bg-gray-100 min-h-screen p-6">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-        <Link to="/clients" className="hover:text-primary">{t.clientDetail.patient}</Link>
-        <span>/</span>
-        <span>{t.clientDetail.patientDetails}</span>
-        <span>/</span>
-        <span className="text-gray-900 font-medium">{fullName}</span>
-      </div>
-
-      {/* Header with Icons */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">{t.clientDetail.inPatientCounselling}</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-gray-100 rounded-lg">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg relative">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-        </div>
-      </div>
-
-      {/* Patient Profile Section */}
-      <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-        <div className="flex items-start gap-6">
-          {/* Profile Picture */}
-          <div className="flex-shrink-0">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-              {fullName?.charAt(0) || 'P'}
-            </div>
-          </div>
-
-          {/* Patient Info */}
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Patient Summary Card */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left side */}
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">{fullName}</h2>
-            {email && (
-              <p className="text-gray-600 mb-4">{email}</p>
-            )}
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">{fullName}</h1>
+            
+            {/* Contact Info */}
+            <div className="space-y-2 mb-6">
+              {phone && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span className="text-sm">{formatPhone(phone)}</span>
+                </div>
+              )}
+              {dateOfBirth && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm">{formatDate(dateOfBirth)}</span>
+                </div>
+              )}
+              {client.get('address') && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-sm">{client.get('address')}</span>
+                </div>
+              )}
+            </div>
+            
             <Link
               to={`/clients/${id}/edit`}
-              className="inline-block px-4 py-2 border-2 border-red-500 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors"
+              className="inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
             >
               {t.clientDetail.editProfile}
             </Link>
           </div>
 
-          {/* Demographics Grid */}
+          {/* Right side - Info Grid */}
           <div className="grid grid-cols-2 gap-4 flex-1">
             <div>
               <p className="text-sm text-gray-500">{t.clientDetail.sex}:</p>
-              <p className="font-medium">{gender ? (gender === 'male' ? t.clients.male : gender === 'female' ? t.clients.female : gender) : '-'}</p>
+              <p className="font-medium">
+                {gender ? (gender === 'male' ? t.clients.male : gender === 'female' ? t.clients.female : gender) : '-'}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">{t.clientDetail.age}:</p>
@@ -136,178 +170,168 @@ export default function ClientDetailPage() {
               <p className="font-medium">-</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">{t.clientDetail.status}:</p>
-              <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-              }`}>
-                {isActive ? t.clients.isActive : t.clients.inactiveOnly}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">{t.clientDetail.department}:</p>
-              <p className="font-medium">Hearing Clinic</p>
-            </div>
-            <div>
               <p className="text-sm text-gray-500">{t.clientDetail.registeredDate}:</p>
               <p className="font-medium">{client.get('createdAt') ? formatDate(client.get('createdAt')) : '-'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">{t.clientDetail.appointment}:</p>
-              <p className="font-medium">{reports.length}</p>
+              <p className="font-medium">{totalCount}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">{t.clientDetail.bedNumber}:</p>
-              <p className="font-medium">-</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.referrer || 'Người giới thiệu'}:</p>
+              <p className="font-medium">{client.get('referrer') || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{t.clientDetail.hearingAidLeft || 'Loại máy đang đeo bên trái'}:</p>
+              <p className="font-medium">{client.get('hearingAidLeft') || '-'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{t.clientDetail.hearingAidRight || 'Loại máy đang đeo bên phải'}:</p>
+              <p className="font-medium">{client.get('hearingAidRight') || '-'}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Patient Current Vitals */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">-</p>
-              <p className="text-xs text-gray-500">mm/hg</p>
-            </div>
-          </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">{t.clientDetail.bloodPressure}</p>
-          <p className="text-xs text-green-600">{t.clientDetail.inTheNorm}</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">-</p>
-              <p className="text-xs text-gray-500">BPM</p>
-            </div>
-          </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">{t.clientDetail.heartRate}</p>
-          <p className="text-xs text-red-600">{t.clientDetail.aboveTheNorm}</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">-</p>
-              <p className="text-xs text-gray-500">mg/dl</p>
-            </div>
-          </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">{t.clientDetail.glucose}</p>
-          <p className="text-xs text-green-600">{t.clientDetail.inTheNorm}</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">-</p>
-              <p className="text-xs text-gray-500">mg/dl</p>
-            </div>
-          </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">{t.clientDetail.cholesterol}</p>
-          <p className="text-xs text-green-600">{t.clientDetail.inTheNorm}</p>
-        </div>
-      </div>
-
-      {/* Patient History */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      {/* Patient History Card */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">{t.clientDetail.patientHistory}</h2>
-          <span className="text-sm text-gray-600">{t.clientDetail.totalVisitsCount}: {reports.length}</span>
+          <span className="text-sm text-gray-600">
+            {t.clientDetail.totalVisitsCount}: {totalCount}
+          </span>
         </div>
-        
-        {reports.length === 0 ? (
+
+        {/* Filter Tabs */}
+        <div className="flex flex-wrap gap-2 mb-6 pb-4 border-b">
+          {(['ALL', 'REPAIR', 'PURCHASE', 'AUDIOGRAM', 'COUNSELING'] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() => {
+                setSelectedType(type)
+                setCurrentPage(1)
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedType === type
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {type === 'ALL'
+                ? t.clientDetail.allAppointments || 'Tất cả'
+                : getTypeLabel(type)}
+            </button>
+          ))}
+        </div>
+
+        {/* Appointments Table */}
+        {appointmentsLoading ? (
+          <div className="text-center py-8">{t.common.loading}</div>
+        ) : appointments.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            <p>{t.clientDetail.noReportsYet}</p>
+            <p>{t.clientDetail.noAppointments || 'Chưa có lịch hẹn nào'}</p>
             <Link
               to={`/hearing-reports/new?clientId=${id}`}
-              className="mt-4 inline-block btn btn-primary"
+              className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
             >
               {t.clientDetail.createFirstReport}
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>{t.clientDetail.dateOfVisit}</th>
-                  <th>{t.clientDetail.diagnosis}</th>
-                  <th>{t.clientDetail.severity}</th>
-                  <th>{t.clientDetail.totalVisitsCount}</th>
-                  <th>{t.clientDetail.status}</th>
-                  <th>{t.clientDetail.documents}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((report, index) => {
-                  const testDate = report.get('testDate')
-                  const diagnosis = report.get('diagnosis') || report.get('typeOfTest') || 'Hearing Test'
-                  const severity = report.get('severity') || 'Medium'
-                  const isHigh = severity.toLowerCase().includes('high') || severity.toLowerCase().includes('severe')
-                  const status = report.get('status') || 'Completed'
-                  const isCured = status.toLowerCase().includes('cured') || status.toLowerCase().includes('completed')
-                  
-                  return (
-                    <tr key={report.id}>
-                      <td>{testDate ? formatDate(testDate) : '-'}</td>
-                      <td className="font-medium">{diagnosis}</td>
-                      <td>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          isHigh ? 'bg-danger-100 text-danger-800' : 'bg-secondary-100 text-secondary-800'
-                        }`}>
-                          {severity}
-                        </span>
-                      </td>
-                      <td>{index + 1}</td>
-                      <td>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          isCured ? 'bg-secondary-100 text-secondary-800' : 'bg-danger-100 text-danger-800'
-                        }`}>
-                          {isCured ? t.clientDetail.cured : t.clientDetail.underTreatment}
-                        </span>
-                      </td>
-                      <td>
-                        <Link
-                          to={`/hearing-reports/${report.id}`}
-                          className="flex items-center gap-2 text-primary hover:text-primary-600 text-sm font-medium"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          {t.clientDetail.download}
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>{t.clientDetail.date || 'Ngày'}</th>
+                    <th>{t.clientDetail.type || 'Loại hẹn'}</th>
+                    <th>{t.clientDetail.description || 'Mô tả'}</th>
+                    <th>{t.clientDetail.hearingReport || 'Báo cáo thính lực'}</th>
+                    <th>{t.clientDetail.staff || 'Nhân viên phụ trách'}</th>
+                    <th>{t.clientDetail.status}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appointments.map((appointment) => {
+                    const date = appointment.get('date')
+                    const type = appointment.get('type') as AppointmentType
+                    const note = appointment.get('note')
+                    const hearingReport = appointment.get('hearingReport')
+                    const staffName = appointment.get('staffName')
+                    const status = appointment.get('status')
+
+                    return (
+                      <tr
+                        key={appointment.id}
+                        onClick={() => handleRowClick(appointment)}
+                        className="cursor-pointer hover:bg-gray-50"
+                      >
+                        <td>{date ? formatDateTime(date) : '-'}</td>
+                        <td>
+                          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                            {getTypeLabel(type)}
+                          </span>
+                        </td>
+                        <td className="max-w-md truncate">{note || '-'}</td>
+                        <td>
+                          {hearingReport ? (
+                            <Link
+                              to={`/hearing-reports/${hearingReport.id || hearingReport.objectId}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-primary hover:underline text-sm font-medium flex items-center gap-1"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              {t.clientDetail.viewReport || 'Xem báo cáo'}
+                            </Link>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
+                        <td>{staffName || '-'}</td>
+                        <td>
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                            {getStatusLabel(status)}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <div className="text-sm text-gray-600">
+                  {t.common.showing || 'Hiển thị'} {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalCount)} {t.common.of || 'của'} {totalCount}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    {t.common.previous || 'Trước'}
+                  </button>
+                  <span className="px-4 py-2 text-sm text-gray-600">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    {t.common.next || 'Tiếp'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
   )
 }
-

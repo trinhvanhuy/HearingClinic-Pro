@@ -1,37 +1,53 @@
 /**
- * Format date to display string
+ * Format date to display string (DD/MM/YYYY)
  */
-export function formatDate(date: Date | undefined | null): string {
+export function formatDate(date: Date | undefined | null | string): string {
   if (!date) return '';
   
+  let dateObj: Date;
   if (typeof date === 'string') {
-    date = new Date(date);
+    dateObj = new Date(date);
+  } else {
+    dateObj = date;
   }
   
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(date);
+  // Check if date is valid
+  if (isNaN(dateObj.getTime())) {
+    return '';
+  }
+  
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const year = dateObj.getFullYear();
+  
+  return `${day}/${month}/${year}`;
 }
 
 /**
- * Format date and time
+ * Format date and time (DD/MM/YYYY HH:mm)
  */
-export function formatDateTime(date: Date | undefined | null): string {
+export function formatDateTime(date: Date | undefined | null | string): string {
   if (!date) return '';
   
+  let dateObj: Date;
   if (typeof date === 'string') {
-    date = new Date(date);
+    dateObj = new Date(date);
+  } else {
+    dateObj = date;
   }
   
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
+  // Check if date is valid
+  if (isNaN(dateObj.getTime())) {
+    return '';
+  }
+  
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const year = dateObj.getFullYear();
+  const hours = String(dateObj.getHours()).padStart(2, '0');
+  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+  
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 /**

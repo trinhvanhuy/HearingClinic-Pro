@@ -22,6 +22,8 @@ export interface Translations {
     submit: string
     reset: string
     confirm: string
+    showing: string
+    of: string
   }
 
   // Navigation
@@ -29,6 +31,7 @@ export interface Translations {
     dashboard: string
     clients: string
     reminders: string
+    staff: string
     logout: string
     language: string
   }
@@ -95,6 +98,11 @@ export interface Translations {
     lastVisitDate: string
     dob: string
     name: string
+    referrer: string
+    referrerPlaceholder: string
+    hearingAidLeft: string
+    hearingAidRight: string
+    hearingAidPlaceholder: string
   }
 
   // Hearing Reports
@@ -169,6 +177,14 @@ export interface Translations {
     underTreatment: string
     clientNotFound: string
     clientDeleted: string
+    allAppointments: string
+    noAppointments: string
+    date: string
+    type: string
+    description: string
+    hearingReport: string
+    staff: string
+    viewReport: string
   }
 
   // Not Found
@@ -207,6 +223,7 @@ export const translations: Record<Language, Translations> = {
       dashboard: 'Dashboard',
       clients: 'Clients',
       reminders: 'Reminders',
+      staff: 'Staff',
       logout: 'Logout',
       language: 'Language',
     },
@@ -267,6 +284,11 @@ export const translations: Record<Language, Translations> = {
       lastVisitDate: 'Last Visit Date',
       dob: 'DOB',
       name: 'Name',
+      referrer: 'Referrer',
+      referrerPlaceholder: 'Name of person who referred',
+      hearingAidLeft: 'Hearing Aid (Left)',
+      hearingAidRight: 'Hearing Aid (Right)',
+      hearingAidPlaceholder: 'e.g., Phonak Audeo P90',
     },
     hearingReports: {
       title: 'Hearing Reports',
@@ -335,6 +357,43 @@ export const translations: Record<Language, Translations> = {
       underTreatment: 'Under Treatment',
       clientNotFound: 'Client not found',
       clientDeleted: 'Client deleted',
+      allAppointments: 'All',
+      noAppointments: 'No appointments yet',
+      date: 'Date',
+      type: 'Type',
+      description: 'Description',
+      hearingReport: 'Hearing Report',
+      staff: 'Staff',
+      viewReport: 'View Report',
+    },
+    staff: {
+      title: 'Staff Management',
+      newStaff: 'New Staff',
+      editStaff: 'Edit Staff',
+      username: 'Username',
+      fullName: 'Full Name',
+      email: 'Email',
+      role: 'Role',
+      staffRole: 'Staff Role',
+      password: 'Password',
+      confirmPassword: 'Confirm Password',
+      createdAt: 'Created At',
+      searchPlaceholder: 'Search by username or email...',
+      allRoles: 'All Roles',
+      noStaffFound: 'No staff found',
+      staffCreated: 'Staff created successfully',
+      staffUpdated: 'Staff updated successfully',
+      staffDeleted: 'Staff deleted successfully',
+      technicalSpecialist: 'Technical Specialist',
+      consultant: 'Consultant',
+      audiologist: 'Audiologist',
+      hearingDoctor: 'Hearing Doctor',
+      passwordRequired: 'Password is required',
+      passwordMinLength: 'Password must be at least 6 characters',
+      passwordMismatch: 'Passwords do not match',
+      selectRole: 'Select role...',
+      leaveBlank: 'Leave blank to keep current',
+      required: 'is required',
     },
     notFound: {
       title: '404',
@@ -364,6 +423,8 @@ export const translations: Record<Language, Translations> = {
       submit: 'Gửi',
       reset: 'Đặt lại',
       confirm: 'Xác nhận',
+      showing: 'Hiển thị',
+      of: 'của',
     },
     nav: {
       dashboard: 'Bảng điều khiển',
@@ -429,6 +490,11 @@ export const translations: Record<Language, Translations> = {
       lastVisitDate: 'Ngày thăm khám cuối',
       dob: 'Ngày sinh',
       name: 'Tên',
+      referrer: 'Người giới thiệu',
+      referrerPlaceholder: 'Tên người giới thiệu',
+      hearingAidLeft: 'Loại máy đang đeo bên trái',
+      hearingAidRight: 'Loại máy đang đeo bên phải',
+      hearingAidPlaceholder: 'Ví dụ: Phonak Audeo P90',
     },
     hearingReports: {
       title: 'Báo cáo thính lực',
@@ -497,6 +563,43 @@ export const translations: Record<Language, Translations> = {
       underTreatment: 'Đang điều trị',
       clientNotFound: 'Không tìm thấy khách hàng',
       clientDeleted: 'Đã xóa khách hàng',
+      allAppointments: 'Tất cả',
+      noAppointments: 'Chưa có lịch hẹn nào',
+      date: 'Ngày',
+      type: 'Loại hẹn',
+      description: 'Mô tả',
+      hearingReport: 'Báo cáo thính lực',
+      staff: 'Nhân viên phụ trách',
+      viewReport: 'Xem báo cáo',
+    },
+    staff: {
+      title: 'Quản lý Nhân viên',
+      newStaff: 'Nhân viên mới',
+      editStaff: 'Sửa Nhân viên',
+      username: 'Tên đăng nhập',
+      fullName: 'Họ và tên',
+      email: 'Email',
+      role: 'Vai trò',
+      staffRole: 'Chức danh',
+      password: 'Mật khẩu',
+      confirmPassword: 'Xác nhận mật khẩu',
+      createdAt: 'Ngày tạo',
+      searchPlaceholder: 'Tìm theo tên đăng nhập hoặc email...',
+      allRoles: 'Tất cả chức danh',
+      noStaffFound: 'Không tìm thấy nhân viên',
+      staffCreated: 'Tạo nhân viên thành công',
+      staffUpdated: 'Cập nhật nhân viên thành công',
+      staffDeleted: 'Xóa nhân viên thành công',
+      technicalSpecialist: 'Chuyên viên kĩ thuật',
+      consultant: 'Nhân viên Tư vấn',
+      audiologist: 'Chuyên gia thính học',
+      hearingDoctor: 'Bác sĩ thính học',
+      passwordRequired: 'Mật khẩu là bắt buộc',
+      passwordMinLength: 'Mật khẩu phải có ít nhất 6 ký tự',
+      passwordMismatch: 'Mật khẩu không khớp',
+      selectRole: 'Chọn chức danh...',
+      leaveBlank: 'Để trống để giữ nguyên',
+      required: 'là bắt buộc',
     },
     notFound: {
       title: '404',

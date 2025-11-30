@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useI18n } from '../../i18n/I18nContext'
 import { connectionStatus } from '../../services/connectionStatus'
 import { syncService } from '../../services/syncService'
+import { isAdminSync } from '../../utils/roleHelper'
 import { useState, useEffect } from 'react'
 
 export default function Layout() {
@@ -41,18 +42,6 @@ export default function Layout() {
     </svg>
   )
 
-  const ChevronLeftIcon = ({ className }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-    </svg>
-  )
-
-  const ChevronRightIcon = ({ className }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-    </svg>
-  )
-
   const LayoutGridIcon = ({ className }: { className?: string }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -62,6 +51,14 @@ export default function Layout() {
   const UsersRoundIcon = ({ className }: { className?: string }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  )
+
+  const UserCogIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   )
 
@@ -89,10 +86,13 @@ export default function Layout() {
     </svg>
   )
 
+  const isUserAdmin = isAdminSync(user)
+  
   const navItems = [
     { path: '/dashboard', label: t.nav.dashboard, icon: LayoutGridIcon },
     { path: '/clients', label: t.nav.clients, icon: UsersRoundIcon },
     { path: '/reminders', label: t.nav.reminders, icon: AlarmClockIcon },
+    ...(isUserAdmin ? [{ path: '/staff', label: t.nav.staff, icon: UserCogIcon }] : []),
   ]
 
   return (
@@ -109,10 +109,10 @@ export default function Layout() {
       <aside
         className={`fixed top-0 left-0 z-50 h-full bg-white shadow-lg border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${sidebarCollapsed ? 'w-20' : 'w-[280px]'}`}
+        } ${sidebarCollapsed ? 'w-20' : 'w-56'}`}
       >
         <div className="flex flex-col h-full">
-          <nav className="flex-1 p-4 pt-6">
+          <nav className="flex-1 p-3 pt-4">
             <ul className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -122,7 +122,7 @@ export default function Layout() {
                   <li key={item.path}>
                     <Link
                       to={item.path}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all ${
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all ${
                         sidebarCollapsed ? 'justify-center' : ''
                       } ${
                         isActive
@@ -134,7 +134,7 @@ export default function Layout() {
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
                       {!sidebarCollapsed && (
-                        <span className="text-[15px] font-medium">{item.label}</span>
+                        <span className="text-sm font-medium">{item.label}</span>
                       )}
                     </Link>
                   </li>
@@ -142,38 +142,38 @@ export default function Layout() {
               })}
             </ul>
           </nav>
-          <div className="p-4 border-t border-gray-200 space-y-2">
+          <div className="p-3 border-t border-gray-200 space-y-1.5">
             {/* Language Toggle */}
             <button
               onClick={toggleLanguage}
-              className={`w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}
+              className={`w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}
               title={sidebarCollapsed ? t.nav.language : ''}
             >
-              <span className={`flex items-center gap-3 ${sidebarCollapsed ? 'gap-0' : ''}`}>
-                <GlobeIcon className="w-5 h-5 flex-shrink-0" />
+              <span className={`flex items-center gap-2.5 ${sidebarCollapsed ? 'gap-0' : ''}`}>
+                <GlobeIcon className="w-4 h-4 flex-shrink-0" />
                 {!sidebarCollapsed && (
                   <>
-                    <span className="text-[15px] font-medium">{t.nav.language}</span>
-                    <span className="text-sm font-medium ml-auto">{language === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}</span>
+                    <span className="text-sm font-medium">{t.nav.language}</span>
+                    <span className="text-xs font-medium ml-auto">{language === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}</span>
                   </>
                 )}
               </span>
             </button>
             
             {!sidebarCollapsed && (
-              <div className="mb-2 px-4 py-2">
-                <p className="text-sm font-medium text-gray-900">{user?.get('username') || user?.get('email')}</p>
+              <div className="mb-1.5 px-3 py-1.5">
+                <p className="text-xs font-medium text-gray-900">{user?.get('username') || user?.get('email')}</p>
                 <p className="text-xs text-gray-500">{t.clients.staff}</p>
               </div>
             )}
             <button
               onClick={handleLogout}
-              className={`w-full px-4 py-3 text-left text-danger hover:bg-danger-50 rounded-lg transition-colors flex items-center gap-3 ${sidebarCollapsed ? 'justify-center' : ''}`}
+              className={`w-full px-3 py-2 text-left text-danger hover:bg-danger-50 rounded-lg transition-colors flex items-center gap-2.5 ${sidebarCollapsed ? 'justify-center' : ''}`}
               title={sidebarCollapsed ? t.nav.logout : ''}
             >
-              <LogOutIcon className="w-5 h-5 flex-shrink-0" />
+              <LogOutIcon className="w-4 h-4 flex-shrink-0" />
               {!sidebarCollapsed && (
-                <span className="text-[15px] font-medium">{t.nav.logout}</span>
+                <span className="text-sm font-medium">{t.nav.logout}</span>
               )}
             </button>
           </div>
@@ -181,39 +181,39 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-[280px]'}`}>
+      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-56'}`}>
         {/* Top navbar */}
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-          <div className="flex items-center justify-between px-4 py-4">
+          <div className="flex items-center justify-between px-4 py-2.5">
             {/* Left: Menu Toggle Button + Logo */}
             <div className="flex items-center gap-4">
               {/* Menu Toggle Button */}
               <div className="flex items-center gap-2">
-                {/* Mobile: Toggle sidebar open/close */}
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-900 transition-colors"
-                >
-                  <MenuIcon className="w-6 h-6" />
-                </button>
-                {/* Desktop: Toggle sidebar collapse/expand */}
-                <button
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 text-gray-900 transition-colors"
-                  title={sidebarCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
-                >
-                  <MenuIcon className="w-6 h-6" />
-                </button>
+              {/* Mobile: Toggle sidebar open/close */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-900 transition-colors"
+              >
+                <MenuIcon className="w-5 h-5" />
+              </button>
+              {/* Desktop: Toggle sidebar collapse/expand */}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="hidden lg:flex p-1.5 rounded-lg hover:bg-gray-100 text-gray-900 transition-colors"
+                title={sidebarCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
+              >
+                <MenuIcon className="w-5 h-5" />
+              </button>
               </div>
               
               {/* Logo */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <img
                   src="/assets/logo-transparent.png"
                   alt="Hearing Clinic Pro"
-                  className="h-10 w-auto"
+                  className="h-8 w-auto"
                 />
-                <span className="font-semibold text-lg hidden sm:block" style={{ color: '#2D2D2D' }}>
+                <span className="font-semibold text-base hidden sm:block" style={{ color: '#2D2D2D' }}>
                   Hearing Clinic Pro
                 </span>
               </div>
@@ -221,46 +221,62 @@ export default function Layout() {
             
             <div className="flex-1" />
             
-            {/* Right: Connection Status Indicator */}
+            {/* Right: Search, Notification, and Connection Status */}
             <div className="flex items-center gap-3">
-                {isSyncing && (
-                  <div className="flex items-center gap-2 text-primary text-sm">
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Đang đồng bộ...</span>
-                  </div>
-                )}
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-                  connectionState === 'online'
-                    ? 'bg-secondary-100 text-secondary-800'
-                    : connectionState === 'offline'
-                    ? 'bg-[#FFEBEE] text-[#D32F2F]'
-                    : 'bg-accent-100 text-accent-800'
-                }`}>
-                  {connectionState === 'offline' && <WifiOffIcon className="w-4 h-4" />}
-                  <div className={`w-2 h-2 rounded-full ${
-                    connectionState === 'online'
-                      ? 'bg-secondary'
-                      : connectionState === 'offline'
-                      ? 'bg-[#D32F2F]'
-                      : 'bg-accent'
-                  }`} />
-                  <span>
-                    {connectionState === 'online'
-                      ? 'Đang kết nối'
-                      : connectionState === 'offline'
-                      ? 'Ngoại tuyến'
-                      : 'Đang kiểm tra...'}
-                  </span>
+              {/* Search Icon */}
+              <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+              
+              {/* Notification Icon */}
+              <button className="p-1.5 hover:bg-gray-100 rounded-lg relative transition-colors">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              
+              {/* Connection Status Indicator */}
+              {isSyncing && (
+                <div className="flex items-center gap-2 text-primary text-sm">
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Đang đồng bộ...</span>
                 </div>
+              )}
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                connectionState === 'online'
+                  ? 'bg-secondary-100 text-secondary-800'
+                  : connectionState === 'offline'
+                  ? 'bg-[#FFEBEE] text-[#D32F2F]'
+                  : 'bg-accent-100 text-accent-800'
+              }`}>
+                {connectionState === 'offline' && <WifiOffIcon className="w-4 h-4" />}
+                <div className={`w-2 h-2 rounded-full ${
+                  connectionState === 'online'
+                    ? 'bg-secondary'
+                    : connectionState === 'offline'
+                    ? 'bg-[#D32F2F]'
+                    : 'bg-accent'
+                }`} />
+                <span>
+                  {connectionState === 'online'
+                    ? 'Đang kết nối'
+                    : connectionState === 'offline'
+                    ? 'Ngoại tuyến'
+                    : 'Đang kiểm tra...'}
+                </span>
               </div>
+            </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="p-6" style={{ backgroundColor: '#F5F7FA' }}>
+        <main className="p-4 pt-3" style={{ backgroundColor: '#F5F7FA' }}>
           <Outlet />
         </main>
       </div>

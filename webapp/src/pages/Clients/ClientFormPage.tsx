@@ -29,6 +29,9 @@ export default function ClientFormPage() {
     address: '',
     notes: '',
     isActive: true,
+    referrer: '',
+    hearingAidLeft: '',
+    hearingAidRight: '',
   })
 
   useEffect(() => {
@@ -45,6 +48,9 @@ export default function ClientFormPage() {
         address: client.get('address') || '',
         notes: client.get('notes') || '',
         isActive: client.get('isActive') ?? true,
+        referrer: client.get('referrer') || '',
+        hearingAidLeft: client.get('hearingAidLeft') || '',
+        hearingAidRight: client.get('hearingAidRight') || '',
       })
     }
   }, [client])
@@ -180,6 +186,40 @@ export default function ClientFormPage() {
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           />
+        </div>
+
+        <div>
+          <label className="label">{t.clients.referrer || 'Người giới thiệu'}</label>
+          <input
+            type="text"
+            className="input"
+            value={formData.referrer}
+            onChange={(e) => setFormData({ ...formData, referrer: e.target.value })}
+            placeholder={t.clients.referrerPlaceholder || 'Tên người giới thiệu'}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="label">{t.clients.hearingAidLeft || 'Loại máy đang đeo bên trái'}</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.hearingAidLeft}
+              onChange={(e) => setFormData({ ...formData, hearingAidLeft: e.target.value })}
+              placeholder={t.clients.hearingAidPlaceholder || 'Ví dụ: Phonak Audeo P90'}
+            />
+          </div>
+          <div>
+            <label className="label">{t.clients.hearingAidRight || 'Loại máy đang đeo bên phải'}</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.hearingAidRight}
+              onChange={(e) => setFormData({ ...formData, hearingAidRight: e.target.value })}
+              placeholder={t.clients.hearingAidPlaceholder || 'Ví dụ: Phonak Audeo P90'}
+            />
+          </div>
         </div>
 
         {isEdit && (
