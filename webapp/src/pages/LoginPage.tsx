@@ -146,7 +146,7 @@ export default function LoginPage() {
                 <label className="block text-gray-700 text-sm font-medium mb-2">{t.login.username}</label>
                 <input
                   type="text"
-                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:border-primary text-gray-900"
                   style={{ '--tw-ring-color': '#E14D4D' } as React.CSSProperties}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 pr-12 text-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:border-primary pr-12 text-gray-900"
                     style={{ '--tw-ring-color': '#E14D4D' } as React.CSSProperties}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -231,7 +231,7 @@ export default function LoginPage() {
                 <label className="block text-gray-700 text-sm font-medium mb-2">{t.clients.email}</label>
                 <input
                   type="email"
-                  className="w-full px-4 py-3 rounded-lg bg-white focus:outline-none focus:ring-2 text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:border-primary text-gray-900"
                   style={{ '--tw-ring-color': '#E14D4D' } as React.CSSProperties}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

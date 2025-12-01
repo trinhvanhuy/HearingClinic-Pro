@@ -178,31 +178,23 @@ export default function HearingReportFormPage() {
         throw new Error('Invalid client ID. Please select a valid client.')
       }
       
-      // Create client pointer - use the simplest approach
-      let client: Parse.Object
+      // Verify client exists
       try {
-        // Create pointer using createWithoutData - this is the standard way
-        client = Parse.Object.createWithoutData('Client', clientIdStr)
-        
-        // Verify the pointer has the correct ID
-        if (!client.id || client.id !== clientIdStr) {
-          // Force set the ID if needed
-          const clientObj = client as any
-          if (clientObj.id !== clientIdStr) {
-            clientObj.id = clientIdStr
-          }
-          if (clientObj._id !== clientIdStr) {
-            clientObj._id = clientIdStr
-          }
+        const client = await clientService.getById(clientIdStr)
+        if (!client) {
+          throw new Error(`Client not found: ${clientIdStr}`)
         }
       } catch (error: any) {
-        console.error('Error creating client pointer:', error, 'clientId:', clientIdStr)
+        console.error('Error fetching client:', error)
         throw new Error(`Invalid client ID: ${error.message || 'Client ID is not valid'}`)
       }
       
       // Prepare report data
+      // CRITICAL: Pass clientId as string, NOT as Parse Object
+      // Parse SDK has a bug where it serializes Parse.Object.createWithoutData incorrectly
+      // Backend will convert string to proper pointer
       const reportData: any = {
-        client: client, // Parse Object pointer
+        client: clientIdStr, // Pass as string - backend will handle conversion
         testDate: new Date(data.testDate),
         typeOfTest: data.typeOfTest,
         leftEarThresholds: data.leftEarThresholds,

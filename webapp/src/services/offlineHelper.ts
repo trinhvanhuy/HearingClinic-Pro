@@ -55,15 +55,28 @@ export async function handleOfflineOperation<T extends Parse.Object>(
       // Cache is mainly for reading data when offline
       
       return result
-    } catch (error) {
-      // If operation fails while online, add to sync queue for retry later
-      // This handles cases where network fails mid-operation
-      await offlineStorage.addToSyncQueue({
-        type: operation,
-        entityType,
-        entityId,
-        data: normalizeDataForQueue(data || {}),
-      })
+    } catch (error: any) {
+      // Only add to sync queue if it's a network error or connection issue
+      // Don't add validation errors or other non-retryable errors
+      const isNetworkError = error.code === 100 || error.code === 107 || 
+                            error.message?.includes('network') || 
+                            error.message?.includes('timeout') ||
+                            error.message?.includes('ECONNREFUSED')
+      
+      // Only queue if it's a network error that might be retryable
+      // Validation errors (like invalid pointer) should NOT be queued
+      if (isNetworkError) {
+        console.log('Network error detected, adding to sync queue for retry')
+        await offlineStorage.addToSyncQueue({
+          type: operation,
+          entityType,
+          entityId,
+          data: normalizeDataForQueue(data || {}),
+        })
+      } else {
+        console.log('Non-network error, NOT adding to sync queue:', error.message || error)
+      }
+      
       throw error
     }
   } else {
