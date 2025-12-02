@@ -1,0 +1,67 @@
+const express = require('express')
+const router = express.Router()
+const { chromium } = require('playwright')
+
+/**
+ * Generate PDF from HTML content
+ * POST /api/pdf/export
+ * Body: { html: string, options?: { format?: 'A4', margin?: {...} } }
+ */
+router.post('/export', async (req, res) => {
+  try {
+    const { html, options = {} } = req.body
+
+    if (!html) {
+      return res.status(400).json({ error: 'HTML content is required' })
+    }
+
+    // Launch browser
+    // Use system Chromium if available (for Docker/Alpine)
+    const launchOptions = {
+      headless: true,
+    }
+    
+    if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH) {
+      launchOptions.executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+    }
+    
+    const browser = await chromium.launch(launchOptions)
+
+    const page = await browser.newPage()
+
+    // Set content with HTML
+    await page.setContent(html, {
+      waitUntil: 'networkidle',
+    })
+
+    // Generate PDF with no header/footer
+    const pdfBuffer = await page.pdf({
+      format: options.format || 'A4',
+      margin: options.margin || {
+        top: '0mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm',
+      },
+      printBackground: true,
+      displayHeaderFooter: false, // This removes browser header/footer
+      preferCSSPageSize: true,
+    })
+
+    await browser.close()
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', 'attachment; filename="hearing-report.pdf"')
+    res.setHeader('Content-Length', pdfBuffer.length)
+
+    // Send PDF
+    res.send(pdfBuffer)
+  } catch (error) {
+    console.error('Error generating PDF:', error)
+    res.status(500).json({ error: 'Failed to generate PDF', message: error.message })
+  }
+})
+
+module.exports = router
+

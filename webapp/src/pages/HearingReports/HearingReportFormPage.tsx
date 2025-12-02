@@ -5,16 +5,19 @@ import { clientService } from '../../api/clientService'
 import { configService } from '../../api/configService'
 import { appointmentService } from '../../api/appointmentService'
 import { useAuth } from '../../hooks/useAuth'
-import { HearingReport, EarThresholds } from '@hearing-clinic/shared/src/models/hearingReport'
-import { Client } from '@hearing-clinic/shared/src/models/client'
+import { EarThresholds } from '@hearing-clinic/shared/src/models/hearingReport'
 import Parse from '../../api/parseClient'
 import toast from 'react-hot-toast'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AudiogramChart from '../../components/AudiogramChart'
 import SpeechAudiometryChart, { SpeechAudiometryPoint, SpeechAudiometryData } from '../../components/SpeechAudiometryChart'
 import DiscriminationLossChart, { DiscriminationLossData } from '../../components/DiscriminationLossChart'
 import TympanogramChart, { TympanogramPoint, TympanogramData } from '../../components/TympanogramChart'
 import { useI18n } from '../../i18n/I18nContext'
+import PrintPortal from '../../components/PrintPortal'
+import { captureAllCharts } from '../../utils/exportReport'
+import { generatePdfFromHtml, downloadPdf, printPdf } from '../../utils/pdfApi'
+import { renderReportToHtml } from '../../utils/renderToHtml'
 
 interface SpeechAudiometry {
   // Legacy format (for backward compatibility)
@@ -103,7 +106,21 @@ export default function HearingReportFormPage() {
   const [speechAudiometryMode, setSpeechAudiometryMode] = useState<'R' | 'L'>('R')
   const [tympanogramMode, setTympanogramMode] = useState<'R' | 'L'>('R')
   const [showFloatingMenu, setShowFloatingMenu] = useState(false)
+  const [isPrinting, setIsPrinting] = useState(false)
+  const [chartImages, setChartImages] = useState<{
+    audiogram?: string
+    speechAudiometry?: string
+    discriminationLoss?: string
+    leftTympanogram?: string
+    rightTympanogram?: string
+  }>({})
   const { user } = useAuth()
+
+  // Refs for chart containers
+  const audiogramChartRef = useRef<HTMLDivElement>(null)
+  const speechChartRef = useRef<HTMLDivElement>(null)
+  const discriminationChartRef = useRef<HTMLDivElement>(null)
+  const tympanogramChartRef = useRef<HTMLDivElement>(null)
 
   const { data: clinicConfig } = useQuery({
     queryKey: ['clinic-config'],
@@ -553,40 +570,207 @@ export default function HearingReportFormPage() {
 
   const client = selectedClient || clients.find(c => c.id === formData.clientId)
 
-  const handlePrint = () => {
-    if (id) {
-      window.open(`/hearing-reports/${id}/print`, '_blank')
-    } else {
-      toast.error('Please save the report first')
+  // Create report data object for printable component
+  const getReportDataForPrint = () => {
+    if (id && report) {
+      return report
+    }
+    
+    // Create a mock report object from formData
+    return {
+      get: (key: string) => {
+        const keyMap: Record<string, any> = {
+          testDate: formData.testDate,
+          typeOfTest: formData.typeOfTest,
+          diagnosis: formData.results,
+          results: formData.results,
+          recommendations: formData.recommendations,
+          printName: formData.printName,
+          signatureDate: formData.signatureDate,
+          leftEarThresholds: formData.leftEarThresholds,
+          rightEarThresholds: formData.rightEarThresholds,
+        }
+        return keyMap[key] || null
+      }
     }
   }
 
-  const handleShareEmail = () => {
-    if (!id) {
-      toast.error('Please save the report first')
+  const handleExportPDF = async () => {
+    if (!client) {
+      toast.error('Client not found')
       return
     }
-    if (client) {
-      const email = client.get('email')
-      if (email) {
-        window.location.href = `mailto:${email}?subject=Hearing Report&body=Please find attached your hearing report.`
-      } else {
-        toast.error('Client email not found')
-      }
-    } else {
-      toast.error('Client not found')
+
+    toast.loading('Generating PDF...', { id: 'export-pdf' })
+
+    try {
+      // Capture all charts first
+      const images = await captureAllCharts({
+        audiogram: audiogramChartRef.current,
+        speechAudiometry: speechChartRef.current,
+        discriminationLoss: discriminationChartRef.current,
+        leftTympanogram: null,
+        rightTympanogram: null,
+      })
+
+      // Get report data
+      const reportData = getReportDataForPrint()
+
+      // Render component to HTML (async)
+      const html = await renderReportToHtml(
+        reportData,
+        client,
+        clinicConfig,
+        images,
+        formData
+      )
+
+      // Generate PDF using server-side API
+      const pdfBlob = await generatePdfFromHtml(html, {
+        format: 'A4',
+        margin: {
+          top: '0mm',
+          right: '10mm',
+          bottom: '10mm',
+          left: '10mm',
+        },
+      })
+
+      // Download PDF
+      const filename = `Hearing_Report_${client.get('fullName')}_${formData.testDate || new Date().toISOString().split('T')[0]}.pdf`
+      downloadPdf(pdfBlob, filename)
+      
+      toast.success('PDF generated successfully', { id: 'export-pdf' })
+    } catch (error) {
+      console.error('Error exporting PDF:', error)
+      toast.error('Failed to export PDF', { id: 'export-pdf' })
     }
   }
 
-  const handleDownloadPDF = () => {
-    if (id) {
-      window.open(`/hearing-reports/${id}/print`, '_blank')
-      setTimeout(() => {
-        window.print()
-      }, 500)
-    } else {
-      toast.error('Please save the report first')
+  const handlePrint = async () => {
+    if (!client) {
+      toast.error('Client not found')
+      return
     }
+
+    toast.loading('Generating PDF...', { id: 'print-pdf' })
+
+    try {
+      // Capture all charts first
+      const images = await captureAllCharts({
+        audiogram: audiogramChartRef.current,
+        speechAudiometry: speechChartRef.current,
+        discriminationLoss: discriminationChartRef.current,
+        leftTympanogram: null,
+        rightTympanogram: null,
+      })
+
+      // Get report data
+      const reportData = getReportDataForPrint()
+
+      // Render component to HTML (async)
+      const html = await renderReportToHtml(
+        reportData,
+        client,
+        clinicConfig,
+        images,
+        formData
+      )
+
+      // Generate PDF using server-side API
+      const pdfBlob = await generatePdfFromHtml(html, {
+        format: 'A4',
+        margin: {
+          top: '0mm',
+          right: '10mm',
+          bottom: '10mm',
+          left: '10mm',
+        },
+      })
+
+      // Open PDF in new window for printing
+      printPdf(pdfBlob)
+      
+      toast.success('Opening print dialog...', { id: 'print-pdf' })
+    } catch (error) {
+      console.error('Error printing PDF:', error)
+      toast.error('Failed to generate PDF', { id: 'print-pdf' })
+    }
+  }
+
+  const handleShareEmail = async () => {
+    if (!client) {
+      toast.error('Client not found')
+      return
+    }
+
+    const email = client.get('email')
+    if (!email) {
+      toast.error('Client email not found')
+      return
+    }
+
+    toast.loading('Generating PDF for email...', { id: 'email-pdf' })
+
+    try {
+      // Capture all charts first
+      const images = await captureAllCharts({
+        audiogram: audiogramChartRef.current,
+        speechAudiometry: speechChartRef.current,
+        discriminationLoss: discriminationChartRef.current,
+        leftTympanogram: null,
+        rightTympanogram: null,
+      })
+
+      // Get report data
+      const reportData = getReportDataForPrint()
+
+      // Render component to HTML (async)
+      const html = await renderReportToHtml(
+        reportData,
+        client,
+        clinicConfig,
+        images,
+        formData
+      )
+
+      // Generate PDF using server-side API
+      const pdfBlob = await generatePdfFromHtml(html, {
+        format: 'A4',
+        margin: {
+          top: '0mm',
+          right: '10mm',
+          bottom: '10mm',
+          left: '10mm',
+        },
+      })
+
+      // Convert blob to data URL for email attachment
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        // Note: Direct attachment via mailto has limitations
+        // For production, use backend email service
+        const filename = `Hearing_Report_${client.get('fullName')}.pdf`
+        window.location.href = `mailto:${email}?subject=Hearing Report&body=Please find attached your hearing report.`
+        // Download PDF as fallback
+        downloadPdf(pdfBlob, filename)
+        toast.success('PDF ready. Please attach it manually to the email.', { id: 'email-pdf' })
+      }
+      reader.readAsDataURL(pdfBlob)
+    } catch (error) {
+      console.error('Error generating PDF for email:', error)
+      toast.error('Failed to generate PDF', { id: 'email-pdf' })
+    }
+  }
+
+  const handleDownloadPDF = async () => {
+    await handleExportPDF()
+  }
+
+  const handleAfterPrint = () => {
+    setIsPrinting(false)
+    setChartImages({})
   }
 
   return (
@@ -796,7 +980,7 @@ export default function HearingReportFormPage() {
             {activeTestTab === 'pureTone' && (
               <div>
                 {/* Interactive Audiogram */}
-                <div className="mb-6">
+                <div className="mb-6" ref={audiogramChartRef}>
                   <AudiogramChart
                     leftEar={formData.leftEarThresholds}
                     rightEar={formData.rightEarThresholds}
@@ -863,7 +1047,7 @@ export default function HearingReportFormPage() {
             {activeTestTab === 'speech' && (
               <div>
                 {/* Speech Audiometry Chart */}
-                <div className="mb-6">
+                <div className="mb-6" ref={speechChartRef}>
                   <SpeechAudiometryChart 
                     data={getSpeechAudiometryChartData()} 
                     mode={speechAudiometryMode}
@@ -966,7 +1150,7 @@ export default function HearingReportFormPage() {
             {activeTestTab === 'discrimination' && (
               <div>
                 {/* Discrimination Loss Chart */}
-                <div className="mb-6">
+                <div className="mb-6" ref={discriminationChartRef}>
                   <DiscriminationLossChart data={getDiscriminationLossChartData()} />
                 </div>
 
@@ -1020,7 +1204,7 @@ export default function HearingReportFormPage() {
             {activeTestTab === 'tympanogram' && (
               <div>
                 {/* Tympanogram Chart */}
-                <div className="mb-6">
+                <div className="mb-6" ref={tympanogramChartRef}>
                   <TympanogramChart 
                     data={getTympanogramChartData()} 
                     mode={tympanogramMode}
@@ -1292,6 +1476,19 @@ export default function HearingReportFormPage() {
           </button>
         </div>
       </form>
+
+      {/* Print Portal - Hidden printable report */}
+      {isPrinting && client && (
+        <PrintPortal
+          report={getReportDataForPrint()}
+          client={client}
+          clinicConfig={clinicConfig}
+          chartImages={chartImages}
+          formData={formData}
+          isOpen={isPrinting}
+          onAfterPrint={handleAfterPrint}
+        />
+      )}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import './api/parseClient' // Initialize Parse before anything else
 import App from './App.tsx'
 import './index.css'
+import './styles/print.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {

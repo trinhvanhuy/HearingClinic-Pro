@@ -44,6 +44,13 @@ app.use((req, res, next) => {
   next();
 });
 
+// JSON body parser middleware (needed for PDF export API)
+// MUST be placed before any routes that need to parse JSON body
+// Increase limit to 50MB for large HTML content with embedded images (base64)
+// HTML with base64-encoded chart images can be several MB
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
 // Parse Server Configuration
 const api = new ParseServer({
   databaseURI: process.env.DATABASE_URI || 'mongodb://mongo:27017/hearing-clinic-db',
@@ -112,6 +119,10 @@ const api = new ParseServer({
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// PDF Export routes (before Parse Server)
+const pdfExportRoutes = require('./routes/pdfExport');
+app.use('/api/pdf', pdfExportRoutes);
 
 // CRITICAL FIX: Middleware to fix client Pointer before Parse Server processes it
 // Parse Server has a bug where it converts string objectId to Pointer with objectId = className
