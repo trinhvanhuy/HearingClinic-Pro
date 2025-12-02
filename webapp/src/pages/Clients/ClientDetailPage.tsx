@@ -7,6 +7,7 @@ import { useI18n } from '../../i18n/I18nContext'
 import { formatDate, formatPhone, formatDateTime } from '@hearing-clinic/shared/src/utils/formatting'
 import { AppointmentType } from '@hearing-clinic/shared/src/models/appointment'
 import { useState } from 'react'
+import RepairAppointmentModal from '../../components/RepairAppointmentModal'
 
 const APPOINTMENT_TYPE_LABELS: Record<AppointmentType, { en: string; vi: string }> = {
   REPAIR: { en: 'Repair', vi: 'Sửa máy' },
@@ -28,6 +29,8 @@ export default function ClientDetailPage() {
   const [selectedType, setSelectedType] = useState<AppointmentType | 'ALL'>('ALL')
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 20
+  const [isRepairModalOpen, setIsRepairModalOpen] = useState(false)
+  const [selectedRepairAppointmentId, setSelectedRepairAppointmentId] = useState<string | undefined>()
 
   const { data: client, isLoading: clientLoading } = useQuery({
     queryKey: ['client', id],
@@ -108,11 +111,28 @@ export default function ClientDetailPage() {
   }
 
   const handleRowClick = (appointment: any) => {
-    const hearingReport = appointment.get('hearingReport')
-    if (hearingReport) {
-      const reportId = hearingReport.id || hearingReport.objectId
-      navigate(`/hearing-reports/${reportId}`)
+    const type = appointment.get('type')
+    if (type === 'REPAIR') {
+      // Open repair modal for viewing/editing
+      setSelectedRepairAppointmentId(appointment.id)
+      setIsRepairModalOpen(true)
+    } else {
+      const hearingReport = appointment.get('hearingReport')
+      if (hearingReport) {
+        const reportId = hearingReport.id || hearingReport.objectId
+        navigate(`/hearing-reports/${reportId}`)
+      }
     }
+  }
+
+  const handleCloseRepairModal = () => {
+    setIsRepairModalOpen(false)
+    setSelectedRepairAppointmentId(undefined)
+  }
+
+  const handleOpenNewRepairModal = () => {
+    setSelectedRepairAppointmentId(undefined)
+    setIsRepairModalOpen(true)
   }
 
   return (
@@ -264,12 +284,28 @@ export default function ClientDetailPage() {
         ) : appointments.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <p>{t.clientDetail.noAppointments || 'Chưa có lịch hẹn nào'}</p>
-            <Link
-              to={`/hearing-reports/new?clientId=${id}`}
-              className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
-            >
-              {t.clientDetail.createFirstReport}
-            </Link>
+            {selectedType === 'REPAIR' ? (
+              <button
+                onClick={handleOpenNewRepairModal}
+                className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
+              >
+                {t.clientDetail.createFirstReport || 'Tạo báo cáo đầu tiên'}
+              </button>
+            ) : selectedType === 'AUDIOGRAM' ? (
+              <Link
+                to={`/hearing-reports/new?clientId=${id}`}
+                className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
+              >
+                {t.clientDetail.createFirstReport}
+              </Link>
+            ) : (
+              <Link
+                to={`/appointments/new?clientId=${id}&type=${selectedType}`}
+                className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
+              >
+                {t.clientDetail.createFirstReport || 'Tạo báo cáo đầu tiên'}
+              </Link>
+            )}
           </div>
         ) : (
           <>
@@ -293,6 +329,21 @@ export default function ClientDetailPage() {
                     const hearingReport = appointment.get('hearingReport')
                     const staffName = appointment.get('staffName')
                     const status = appointment.get('status')
+                    const deviceName = appointment.get('deviceName')
+                    const ear = appointment.get('ear')
+
+                    // Build description text
+                    let description = note || ''
+                    if (type === 'REPAIR') {
+                      const parts: string[] = []
+                      if (deviceName) parts.push(`Máy: ${deviceName}`)
+                      if (ear) {
+                        const earLabels: Record<string, string> = { LEFT: 'Trái', RIGHT: 'Phải', BOTH: 'Cả hai' }
+                        parts.push(`Tai: ${earLabels[ear] || ear}`)
+                      }
+                      if (note) parts.push(`Ghi chú: ${note}`)
+                      description = parts.join(' | ')
+                    }
 
                     return (
                       <tr
@@ -306,7 +357,7 @@ export default function ClientDetailPage() {
                             {getTypeLabel(type)}
                           </span>
                         </td>
-                        <td className="max-w-md truncate">{note || '-'}</td>
+                        <td className="max-w-md truncate" title={description}>{description || '-'}</td>
                         <td>
                           {hearingReport ? (
                             <Link
@@ -366,6 +417,16 @@ export default function ClientDetailPage() {
           </>
         )}
       </div>
+
+      {/* Repair Appointment Modal */}
+      {id && (
+        <RepairAppointmentModal
+          isOpen={isRepairModalOpen}
+          onClose={handleCloseRepairModal}
+          clientId={id}
+          appointmentId={selectedRepairAppointmentId}
+        />
+      )}
     </div>
   )
 }

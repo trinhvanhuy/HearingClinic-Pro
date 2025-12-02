@@ -72,6 +72,12 @@ export const appointmentService = {
     note?: string
     hearingReportId?: string
     staffName?: string
+    deviceName?: string
+    ear?: 'LEFT' | 'RIGHT' | 'BOTH'
+    price?: number | null
+    isPaid?: boolean
+    paymentMethod?: 'CASH' | 'BANK_TRANSFER'
+    paymentCollectorName?: string
   }): Promise<Appointment> {
     const appointment = new Appointment()
     
@@ -99,6 +105,30 @@ export const appointmentService = {
       appointment.set('staffName', data.staffName)
     }
     
+    if (data.deviceName) {
+      appointment.set('deviceName', data.deviceName)
+    }
+    
+    if (data.ear) {
+      appointment.set('ear', data.ear)
+    }
+    
+    if (data.price !== undefined && data.price !== null) {
+      appointment.set('price', data.price)
+    }
+    
+    if (data.isPaid !== undefined) {
+      appointment.set('isPaid', data.isPaid)
+    }
+    
+    if (data.paymentMethod) {
+      appointment.set('paymentMethod', data.paymentMethod)
+    }
+    
+    if (data.paymentCollectorName) {
+      appointment.set('paymentCollectorName', data.paymentCollectorName)
+    }
+    
     const currentUser = Parse.User.current()
     if (currentUser) {
       appointment.set('createdBy', currentUser)
@@ -118,6 +148,12 @@ export const appointmentService = {
     note?: string
     hearingReportId?: string
     staffName?: string
+    deviceName?: string
+    ear?: 'LEFT' | 'RIGHT' | 'BOTH'
+    price?: number | null
+    isPaid?: boolean
+    paymentMethod?: 'CASH' | 'BANK_TRANSFER'
+    paymentCollectorName?: string
   }): Promise<Appointment> {
     const appointment = await this.getById(id)
     
@@ -150,6 +186,38 @@ export const appointmentService = {
     
     if (data.staffName !== undefined) {
       appointment.set('staffName', data.staffName)
+    }
+    
+    if (data.deviceName !== undefined) {
+      appointment.set('deviceName', data.deviceName)
+    }
+    
+    if (data.ear !== undefined) {
+      appointment.set('ear', data.ear)
+    }
+    
+    if (data.price !== undefined) {
+      if (data.price === null) {
+        appointment.unset('price')
+      } else {
+        appointment.set('price', data.price)
+      }
+    }
+    
+    if (data.isPaid !== undefined) {
+      appointment.set('isPaid', data.isPaid)
+    }
+    
+    if (data.paymentMethod !== undefined) {
+      appointment.set('paymentMethod', data.paymentMethod)
+    }
+    
+    if (data.paymentCollectorName !== undefined) {
+      if (data.paymentCollectorName) {
+        appointment.set('paymentCollectorName', data.paymentCollectorName)
+      } else {
+        appointment.unset('paymentCollectorName')
+      }
     }
     
     const currentUser = Parse.User.current()
