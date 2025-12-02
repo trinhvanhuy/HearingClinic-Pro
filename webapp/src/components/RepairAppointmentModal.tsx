@@ -69,6 +69,8 @@ export default function RepairAppointmentModal({
 
   const [staffSearchTerm, setStaffSearchTerm] = useState('')
   const [paymentCollectorSearchTerm, setPaymentCollectorSearchTerm] = useState('')
+  const [showStaffDropdown, setShowStaffDropdown] = useState(false)
+  const [showPaymentCollectorDropdown, setShowPaymentCollectorDropdown] = useState(false)
 
   // Load appointment data when editing
   useEffect(() => {
@@ -225,8 +227,45 @@ export default function RepairAppointmentModal({
     if (!isOpen) {
       setStaffSearchTerm('')
       setPaymentCollectorSearchTerm('')
+      setShowStaffDropdown(false)
+      setShowPaymentCollectorDropdown(false)
     }
   }, [isOpen])
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.staff-dropdown-container')) {
+        setShowStaffDropdown(false)
+      }
+      if (!target.closest('.payment-collector-dropdown-container')) {
+        setShowPaymentCollectorDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Filter staff based on search term
+  const filteredStaff = staffList.filter((staff) => {
+    if (!staffSearchTerm) return true
+    const searchLower = staffSearchTerm.toLowerCase()
+    const fullName = (staff.get('fullName') || '').toLowerCase()
+    const username = (staff.get('username') || '').toLowerCase()
+    return fullName.includes(searchLower) || username.includes(searchLower)
+  })
+
+  const filteredPaymentCollectors = staffList.filter((staff) => {
+    if (!paymentCollectorSearchTerm) return true
+    const searchLower = paymentCollectorSearchTerm.toLowerCase()
+    const fullName = (staff.get('fullName') || '').toLowerCase()
+    const username = (staff.get('username') || '').toLowerCase()
+    return fullName.includes(searchLower) || username.includes(searchLower)
+  })
+
+  const selectedStaff = staffList.find((s) => s.id === formData.staffId)
+  const selectedPaymentCollector = staffList.find((s) => s.id === formData.paymentCollectorId)
 
   if (!isOpen) return null
 
@@ -384,39 +423,71 @@ export default function RepairAppointmentModal({
           </div>
 
           {/* 6. Staff Selection */}
-          <div>
+          <div className="staff-dropdown-container">
             <label className="block text-sm font-medium mb-2">
               6. Người sửa <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <input
-                type="text"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent mb-2"
-                placeholder="Tìm kiếm nhân viên..."
-                value={staffSearchTerm}
-                onChange={(e) => setStaffSearchTerm(e.target.value)}
-              />
-              <select
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                value={formData.staffId}
-                onChange={(e) => setFormData({ ...formData, staffId: e.target.value })}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowStaffDropdown(!showStaffDropdown)
+                  setShowPaymentCollectorDropdown(false)
+                }}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-left bg-white flex items-center justify-between"
                 required
               >
-                <option value="">Chọn nhân viên</option>
-                {staffList
-                  .filter((staff) => {
-                    if (!staffSearchTerm) return true
-                    const searchLower = staffSearchTerm.toLowerCase()
-                    const fullName = (staff.get('fullName') || '').toLowerCase()
-                    const username = (staff.get('username') || '').toLowerCase()
-                    return fullName.includes(searchLower) || username.includes(searchLower)
-                  })
-                  .map((staff) => (
-                    <option key={staff.id} value={staff.id}>
-                      {staff.get('fullName') || staff.get('username')}
-                    </option>
-                  ))}
-              </select>
+                <span className={selectedStaff ? 'text-gray-900' : 'text-gray-400'}>
+                  {selectedStaff
+                    ? selectedStaff.get('fullName') || selectedStaff.get('username')
+                    : 'Chọn nhân viên'}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${showStaffDropdown ? 'transform rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showStaffDropdown && (
+                <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-hidden">
+                  <div className="p-2 border-b">
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Tìm kiếm nhân viên..."
+                      value={staffSearchTerm}
+                      onChange={(e) => setStaffSearchTerm(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredStaff.length > 0 ? (
+                      filteredStaff.map((staff) => (
+                        <button
+                          key={staff.id}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, staffId: staff.id })
+                            setShowStaffDropdown(false)
+                            setStaffSearchTerm('')
+                          }}
+                          className={`w-full px-3 py-2 text-left hover:bg-gray-100 ${
+                            formData.staffId === staff.id ? 'bg-primary/10 text-primary font-medium' : ''
+                          }`}
+                        >
+                          {staff.get('fullName') || staff.get('username')}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-gray-500 text-sm">Không tìm thấy nhân viên</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -489,38 +560,70 @@ export default function RepairAppointmentModal({
 
           {/* 11. Payment Collector */}
           {formData.isPaid && (
-            <div>
+            <div className="payment-collector-dropdown-container">
               <label className="block text-sm font-medium mb-2">
                 11. Người thu tiền
               </label>
               <div className="relative">
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent mb-2"
-                  placeholder="Tìm kiếm nhân viên..."
-                  value={paymentCollectorSearchTerm}
-                  onChange={(e) => setPaymentCollectorSearchTerm(e.target.value)}
-                />
-                <select
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  value={formData.paymentCollectorId}
-                  onChange={(e) => setFormData({ ...formData, paymentCollectorId: e.target.value })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPaymentCollectorDropdown(!showPaymentCollectorDropdown)
+                    setShowStaffDropdown(false)
+                  }}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-left bg-white flex items-center justify-between"
                 >
-                  <option value="">Chọn người thu tiền</option>
-                  {staffList
-                    .filter((staff) => {
-                      if (!paymentCollectorSearchTerm) return true
-                      const searchLower = paymentCollectorSearchTerm.toLowerCase()
-                      const fullName = (staff.get('fullName') || '').toLowerCase()
-                      const username = (staff.get('username') || '').toLowerCase()
-                      return fullName.includes(searchLower) || username.includes(searchLower)
-                    })
-                    .map((staff) => (
-                      <option key={staff.id} value={staff.id}>
-                        {staff.get('fullName') || staff.get('username')}
-                      </option>
-                    ))}
-                </select>
+                  <span className={selectedPaymentCollector ? 'text-gray-900' : 'text-gray-400'}>
+                    {selectedPaymentCollector
+                      ? selectedPaymentCollector.get('fullName') || selectedPaymentCollector.get('username')
+                      : 'Chọn người thu tiền'}
+                  </span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${showPaymentCollectorDropdown ? 'transform rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showPaymentCollectorDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-hidden">
+                    <div className="p-2 border-b">
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Tìm kiếm nhân viên..."
+                        value={paymentCollectorSearchTerm}
+                        onChange={(e) => setPaymentCollectorSearchTerm(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredPaymentCollectors.length > 0 ? (
+                        filteredPaymentCollectors.map((staff) => (
+                          <button
+                            key={staff.id}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, paymentCollectorId: staff.id })
+                              setShowPaymentCollectorDropdown(false)
+                              setPaymentCollectorSearchTerm('')
+                            }}
+                            className={`w-full px-3 py-2 text-left hover:bg-gray-100 ${
+                              formData.paymentCollectorId === staff.id ? 'bg-primary/10 text-primary font-medium' : ''
+                            }`}
+                          >
+                            {staff.get('fullName') || staff.get('username')}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-gray-500 text-sm">Không tìm thấy nhân viên</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
