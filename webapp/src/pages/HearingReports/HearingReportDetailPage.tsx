@@ -23,7 +23,13 @@ export default function HearingReportDetailPage() {
     onSuccess: () => {
       toast.success('Report deleted')
       queryClient.invalidateQueries({ queryKey: ['hearing-reports'] })
-      navigate('/hearing-reports')
+      // Redirect to client detail page if we have a client, otherwise dashboard
+      const clientId = report?.get('client')?.id
+      if (clientId) {
+        navigate(`/clients/${clientId}`)
+      } else {
+        navigate('/dashboard')
+      }
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to delete report')

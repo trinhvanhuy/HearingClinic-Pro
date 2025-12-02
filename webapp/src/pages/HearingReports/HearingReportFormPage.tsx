@@ -264,7 +264,12 @@ export default function HearingReportFormPage() {
       console.log('Mutation succeeded')
       toast.success(isEdit ? 'Report updated' : 'Report created')
       queryClient.invalidateQueries({ queryKey: ['hearing-reports'] })
-      navigate('/hearing-reports')
+      // Redirect to client detail page if we have a clientId, otherwise dashboard
+      if (formData.clientId) {
+        navigate(`/clients/${formData.clientId}`)
+      } else {
+        navigate('/dashboard')
+      }
     },
     onError: (error: any) => {
       console.error('Mutation error:', error)
@@ -1139,7 +1144,14 @@ export default function HearingReportFormPage() {
         <div className="flex gap-2 justify-end pt-4 border-t">
           <button
             type="button"
-            onClick={() => navigate('/hearing-reports')}
+            onClick={() => {
+              // Go back to client detail page if we have a clientId, otherwise dashboard
+              if (clientId) {
+                navigate(`/clients/${clientId}`)
+              } else {
+                navigate('/dashboard')
+              }
+            }}
             className="px-6 py-2 border rounded-lg hover:bg-gray-50"
           >
             Cancel
