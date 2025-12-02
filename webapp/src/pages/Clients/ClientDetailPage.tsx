@@ -8,6 +8,8 @@ import { formatDate, formatPhone, formatDateTime } from '@hearing-clinic/shared/
 import { AppointmentType } from '@hearing-clinic/shared/src/models/appointment'
 import { useState } from 'react'
 import RepairAppointmentModal from '../../components/RepairAppointmentModal'
+import Parse from '../../api/parseClient'
+import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
 
 const APPOINTMENT_TYPE_LABELS: Record<AppointmentType, { en: string; vi: string }> = {
   REPAIR: { en: 'Repair', vi: 'Sửa máy' },
@@ -62,12 +64,49 @@ export default function ClientDetailPage() {
     enabled: !!id,
   })
 
-  // Get latest hearing report for the client
-  const { data: latestReport } = useQuery({
-    queryKey: ['hearing-reports', 'client', id, 'latest'],
-    queryFn: () => hearingReportService.getAll({ clientId: id!, limit: 1 }),
+  // Get latest hearing report for the client - query directly to avoid cache issues
+  const { data: latestReportData, isLoading: latestReportLoading } = useQuery({
+    queryKey: ['hearing-reports', 'client', id, 'latest', 'client-detail'],
+    queryFn: async () => {
+      if (!id) return null
+      
+      try {
+        // Query directly without cache to ensure fresh data
+        const query = new Parse.Query(HearingReport)
+        const client = Parse.Object.createWithoutData('Client', id)
+        query.equalTo('client', client)
+        query.descending('updatedAt')
+        query.addDescending('testDate')
+        query.include('client')
+        query.include('audiologist')
+        query.limit(1)
+        
+        const reports = await query.find()
+        
+        console.log('ClientDetailPage - Latest hearing report query:', {
+          clientId: id,
+          count: reports.length,
+          reports: reports.map((r: any) => ({
+            id: r.id,
+            objectId: (r as any).objectId,
+            testDate: r.get('testDate'),
+            clientId: r.get('client')?.id,
+            allIds: { id: r.id, _id: r._id, objectId: (r as any).objectId },
+          })),
+        })
+        
+        return reports.length > 0 ? reports[0] : null
+      } catch (error) {
+        console.error('Error fetching latest hearing report:', error)
+        return null
+      }
+    },
     enabled: !!id,
+    refetchOnMount: 'always',
+    staleTime: 0,
   })
+  
+  const latestReport = latestReportData
 
   if (clientLoading) {
     return <div className="text-center py-8">{t.common.loading}</div>
@@ -183,9 +222,16 @@ export default function ClientDetailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </Link>
-              {latestReport && latestReport.length > 0 ? (
+              {latestReportLoading ? (
+                <div className="inline-flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg">
+                  <svg className="w-5 h-5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              ) : latestReport ? (
                 <Link
-                  to={`/hearing-reports/${latestReport[0].id || (latestReport[0] as any).objectId}/edit`}
+                  to={`/hearing-reports/${latestReport.id || (latestReport as any).objectId}/edit`}
                   className="inline-flex items-center justify-center w-10 h-10 bg-secondary text-white rounded-lg hover:bg-secondary-600 transition-colors"
                   title={t.hearingReports.viewAudiogram}
                 >
@@ -200,7 +246,7 @@ export default function ClientDetailPage() {
                   title={t.hearingReports.createAudiogram}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </Link>
               )}

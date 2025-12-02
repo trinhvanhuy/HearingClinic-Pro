@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { appointmentService } from '../api/appointmentService'
 import { hearingReportService } from '../api/hearingReportService'
 import { staffService } from '../api/staffService'
@@ -7,6 +7,8 @@ import { clientService } from '../api/clientService'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { useI18n } from '../i18n/I18nContext'
+import Parse from '../api/parseClient'
+import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
 
 interface RepairAppointmentModalProps {
   isOpen: boolean
@@ -26,11 +28,40 @@ export default function RepairAppointmentModal({
   const queryClient = useQueryClient()
   const isEdit = !!appointmentId
 
-  // Get all hearing reports for dropdown
-  const { data: hearingReports = [] } = useQuery({
-    queryKey: ['hearing-reports', 'client', clientId, 'all'],
-    queryFn: () => hearingReportService.getAll({ clientId, limit: 100 }),
+  // Get all hearing reports for dropdown - query directly to avoid cache issues
+  const { data: hearingReports = [], isLoading: hearingReportsLoading } = useQuery({
+    queryKey: ['hearing-reports', 'client', clientId, 'all', 'repair-modal'],
+    queryFn: async () => {
+      if (!clientId) return []
+      
+      // Query directly without cache to ensure fresh data
+      const query = new Parse.Query(HearingReport)
+      const client = Parse.Object.createWithoutData('Client', clientId)
+      query.equalTo('client', client)
+      query.descending('updatedAt')
+      query.addDescending('testDate')
+      query.include('client')
+      query.include('audiologist')
+      query.limit(100)
+      
+      const reports = await query.find()
+      
+      console.log('RepairAppointmentModal - Hearing reports fetched:', {
+        clientId,
+        count: reports.length,
+        reports: reports.map((r: any) => ({
+          id: r.id || r.objectId,
+          testDate: r.get('testDate'),
+          client: r.get('client')?.id,
+          clientIdMatch: r.get('client')?.id === clientId,
+        })),
+      })
+      
+      return reports
+    },
     enabled: isOpen && !!clientId,
+    refetchOnMount: 'always',
+    staleTime: 0,
   })
 
   // Get client info
@@ -71,59 +102,104 @@ export default function RepairAppointmentModal({
   const [paymentCollectorSearchTerm, setPaymentCollectorSearchTerm] = useState('')
   const [showStaffDropdown, setShowStaffDropdown] = useState(false)
   const [showPaymentCollectorDropdown, setShowPaymentCollectorDropdown] = useState(false)
+  
+  // Track if form has been initialized to avoid infinite loops
+  const formInitializedRef = useRef(false)
 
   // Load appointment data when editing
   useEffect(() => {
-    if (appointment && isEdit && staffList.length > 0) {
-      const staffName = appointment.get('staffName') || ''
-      // Try to find staff by name
-      const foundStaff = staffList.find(
-        (s) => s.get('fullName') === staffName || s.get('username') === staffName
-      )
-      
-      const hearingReport = appointment.get('hearingReport')
-      const hearingReportId = hearingReport?.id || hearingReport?.objectId || ''
-      
-      const paymentCollectorName = appointment.get('paymentCollectorName') || ''
-      const foundPaymentCollector = staffList.find(
-        (s) => s.get('fullName') === paymentCollectorName || s.get('username') === paymentCollectorName
-      )
-
-      setFormData({
-        hearingReportId,
-        deviceName: appointment.get('deviceName') || '',
-        ear: (appointment.get('ear') as 'LEFT' | 'RIGHT' | 'BOTH') || 'LEFT',
-        repairDate: appointment.get('date')
-          ? new Date(appointment.get('date')).toISOString().slice(0, 16)
-          : new Date().toISOString().slice(0, 16),
-        staffId: foundStaff?.id || '',
-        note: appointment.get('note') || '',
-        price: appointment.get('price') ? String(appointment.get('price')) : '',
-        isPaid: appointment.get('isPaid') || false,
-        paymentMethod: (appointment.get('paymentMethod') as 'CASH' | 'BANK_TRANSFER') || 'CASH',
-        paymentCollectorId: foundPaymentCollector?.id || '',
-      })
-    } else if (!isEdit) {
-      // Reset form for new appointment - set latest report as default if available
-      const latestReport = hearingReports.length > 0 ? hearingReports[0] : null
-      const latestReportId = latestReport
-        ? (latestReport.id || (latestReport as any).objectId || '')
-        : ''
-      
-      setFormData({
-        hearingReportId: latestReportId,
-        deviceName: '',
-        ear: 'LEFT',
-        repairDate: new Date().toISOString().slice(0, 16),
-        staffId: user?.id || '',
-        note: '',
-        price: '',
-        isPaid: false,
-        paymentMethod: 'CASH',
-        paymentCollectorId: '',
-      })
+    if (!isOpen || !isEdit || !appointment) {
+      formInitializedRef.current = false
+      return
     }
-  }, [appointment, isEdit, user, staffList, hearingReports])
+    
+    // Only update once when appointment is loaded
+    if (formInitializedRef.current) return
+    
+    if (staffList.length === 0) return // Wait for staff list
+    
+    const staffName = appointment.get('staffName') || ''
+    const foundStaff = staffList.find(
+      (s) => s.get('fullName') === staffName || s.get('username') === staffName
+    )
+    
+    const hearingReport = appointment.get('hearingReport')
+    const hearingReportId = hearingReport?.id || hearingReport?.objectId || ''
+    
+    const paymentCollectorName = appointment.get('paymentCollectorName') || ''
+    const foundPaymentCollector = staffList.find(
+      (s) => s.get('fullName') === paymentCollectorName || s.get('username') === paymentCollectorName
+    )
+
+    setFormData({
+      hearingReportId,
+      deviceName: appointment.get('deviceName') || '',
+      ear: (appointment.get('ear') as 'LEFT' | 'RIGHT' | 'BOTH') || 'LEFT',
+      repairDate: appointment.get('date')
+        ? new Date(appointment.get('date')).toISOString().slice(0, 16)
+        : new Date().toISOString().slice(0, 16),
+      staffId: foundStaff?.id || '',
+      note: appointment.get('note') || '',
+      price: appointment.get('price') ? String(appointment.get('price')) : '',
+      isPaid: appointment.get('isPaid') || false,
+      paymentMethod: (appointment.get('paymentMethod') as 'CASH' | 'BANK_TRANSFER') || 'CASH',
+      paymentCollectorId: foundPaymentCollector?.id || '',
+    })
+    
+    formInitializedRef.current = true
+  }, [isOpen, isEdit, appointment?.id, staffList.length])
+
+  // Track modal open state to reset form only once
+  const modalOpenRef = useRef(false)
+  
+  // Load initial form data for new appointment - separate useEffect
+  useEffect(() => {
+    if (!isOpen || isEdit) {
+      formInitializedRef.current = false
+      modalOpenRef.current = false
+      return
+    }
+    
+    // Only reset form once when modal first opens
+    if (modalOpenRef.current) return
+    
+    modalOpenRef.current = true
+    formInitializedRef.current = false
+    
+    // Reset form for new appointment (hearing report will be set separately)
+    setFormData({
+      hearingReportId: '',
+      deviceName: '',
+      ear: 'LEFT' as 'LEFT' | 'RIGHT' | 'BOTH',
+      repairDate: new Date().toISOString().slice(0, 16),
+      staffId: user?.id || '',
+      note: '',
+      price: '',
+      isPaid: false,
+      paymentMethod: 'CASH' as 'CASH' | 'BANK_TRANSFER',
+      paymentCollectorId: '',
+    })
+  }, [isOpen, isEdit, user?.id])
+  
+  // Set latest hearing report when available (only once after form reset)
+  const latestReportSetRef = useRef(false)
+  useEffect(() => {
+    if (!isOpen || isEdit || !modalOpenRef.current || latestReportSetRef.current) return
+    
+    if (hearingReports.length > 0) {
+      const latestReport = hearingReports[0]
+      const latestReportId = latestReport.id || (latestReport as any).objectId || ''
+      
+      if (latestReportId) {
+        setFormData(prev => ({
+          ...prev,
+          hearingReportId: latestReportId,
+        }))
+        latestReportSetRef.current = true
+        formInitializedRef.current = true
+      }
+    }
+  }, [isOpen, isEdit])
 
   const mutation = useMutation({
     mutationFn: async (data: {
@@ -229,6 +305,8 @@ export default function RepairAppointmentModal({
       setPaymentCollectorSearchTerm('')
       setShowStaffDropdown(false)
       setShowPaymentCollectorDropdown(false)
+      formInitializedRef.current = false
+      latestReportSetRef.current = false
     }
   }, [isOpen])
 
@@ -292,7 +370,11 @@ export default function RepairAppointmentModal({
             <label className="block text-sm font-medium mb-2">
               1. Thính lực hiện tại
             </label>
-            {hearingReports.length > 0 ? (
+            {hearingReportsLoading ? (
+              <p className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg border">
+                Đang tải...
+              </p>
+            ) : hearingReports.length > 0 ? (
               <select
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 value={formData.hearingReportId}
