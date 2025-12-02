@@ -71,10 +71,35 @@ export default function ClientDetailPage() {
       if (!id) return null
       
       try {
+        // Validate clientId
+        if (!id || typeof id !== 'string' || id.trim() === '' || id === 'Client' || id.length < 10) {
+          console.error('ClientDetailPage - Invalid clientId:', {
+            id,
+            type: typeof id,
+            length: typeof id === 'string' ? id.length : 'N/A',
+          })
+          return null
+        }
+        
+        const validClientId = id.trim()
+        console.log('ClientDetailPage - Querying latest hearing report for clientId:', validClientId)
+        
+        // Verify clientId before creating pointer
+        if (!validClientId || validClientId === 'Client' || validClientId.length < 10) {
+          console.error('ClientDetailPage - Cannot create pointer with invalid clientId:', validClientId)
+          return null
+        }
+        
         // Query directly without cache to ensure fresh data
         const query = new Parse.Query(HearingReport)
-        const client = Parse.Object.createWithoutData('Client', id)
-        query.equalTo('client', client)
+        
+        // Create pointer - Parse pointer only needs className and objectId at query time
+        // We'll use the query's where clause directly with objectId
+        query.equalTo('client', {
+          __type: 'Pointer',
+          className: 'Client',
+          objectId: validClientId,
+        } as any)
         query.descending('updatedAt')
         query.addDescending('testDate')
         query.include('client')

@@ -32,12 +32,33 @@ export default function RepairAppointmentModal({
   const { data: hearingReports = [], isLoading: hearingReportsLoading } = useQuery({
     queryKey: ['hearing-reports', 'client', clientId, 'all', 'repair-modal'],
     queryFn: async () => {
-      if (!clientId) return []
+      if (!clientId) {
+        console.warn('RepairAppointmentModal - No clientId provided')
+        return []
+      }
+      
+      // Validate clientId
+      if (typeof clientId !== 'string' || clientId.trim() === '' || clientId === 'Client' || clientId.length < 10) {
+        console.error('RepairAppointmentModal - Invalid clientId:', {
+          clientId,
+          type: typeof clientId,
+          length: typeof clientId === 'string' ? clientId.length : 'N/A',
+        })
+        return []
+      }
+      
+      const validClientId = clientId.trim()
+      console.log('RepairAppointmentModal - Querying hearing reports for clientId:', validClientId)
       
       // Query directly without cache to ensure fresh data
       const query = new Parse.Query(HearingReport)
-      const client = Parse.Object.createWithoutData('Client', clientId)
-      query.equalTo('client', client)
+      
+      // Create pointer using Parse pointer format directly
+      query.equalTo('client', {
+        __type: 'Pointer',
+        className: 'Client',
+        objectId: validClientId,
+      } as any)
       query.descending('updatedAt')
       query.addDescending('testDate')
       query.include('client')

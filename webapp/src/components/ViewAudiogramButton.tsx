@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { hearingReportService } from '../api/hearingReportService'
 import { useI18n } from '../i18n/I18nContext'
+import Parse from '../api/parseClient'
+import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
 
 interface ViewAudiogramButtonProps {
   clientId: string
@@ -11,13 +12,49 @@ interface ViewAudiogramButtonProps {
 
 export default function ViewAudiogramButton({ clientId, className = '', iconOnly = false }: ViewAudiogramButtonProps) {
   const { t } = useI18n()
-  const { data: reports = [], isLoading } = useQuery({
-    queryKey: ['hearing-reports', 'client', clientId, 'latest'],
-    queryFn: () => hearingReportService.getAll({ clientId, limit: 1 }),
+  const { data: latestReport, isLoading } = useQuery({
+    queryKey: ['hearing-reports', 'client', clientId, 'latest', 'view-audiogram-button'],
+    queryFn: async () => {
+      if (!clientId || typeof clientId !== 'string' || clientId.trim() === '' || clientId === 'Client' || clientId.length < 10) {
+        console.warn('ViewAudiogramButton - Invalid clientId:', clientId)
+        return null
+      }
+      
+      try {
+        const validClientId = clientId.trim()
+        
+        // Verify clientId before creating pointer
+        if (!validClientId || validClientId === 'Client' || validClientId.length < 10) {
+          console.error('ViewAudiogramButton - Cannot create pointer with invalid clientId:', validClientId)
+          return null
+        }
+        
+        // Query directly without cache to ensure fresh data
+        const query = new Parse.Query(HearingReport)
+        
+        // Create pointer using Parse pointer format directly
+        query.equalTo('client', {
+          __type: 'Pointer',
+          className: 'Client',
+          objectId: validClientId,
+        } as any)
+        query.descending('updatedAt')
+        query.addDescending('testDate')
+        query.include('client')
+        query.include('audiologist')
+        query.limit(1)
+        
+        const reports = await query.find()
+        return reports.length > 0 ? reports[0] : null
+      } catch (error) {
+        console.error('ViewAudiogramButton - Error fetching latest hearing report:', error)
+        return null
+      }
+    },
     enabled: !!clientId,
+    refetchOnMount: 'always',
+    staleTime: 0,
   })
-
-  const latestReport = reports[0]
 
   if (isLoading) {
     if (iconOnly) {
@@ -38,7 +75,7 @@ export default function ViewAudiogramButton({ clientId, className = '', iconOnly
   }
 
   if (latestReport) {
-    const reportId = latestReport.id || (latestReport as any).objectId
+    const reportId = latestReport.id || (latestReport as any).objectId || (latestReport as any)._id
     // Redirect to edit page (form page) so user can view and edit
     if (iconOnly) {
       return (

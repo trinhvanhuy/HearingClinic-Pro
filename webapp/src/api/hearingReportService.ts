@@ -14,8 +14,24 @@ export const hearingReportService = {
       const query = new Parse.Query(HearingReport)
       
       if (params.clientId) {
-        const client = Parse.Object.createWithoutData('Client', params.clientId)
-        query.equalTo('client', client)
+        // Validate clientId is a valid string ID
+        const clientIdStr = String(params.clientId).trim()
+        if (clientIdStr === '' || clientIdStr === 'Client' || clientIdStr.length < 10) {
+          console.error('hearingReportService.getAll - Invalid clientId:', {
+            clientId: params.clientId,
+            type: typeof params.clientId,
+            trimmed: clientIdStr,
+          })
+          // Don't add filter if clientId is invalid - will return all reports
+        } else {
+          console.log('hearingReportService.getAll - Filtering by clientId:', clientIdStr)
+          // Create pointer using Parse pointer format directly
+          query.equalTo('client', {
+            __type: 'Pointer',
+            className: 'Client',
+            objectId: clientIdStr,
+          } as any)
+        }
       }
       
       // Sort by updatedAt first (most recently updated), then by testDate
