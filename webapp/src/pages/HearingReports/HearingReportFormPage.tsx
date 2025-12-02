@@ -5,6 +5,7 @@ import { clientService } from '../../api/clientService'
 import { configService } from '../../api/configService'
 import { useAuth } from '../../hooks/useAuth'
 import { HearingReport, EarThresholds } from '@hearing-clinic/shared/src/models/hearingReport'
+import { Client } from '@hearing-clinic/shared/src/models/client'
 import Parse from '../../api/parseClient'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
@@ -189,12 +190,16 @@ export default function HearingReportFormPage() {
         throw new Error(`Invalid client ID: ${error.message || 'Client ID is not valid'}`)
       }
       
-      // Prepare report data
-      // CRITICAL: Pass clientId as string, NOT as Parse Object
-      // Parse SDK has a bug where it serializes Parse.Object.createWithoutData incorrectly
-      // Backend will convert string to proper pointer
+      // Prepare report data, using a proper Parse Pointer for client
+      const clientPointer = (Client as any).createWithoutData
+        ? (Client as any).createWithoutData(clientIdStr)
+        : (() => {
+            const c = new (Client as any)()
+            c.id = clientIdStr
+            return c
+          })()
       const reportData: any = {
-        client: clientIdStr, // Pass as string - backend will handle conversion
+        client: clientPointer,
         testDate: new Date(data.testDate),
         typeOfTest: data.typeOfTest,
         leftEarThresholds: data.leftEarThresholds,

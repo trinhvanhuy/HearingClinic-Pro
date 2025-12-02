@@ -19,7 +19,22 @@ app.use((req, res, next) => {
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Parse-Application-Id, X-Parse-REST-API-Key, X-Parse-Session-Token, X-Parse-Revocable-Session');
+  res.header(
+    'Access-Control-Allow-Headers',
+    [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'X-Parse-Application-Id',
+      'X-Parse-REST-API-Key',
+      'X-Parse-Session-Token',
+      'X-Parse-Revocable-Session',
+      // IMPORTANT: allow master key header so Parse Dashboard can call /serverInfo, /schemas
+      'X-Parse-Master-Key',
+    ].join(', ')
+  );
   res.header('Access-Control-Expose-Headers', 'X-Parse-Session-Token, X-Parse-Revocable-Session');
   res.header('Access-Control-Allow-Credentials', 'true');
   
@@ -39,6 +54,9 @@ const api = new ParseServer({
   publicServerURL: process.env.PARSE_SERVER_URL || 'http://localhost:1338/parse',
   allowClientClassCreation: true,
   enableAnonymousUsers: false,
+   // Allow master key from any IP in development so Parse Dashboard works
+   // (Do NOT use this in production as-is.)
+   masterKeyIps: process.env.NODE_ENV === 'production' ? undefined : ['0.0.0.0/0'],
   // Disable schema validation completely to allow flexible Pointer handling
   // We'll handle validation in beforeSave hooks instead
   schemaCacheTTL: 0, // Disable schema caching
