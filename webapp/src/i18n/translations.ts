@@ -116,35 +116,37 @@ export interface Translations {
   }
 
   // Hearing Reports
-  hearingReports: {
-    title: string
-    newReport: string
-    editReport: string
-    reportDetails: string
-    print: string
-    normalHearingAbility: string
-    decreasedHearingAbility: string
-    noReports: string
-    client: string
-    date: string
-    examiner: string
-    pureToneAudiometry: string
-    speechAudiometry: string
-    tympanometry: string
-    recommendations: string
-    discriminationLoss: string
-    tympanograms: string
-    results: string
-    signature: string
-    printName: string
-    licenseNo: string
-    signatureDate: string
-    enterResults: string
-    enterRecommendations: string
-    enterSignatureName: string
-    enterPrintName: string
-    enterLicenseNumber: string
-  }
+    hearingReports: {
+      title: string
+      newReport: string
+      editReport: string
+      reportDetails: string
+      print: string
+      normalHearingAbility: string
+      decreasedHearingAbility: string
+      noReports: string
+      client: string
+      date: string
+      examiner: string
+      pureToneAudiometry: string
+      speechAudiometry: string
+      tympanometry: string
+      recommendations: string
+      discriminationLoss: string
+      tympanograms: string
+      results: string
+      signature: string
+      printName: string
+      licenseNo: string
+      signatureDate: string
+      enterResults: string
+      enterRecommendations: string
+      enterSignatureName: string
+      enterPrintName: string
+      enterLicenseNumber: string
+      viewAudiogram: string
+      createAudiogram: string
+    }
 
   // Reminders
   reminders: {
@@ -357,6 +359,8 @@ export const translations: Record<Language, Translations> = {
       enterSignatureName: 'Enter signature name',
       enterPrintName: 'Enter print name',
       enterLicenseNumber: 'Enter license number',
+      viewAudiogram: 'View Audiogram',
+      createAudiogram: 'Create Audiogram',
     },
     reminders: {
       title: 'Reminders',
@@ -581,6 +585,8 @@ export const translations: Record<Language, Translations> = {
       speechAudiometry: 'Đo thính lực lời nói',
       tympanometry: 'Đo nhĩ lượng',
       recommendations: 'Khuyến nghị',
+      viewAudiogram: 'Xem đo thính lực',
+      createAudiogram: 'Tạo đo thính lực',
     },
     reminders: {
       title: 'Nhắc nhở',

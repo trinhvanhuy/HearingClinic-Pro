@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { clientService } from '../../api/clientService'
 import { useI18n } from '../../i18n/I18nContext'
 import { formatDate, formatPhone } from '@hearing-clinic/shared/src/utils/formatting'
+import ViewAudiogramButton from '../../components/ViewAudiogramButton'
 
 export default function ClientListPage() {
   const { t } = useI18n()
@@ -84,19 +85,22 @@ export default function ClientListPage() {
                       {client.get('lastVisitDate') ? formatDate(client.get('lastVisitDate')) : '-'}
                     </td>
                     <td>
-                      <div className="flex gap-2">
-                        <Link
-                          to={`/clients/${client.id}`}
-                          className="text-primary hover:underline text-sm"
-                        >
-                          {t.common.view}
-                        </Link>
-                        <Link
-                          to={`/clients/${client.id}/edit`}
-                          className="text-primary hover:underline text-sm"
-                        >
-                          {t.common.edit}
-                        </Link>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex gap-2">
+                          <Link
+                            to={`/clients/${client.id}`}
+                            className="text-primary hover:underline text-sm"
+                          >
+                            {t.common.view}
+                          </Link>
+                          <Link
+                            to={`/clients/${client.id}/edit`}
+                            className="text-primary hover:underline text-sm"
+                          >
+                            {t.common.edit}
+                          </Link>
+                        </div>
+                        <ViewAudiogramButton clientId={client.id} />
                       </div>
                     </td>
                   </tr>

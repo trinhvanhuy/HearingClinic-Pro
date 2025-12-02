@@ -77,6 +77,7 @@ export default function ClientFormPage() {
     e.preventDefault()
     const data = {
       ...formData,
+      isActive: true, // Always active
       dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined,
       gender: formData.gender || undefined,
       email: formData.email || undefined,
@@ -222,19 +223,6 @@ export default function ClientFormPage() {
           </div>
         </div>
 
-        {isEdit && (
-          <div>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="rounded"
-              />
-              <span className="text-sm">{t.clients.isActive}</span>
-            </label>
-          </div>
-        )}
 
         <div className="flex gap-2 justify-end">
           <button

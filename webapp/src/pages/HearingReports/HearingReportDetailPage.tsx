@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { hearingReportService } from '../../api/hearingReportService'
@@ -18,14 +18,25 @@ export default function HearingReportDetailPage() {
     enabled: !!id,
   })
 
+  // Redirect to edit page so user can view and edit with charts
+  useEffect(() => {
+    if (id && !isLoading && report) {
+      navigate(`/hearing-reports/${id}/edit`, { replace: true })
+    }
+  }, [id, isLoading, report, navigate])
+
   const deleteMutation = useMutation({
     mutationFn: () => hearingReportService.delete(id!),
     onSuccess: () => {
       toast.success('Report deleted')
       queryClient.invalidateQueries({ queryKey: ['hearing-reports'] })
+      // Invalidate appointments to refresh Patient History
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
       // Redirect to client detail page if we have a client, otherwise dashboard
       const clientId = report?.get('client')?.id
       if (clientId) {
+        queryClient.invalidateQueries({ queryKey: ['appointments', 'client', clientId] })
+        queryClient.invalidateQueries({ queryKey: ['client', clientId] })
         navigate(`/clients/${clientId}`)
       } else {
         navigate('/dashboard')

@@ -5,6 +5,7 @@ import { clientService } from '../api/clientService'
 import { useI18n } from '../i18n/I18nContext'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import { format, startOfToday, endOfWeek, addDays } from 'date-fns'
+import ViewAudiogramButton from '../components/ViewAudiogramButton'
 
 // Icon components
 const PlusIcon = ({ className }: { className?: string }) => (
@@ -142,6 +143,9 @@ export default function DashboardPage() {
                             {t.dashboard.lastVisit}: {formatDate(client.get('lastVisitDate'))}
                           </p>
                         )}
+                        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                          <ViewAudiogramButton clientId={client.id} />
+                        </div>
                       </div>
                     </div>
                   </Link>

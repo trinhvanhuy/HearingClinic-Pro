@@ -55,6 +55,7 @@ function App() {
             <Route path="clients/:id" element={<ClientDetailPage />} />
             <Route path="clients/:id/edit" element={<ClientFormPage />} />
             <Route path="hearing-reports/new" element={<HearingReportFormPage />} />
+            <Route path="hearing-reports/:id/edit" element={<HearingReportFormPage />} />
             <Route path="hearing-reports/:id" element={<HearingReportDetailPage />} />
             <Route path="hearing-reports/:id/print" element={<HearingReportPrintPage />} />
             <Route path="reminders" element={<ReminderListPage />} />
