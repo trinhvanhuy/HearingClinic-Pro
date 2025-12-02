@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { clientService } from '../../api/clientService'
 import { appointmentService } from '../../api/appointmentService'
+import { hearingReportService } from '../../api/hearingReportService'
 import { useI18n } from '../../i18n/I18nContext'
 import { formatDate, formatPhone, formatDateTime } from '@hearing-clinic/shared/src/utils/formatting'
 import { AppointmentType } from '@hearing-clinic/shared/src/models/appointment'
@@ -55,6 +56,13 @@ export default function ClientDetailPage() {
       })
       return allAppointments.length
     },
+    enabled: !!id,
+  })
+
+  // Get latest hearing report for the client
+  const { data: latestReport } = useQuery({
+    queryKey: ['hearing-reports', 'client', id, 'latest'],
+    queryFn: () => hearingReportService.getAll({ clientId: id!, limit: 1 }),
     enabled: !!id,
   })
 
@@ -145,12 +153,38 @@ export default function ClientDetailPage() {
               )}
             </div>
             
-            <Link
-              to={`/clients/${id}/edit`}
-              className="inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
-            >
-              {t.clientDetail.editProfile}
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                to={`/clients/${id}/edit`}
+                className="inline-flex items-center justify-center w-10 h-10 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                title={t.clientDetail.editProfile}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </Link>
+              {latestReport && latestReport.length > 0 ? (
+                <Link
+                  to={`/hearing-reports/${latestReport[0].id || (latestReport[0] as any).objectId}/edit`}
+                  className="inline-flex items-center justify-center w-10 h-10 bg-secondary text-white rounded-lg hover:bg-secondary-600 transition-colors"
+                  title={t.hearingReports.viewAudiogram}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </Link>
+              ) : (
+                <Link
+                  to={`/hearing-reports/new?clientId=${id}`}
+                  className="inline-flex items-center justify-center w-10 h-10 bg-secondary text-white rounded-lg hover:bg-secondary-600 transition-colors"
+                  title={t.hearingReports.createAudiogram}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Right side - Info Grid */}

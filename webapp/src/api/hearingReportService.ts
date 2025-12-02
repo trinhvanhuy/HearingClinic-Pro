@@ -18,7 +18,9 @@ export const hearingReportService = {
         query.equalTo('client', client)
       }
       
-      query.descending('testDate')
+      // Sort by updatedAt first (most recently updated), then by testDate
+      query.descending('updatedAt')
+      query.addDescending('testDate')
       query.include('client')
       query.include('audiologist')
       query.limit(params.limit || 50)

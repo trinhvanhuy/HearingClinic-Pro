@@ -120,35 +120,52 @@ export default function DashboardPage() {
           {recentClients.length === 0 ? (
             <p className="text-gray-500">{t.dashboard.noClients}</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {recentClients.map((client) => (
                 <li key={client.id}>
-                  <Link
-                    to={`/clients/${client.id}`}
-                    className="block p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer border border-gray-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-base mb-1" style={{ color: '#2D2D2D' }}>
-                          {client.get('fullName')}
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all border border-gray-200">
+                    <Link
+                      to={`/clients/${client.id}`}
+                      className="flex-1 min-w-0"
+                    >
+                      <p className="font-semibold text-sm mb-0.5 truncate" style={{ color: '#2D2D2D' }}>
+                        {client.get('fullName')}
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <PhoneIcon className="w-3 h-3" style={{ color: '#9B9B9B' }} />
+                        <p className="text-xs truncate" style={{ color: '#9B9B9B' }}>
+                          {client.get('phone')}
                         </p>
-                        <div className="flex items-center gap-2">
-                          <PhoneIcon className="w-3.5 h-3.5" style={{ color: '#9B9B9B' }} />
-                          <p className="text-sm" style={{ color: '#9B9B9B' }}>
-                            {client.get('phone')}
-                          </p>
-                        </div>
-                        {client.get('lastVisitDate') && (
-                          <p className="text-xs mt-1" style={{ color: '#9B9B9B' }}>
-                            {t.dashboard.lastVisit}: {formatDate(client.get('lastVisitDate'))}
-                          </p>
-                        )}
-                        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                          <ViewAudiogramButton clientId={client.id} />
-                        </div>
                       </div>
+                      {client.get('lastVisitDate') && (
+                        <p className="text-xs mt-0.5" style={{ color: '#9B9B9B' }}>
+                          {t.dashboard.lastVisit}: {formatDate(client.get('lastVisitDate'))}
+                        </p>
+                      )}
+                    </Link>
+                    <div className="flex items-center gap-1.5 ml-2" onClick={(e) => e.stopPropagation()}>
+                      <Link
+                        to={`/clients/${client.id}`}
+                        className="inline-flex items-center justify-center w-7 h-7 text-primary hover:bg-primary/10 rounded transition-colors"
+                        title={t.common.view}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </Link>
+                      <Link
+                        to={`/clients/${client.id}/edit`}
+                        className="inline-flex items-center justify-center w-7 h-7 text-primary hover:bg-primary/10 rounded transition-colors"
+                        title={t.common.edit}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </Link>
+                      <ViewAudiogramButton clientId={client.id} iconOnly={true} />
                     </div>
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>
