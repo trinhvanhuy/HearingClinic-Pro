@@ -1,10 +1,12 @@
 import Parse from './parseClient'
-import { Reminder, ReminderStatus } from '@hearing-clinic/shared/src/models/reminder'
+import { Reminder, ReminderStatus, ReminderType, ReminderPriority } from '@hearing-clinic/shared/src/models/reminder'
 import { getCachedEntities, getCachedEntity, handleOfflineOperation } from '../services/offlineHelper'
 
 export interface ReminderSearchParams {
   clientId?: string
   status?: ReminderStatus
+  type?: ReminderType
+  priority?: ReminderPriority
   dueFrom?: Date
   dueTo?: Date
   limit?: number
@@ -23,6 +25,14 @@ export const reminderService = {
       
       if (params.status) {
         query.equalTo('status', params.status)
+      }
+      
+      if (params.type) {
+        query.equalTo('type', params.type)
+      }
+      
+      if (params.priority) {
+        query.equalTo('priority', params.priority)
       }
       
       if (params.dueFrom) {

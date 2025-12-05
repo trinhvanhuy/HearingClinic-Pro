@@ -4,8 +4,9 @@ import { reminderService } from '../api/reminderService'
 import { clientService } from '../api/clientService'
 import { useI18n } from '../i18n/I18nContext'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
-import { format, startOfToday, endOfWeek, addDays } from 'date-fns'
+import { format, startOfToday, endOfWeek, addDays, isToday, isTomorrow, differenceInDays } from 'date-fns'
 import ViewAudiogramButton from '../components/ViewAudiogramButton'
+import { ReminderType, ReminderPriority } from '@hearing-clinic/shared/src/models/reminder'
 
 // Icon components
 const PlusIcon = ({ className }: { className?: string }) => (
@@ -36,6 +37,28 @@ export default function DashboardPage() {
       }),
   })
 
+  const { data: overdueReminders = [] } = useQuery({
+    queryKey: ['reminders', 'overdue'],
+    queryFn: () =>
+      reminderService.getAll({
+        dueTo: today,
+        status: 'overdue',
+        limit: 5,
+      }),
+  })
+
+  // Sort reminders by priority and due date
+  const sortedReminders = [...todayReminders, ...overdueReminders].sort((a, b) => {
+    const priorityOrder = { high: 3, medium: 2, low: 1 }
+    const aPriority = priorityOrder[a.get('priority') as ReminderPriority] || 2
+    const bPriority = priorityOrder[b.get('priority') as ReminderPriority] || 2
+    if (aPriority !== bPriority) return bPriority - aPriority
+    
+    const aDue = new Date(a.get('dueAt'))
+    const bDue = new Date(b.get('dueAt'))
+    return aDue.getTime() - bDue.getTime()
+  })
+
   const { data: recentClients = [] } = useQuery({
     queryKey: ['clients', 'recent'],
     queryFn: () => clientService.getAll({ limit: 5 }),
@@ -59,42 +82,93 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Today's Reminders */}
         <div className="rounded-2xl border border-gray-200 shadow-sm p-6 bg-white">
-          <h2 className="text-lg font-semibold mb-6" style={{ color: '#2D2D2D' }}>
-            {t.dashboard.upcomingReminders}
-          </h2>
-          {todayReminders.length === 0 ? (
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold" style={{ color: '#2D2D2D' }}>
+              {t.dashboard.upcomingReminders}
+            </h2>
+            {overdueReminders.length > 0 && (
+              <span className="px-3 py-1 text-xs rounded-full font-medium bg-danger-100 text-danger-800">
+                {overdueReminders.length} quá hạn
+              </span>
+            )}
+          </div>
+          {sortedReminders.length === 0 ? (
             <p className="text-gray-500">{t.dashboard.noUpcomingReminders}</p>
           ) : (
             <ul className="space-y-3">
-              {todayReminders.map((reminder) => (
-                <li
-                  key={reminder.id}
-                  className="rounded-[10px] border border-gray-200 bg-gray-50 p-3 hover:shadow-sm hover:scale-[1.01] transition-all cursor-pointer"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold text-base mb-1" style={{ color: '#2D2D2D' }}>
-                        {reminder.get('title')}
-                      </p>
-                      <p className="text-sm mb-1" style={{ color: '#9B9B9B' }}>
-                        {t.dashboard.client}: {reminder.get('client')?.get('fullName') || 'N/A'}
-                      </p>
-                      <p className="text-xs" style={{ color: '#9B9B9B' }}>
-                        {t.dashboard.due}: {formatDate(reminder.get('dueAt'))}
-                      </p>
+              {sortedReminders.map((reminder) => {
+                const dueDate = new Date(reminder.get('dueAt'))
+                const daysUntilDue = differenceInDays(dueDate, today)
+                const isOverdue = reminder.get('status') === 'overdue'
+                const priority = reminder.get('priority') as ReminderPriority
+                
+                return (
+                  <li
+                    key={reminder.id}
+                    className={`rounded-[10px] border p-3 hover:shadow-sm hover:scale-[1.01] transition-all cursor-pointer ${
+                      isOverdue
+                        ? 'border-danger-300 bg-danger-50'
+                        : isToday(dueDate)
+                        ? 'border-warning-300 bg-warning-50'
+                        : priority === 'high'
+                        ? 'border-red-200 bg-red-50'
+                        : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="font-semibold text-base" style={{ color: '#2D2D2D' }}>
+                            {reminder.get('title')}
+                          </p>
+                          {priority && (
+                            <span
+                              className={`px-2 py-0.5 text-xs rounded font-medium ${
+                                priority === 'high'
+                                  ? 'bg-red-100 text-red-800'
+                                  : priority === 'medium'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {priority === 'high' ? 'Cao' : priority === 'medium' ? 'Trung bình' : 'Thấp'}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm mb-1" style={{ color: '#9B9B9B' }}>
+                          {t.dashboard.client}: {reminder.get('client')?.get('fullName') || 'N/A'}
+                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-medium" style={{ 
+                            color: isOverdue 
+                              ? '#DC2626' 
+                              : isToday(dueDate)
+                              ? '#F59E0B'
+                              : '#9B9B9B'
+                          }}>
+                            {t.dashboard.due}: {formatDate(dueDate)}
+                          </p>
+                          {isOverdue && (
+                            <span className="text-xs font-medium text-danger-600">
+                              (Quá hạn {Math.abs(daysUntilDue)} ngày)
+                            </span>
+                          )}
+                          {isToday(dueDate) && !isOverdue && (
+                            <span className="text-xs font-medium text-warning-600">
+                              (Hôm nay)
+                            </span>
+                          )}
+                          {isTomorrow(dueDate) && !isOverdue && (
+                            <span className="text-xs font-medium text-accent-600">
+                              (Ngày mai)
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <span
-                      className={`px-2.5 py-1 text-xs rounded-full font-medium ml-3 ${
-                        reminder.get('status') === 'overdue'
-                          ? 'bg-danger-100 text-danger-800'
-                          : 'bg-accent-100 text-accent-800'
-                      }`}
-                    >
-                      {t.reminders[reminder.get('status') as keyof typeof t.reminders] || reminder.get('status')}
-                    </span>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                )
+              })}
             </ul>
           )}
           <Link
