@@ -7,31 +7,40 @@ import { ReminderStatus, ReminderType, ReminderPriority } from '@hearing-clinic/
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import toast from 'react-hot-toast'
 import ConfirmDeleteModal from '../../components/ConfirmDeleteModal'
+import ReminderDetailModal from '../../components/ReminderDetailModal'
 
-const REMINDER_TYPE_LABELS: Record<ReminderType | 'all', string> = {
-  all: 'Tất cả',
-  FOLLOW_UP_COUNSELING: 'Tư vấn theo dõi',
-  AUDIOGRAM_DUE: 'Đo thính lực đến hạn',
-  MAINTENANCE_DUE: 'Bảo trì đến hạn',
-  WARRANTY_EXPIRING: 'Bảo hành sắp hết',
-  POST_REPAIR_CHECK: 'Kiểm tra sau sửa',
-  POST_PURCHASE_SUPPORT: 'Hỗ trợ sau mua',
-  CLIENT_INACTIVE: 'Khách hàng lâu chưa đến',
-  BIRTHDAY: 'Sinh nhật',
-  RECOMMENDATION_FOLLOW_UP: 'Theo dõi khuyến nghị',
-  CUSTOM: 'Tùy chỉnh',
+// Helper functions to get translated labels
+const getReminderTypeLabel = (type: ReminderType | 'all', t: any): string => {
+  if (type === 'all') return t.reminders.all
+  const typeMap: Record<ReminderType, keyof typeof t.reminders> = {
+    FOLLOW_UP_COUNSELING: 'typeFollowUpCounseling',
+    AUDIOGRAM_DUE: 'typeAudiogramDue',
+    MAINTENANCE_DUE: 'typeMaintenanceDue',
+    WARRANTY_EXPIRING: 'typeWarrantyExpiring',
+    POST_REPAIR_CHECK: 'typePostRepairCheck',
+    POST_PURCHASE_SUPPORT: 'typePostPurchaseSupport',
+    CLIENT_INACTIVE: 'typeClientInactive',
+    BIRTHDAY: 'typeBirthday',
+    RECOMMENDATION_FOLLOW_UP: 'typeRecommendationFollowUp',
+    CUSTOM: 'typeCustom',
+  }
+  return t.reminders[typeMap[type]] || type
 }
 
-const REMINDER_PRIORITY_LABELS: Record<ReminderPriority | 'all', string> = {
-  all: 'Tất cả',
-  low: 'Thấp',
-  medium: 'Trung bình',
-  high: 'Cao',
+const getReminderPriorityLabel = (priority: ReminderPriority | 'all', t: any): string => {
+  if (priority === 'all') return t.reminders.all
+  const priorityMap: Record<ReminderPriority, keyof typeof t.reminders> = {
+    low: 'priorityLow',
+    medium: 'priorityMedium',
+    high: 'priorityHigh',
+  }
+  return t.reminders[priorityMap[priority]] || priority
 }
 
 export default function ReminderListPage() {
   const { t } = useI18n()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [selectedReminderId, setSelectedReminderId] = useState<string | null>(null)
   const clientId = searchParams.get('clientId')
   const [statusFilter, setStatusFilter] = useState<ReminderStatus | 'all'>(
     (searchParams.get('status') as ReminderStatus | 'all') || 'all'
@@ -126,8 +135,11 @@ export default function ReminderListPage() {
               setSearchParams(newParams)
             }}
           >
-            {Object.entries(REMINDER_TYPE_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+            <option value="all">{t.reminders.all}</option>
+            {Object.values(ReminderType).map((type) => (
+              <option key={type} value={type}>
+                {getReminderTypeLabel(type, t)}
+              </option>
             ))}
           </select>
           
@@ -143,8 +155,11 @@ export default function ReminderListPage() {
               setSearchParams(newParams)
             }}
           >
-            {Object.entries(REMINDER_PRIORITY_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+            <option value="all">{t.reminders.all}</option>
+            {Object.values(ReminderPriority).map((priority) => (
+              <option key={priority} value={priority}>
+                {getReminderPriorityLabel(priority, t)}
+              </option>
             ))}
           </select>
         </div>
@@ -161,7 +176,8 @@ export default function ReminderListPage() {
               return (
                 <div
                   key={reminder.id}
-                  className="card-reminder"
+                  onClick={() => setSelectedReminderId(reminder.id)}
+                  className="card-reminder cursor-pointer"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -180,7 +196,7 @@ export default function ReminderListPage() {
                         </span>
                         {reminder.get('type') && (
                           <span className="px-2 py-1 text-xs rounded font-medium bg-blue-100 text-blue-800">
-                            {REMINDER_TYPE_LABELS[reminder.get('type') as ReminderType] || reminder.get('type')}
+                            {getReminderTypeLabel(reminder.get('type') as ReminderType, t)}
                           </span>
                         )}
                         {reminder.get('priority') && (
@@ -193,12 +209,12 @@ export default function ReminderListPage() {
                                 : 'bg-gray-100 text-gray-800'
                             }`}
                           >
-                            {REMINDER_PRIORITY_LABELS[reminder.get('priority') as ReminderPriority] || reminder.get('priority')}
+                            {getReminderPriorityLabel(reminder.get('priority') as ReminderPriority, t)}
                           </span>
                         )}
                         {reminder.get('isAutoGenerated') && (
                           <span className="px-2 py-1 text-xs rounded font-medium bg-purple-100 text-purple-800">
-                            Tự động
+                            {t.reminders.autoGenerated}
                           </span>
                         )}
                       </div>
@@ -261,6 +277,15 @@ export default function ReminderListPage() {
         itemName={reminderToDelete?.title}
         isLoading={deleteMutation.isPending}
       />
+
+      {/* Reminder Detail Modal */}
+      {selectedReminderId && (
+        <ReminderDetailModal
+          isOpen={!!selectedReminderId}
+          onClose={() => setSelectedReminderId(null)}
+          reminderId={selectedReminderId}
+        />
+      )}
     </div>
   )
 }

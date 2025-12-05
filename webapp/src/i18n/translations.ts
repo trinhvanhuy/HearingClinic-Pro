@@ -202,6 +202,25 @@ export interface Translations {
     markAsOverdue: string
   }
 
+  // Appointments
+  appointments: {
+    counselingTitle: string
+    editCounselingTitle: string
+    currentHearingStatus: string
+    clientInfo: string
+    counselingDate: string
+    counselor: string
+    counselingNote: string
+    noHearingReports: string
+    noDate: string
+    selectClient: string
+    selectCounselor: string
+    counselingCreated: string
+    counselingUpdated: string
+    selectHearingReport: string
+    hearingTestType: string
+  }
+
   // Client Detail
   clientDetail: {
     patient: string
@@ -446,6 +465,23 @@ export const translations: Record<Language, Translations> = {
       changeStatus: 'Change Status',
       markAsPending: 'Mark as Pending',
       markAsOverdue: 'Mark as Overdue',
+    },
+    appointments: {
+      counselingTitle: 'Counseling Information',
+      editCounselingTitle: 'Edit Counseling Information',
+      currentHearingStatus: 'Current Hearing Status',
+      clientInfo: 'Client Information',
+      counselingDate: 'Counseling Date',
+      counselor: 'Counselor',
+      counselingNote: 'Counseling Note',
+      noHearingReports: 'No hearing reports yet',
+      noDate: 'No date',
+      selectClient: 'Please select a client',
+      selectCounselor: 'Please select a counselor',
+      counselingCreated: 'Counseling appointment created',
+      counselingUpdated: 'Counseling appointment updated',
+      selectHearingReport: 'Select Hearing Report',
+      hearingTestType: 'Audiogram',
     },
     clientDetail: {
       patient: 'Patient',

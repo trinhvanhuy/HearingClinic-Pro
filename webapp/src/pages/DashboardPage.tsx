@@ -1,11 +1,13 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { reminderService } from '../api/reminderService'
 import { clientService } from '../api/clientService'
 import { useI18n } from '../i18n/I18nContext'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import { format, startOfToday, endOfWeek, addDays, isToday, isTomorrow, differenceInDays } from 'date-fns'
 import ViewAudiogramButton from '../components/ViewAudiogramButton'
+import ReminderDetailModal from '../components/ReminderDetailModal'
 import { ReminderType, ReminderPriority } from '@hearing-clinic/shared/src/models/reminder'
 
 // Icon components
@@ -23,7 +25,7 @@ const PhoneIcon = ({ className }: { className?: string }) => (
 
 export default function DashboardPage() {
   const { t } = useI18n()
-  const navigate = useNavigate()
+  const [selectedReminderId, setSelectedReminderId] = useState<string | null>(null)
   const today = startOfToday()
   const weekEnd = endOfWeek(addDays(today, 7))
 
@@ -106,7 +108,7 @@ export default function DashboardPage() {
                 return (
                   <li
                     key={reminder.id}
-                    onClick={() => navigate(`/reminders/${reminder.id}`)}
+                    onClick={() => setSelectedReminderId(reminder.id)}
                     className={`rounded-[10px] border p-3 hover:shadow-sm hover:scale-[1.01] transition-all cursor-pointer ${
                       isOverdue
                         ? 'border-danger-300 bg-danger-50'
@@ -247,6 +249,15 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Reminder Detail Modal */}
+      {selectedReminderId && (
+        <ReminderDetailModal
+          isOpen={!!selectedReminderId}
+          onClose={() => setSelectedReminderId(null)}
+          reminderId={selectedReminderId}
+        />
+      )}
     </div>
   )
 }
