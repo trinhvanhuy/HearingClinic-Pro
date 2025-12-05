@@ -11,6 +11,7 @@
     "import-excel": "node src/importExcel.js",
     "create-admin": "node src/createAdmin.js",
     "seed-appointments": "node src/seedAppointments.js",
+    "seed-staff": "node src/seedStaff.js",
     "fix-schema": "node src/fixSchema.js"
   },
   "dependencies": {

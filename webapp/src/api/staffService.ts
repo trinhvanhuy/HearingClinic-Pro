@@ -18,45 +18,44 @@ export const staffService = {
    * Get all staff members
    */
   async getAll(params: StaffSearchParams = {}): Promise<Parse.User[]> {
-    let query: Parse.Query<Parse.User>
-    
-    // Search by username, email, or fullName
-    if (params.search) {
-      const searchTerm = params.search.toLowerCase()
-      const usernameQuery = new Parse.Query(Parse.User).contains('username', searchTerm)
-      const emailQuery = new Parse.Query(Parse.User).contains('email', searchTerm)
-      const fullNameQuery = new Parse.Query(Parse.User).contains('fullName', searchTerm)
-      query = Parse.Query.or(usernameQuery, emailQuery, fullNameQuery)
-    } else {
-      query = new Parse.Query(Parse.User)
+    // Use Cloud Function to query staff members (bypasses _User query restrictions)
+    try {
+      const result = await Parse.Cloud.run('getStaffMembers', {
+        search: params.search,
+        role: params.role,
+        limit: params.limit,
+        skip: params.skip,
+      }) as any[]
+      
+      // Convert JSON data back to Parse.User objects
+      return result.map((userData: any) => {
+        const user = Parse.User.fromJSON(userData)
+        // Mark as clean (not dirty) since this is fetched data
+        ;(user as any)._isDirty = false
+        return user
+      })
+    } catch (error: any) {
+      console.error('Error fetching staff members via Cloud Function:', error)
+      throw error
     }
-    
-    // Filter by role if provided
-    if (params.role) {
-      query.equalTo('staffRole', params.role)
-    }
-    
-    // Exclude admin users from staff list
-    query.notEqualTo('role', 'admin')
-    
-    if (params.limit) {
-      query.limit(params.limit)
-    }
-    if (params.skip) {
-      query.skip(params.skip)
-    }
-    
-    query.addAscending('username')
-    
-    return query.find()
   },
 
   /**
    * Get staff by ID
    */
   async getById(id: string): Promise<Parse.User> {
-    const query = new Parse.Query(Parse.User)
-    return query.get(id)
+    // Use Cloud Function to get staff member (bypasses _User query restrictions)
+    try {
+      const result = await Parse.Cloud.run('getStaffById', { id }) as any
+      
+      // Convert JSON data back to Parse.User object
+      const user = Parse.User.fromJSON(result)
+      ;(user as any)._isDirty = false
+      return user
+    } catch (error: any) {
+      console.error('Error fetching staff by ID via Cloud Function:', error)
+      throw error
+    }
   },
 
   /**

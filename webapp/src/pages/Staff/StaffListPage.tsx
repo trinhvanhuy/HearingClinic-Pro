@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { staffService, StaffRole } from '../../api/staffService'
 import { useI18n } from '../../i18n/I18nContext'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
+import EditStaffModal from '../../components/EditStaffModal'
+import Parse from 'parse'
 
 const STAFF_ROLE_LABELS: Record<StaffRole, { en: string; vi: string }> = {
   technical_specialist: {
@@ -28,6 +30,9 @@ export default function StaffListPage() {
   const { t, language } = useI18n()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedRole, setSelectedRole] = useState<StaffRole | ''>('')
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null)
+  const [editingStaff, setEditingStaff] = useState<Parse.User | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const { data: staff = [], isLoading } = useQuery({
     queryKey: ['staff', searchTerm, selectedRole],
@@ -106,10 +111,11 @@ export default function StaffListPage() {
                 </tr>
               </thead>
               <tbody>
-                {staff.map((member) => {
+                {staff.map((member, index) => {
                   const role = member.get('staffRole') as StaffRole | undefined
+                  const memberId = member.id || (member as any).objectId || (member as any)._id || `staff-${index}`
                   return (
-                    <tr key={member.id}>
+                    <tr key={memberId}>
                       <td className="font-medium">{member.get('username')}</td>
                       <td>{member.get('fullName') || '-'}</td>
                       <td>{member.get('email') || '-'}</td>
@@ -128,12 +134,16 @@ export default function StaffListPage() {
                           : '-'}
                       </td>
                       <td>
-                        <Link
-                          to={`/staff/${member.id}/edit`}
+                        <button
+                          onClick={() => {
+                            setEditingStaffId(memberId)
+                            setEditingStaff(member)
+                            setIsEditModalOpen(true)
+                          }}
                           className="text-primary hover:underline text-sm font-medium"
                         >
                           {t.common.edit}
-                        </Link>
+                        </button>
                       </td>
                     </tr>
                   )
@@ -143,6 +153,18 @@ export default function StaffListPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Staff Modal */}
+      <EditStaffModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditingStaffId(null)
+          setEditingStaff(null)
+        }}
+        staffId={editingStaffId}
+        staffData={editingStaff}
+      />
     </div>
   )
 }

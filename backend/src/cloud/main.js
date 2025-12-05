@@ -165,3 +165,124 @@ Parse.Cloud.beforeSave("ContactLog", async (request) => {
   }
 });
 
+// Cloud Function to get staff members (bypasses _User query restrictions)
+Parse.Cloud.define("getStaffMembers", async (request) => {
+  // Require authentication
+  if (!request.user) {
+    throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Authentication required");
+  }
+
+  const params = request.params || {};
+  const searchTerm = params.search;
+  const roleFilter = params.role;
+
+  // Build query for staff members
+  let query = new Parse.Query(Parse.User);
+  
+  // Only get users with staffRole
+  query.exists("staffRole");
+  
+  // Exclude admin users
+  query.notEqualTo("role", "admin");
+  
+  // Filter by role if provided
+  if (roleFilter) {
+    query.equalTo("staffRole", roleFilter);
+  }
+  
+  // Search by username, email, or fullName
+  if (searchTerm) {
+    const search = searchTerm.toLowerCase();
+    const usernameQuery = new Parse.Query(Parse.User)
+      .exists("staffRole")
+      .notEqualTo("role", "admin")
+      .contains("username", search);
+    
+    const emailQuery = new Parse.Query(Parse.User)
+      .exists("staffRole")
+      .notEqualTo("role", "admin")
+      .contains("email", search);
+    
+    const fullNameQuery = new Parse.Query(Parse.User)
+      .exists("staffRole")
+      .notEqualTo("role", "admin")
+      .contains("fullName", search);
+    
+    query = Parse.Query.or(usernameQuery, emailQuery, fullNameQuery);
+    
+    if (roleFilter) {
+      query.equalTo("staffRole", roleFilter);
+    }
+  }
+  
+  // Sorting
+  query.addAscending("username");
+  
+  // Limit and skip
+  if (params.limit) {
+    query.limit(params.limit);
+  }
+  if (params.skip) {
+    query.skip(params.skip);
+  }
+  
+  // Execute query with master key to bypass restrictions
+  const staff = await query.find({ useMasterKey: true });
+  
+  // Return user data as JSON - frontend will convert to Parse.User objects
+  return staff.map(user => {
+    // Get all attributes
+    const attrs = user.attributes;
+    return {
+      id: user.id,
+      className: user.className,
+      ...attrs,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  });
+});
+
+// Cloud Function to get staff member by ID (bypasses _User query restrictions)
+Parse.Cloud.define("getStaffById", async (request) => {
+  // Require authentication
+  if (!request.user) {
+    throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Authentication required");
+  }
+
+  const staffId = request.params.id;
+  
+  if (!staffId) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "Staff ID is required");
+  }
+
+  // Query for staff member with master key
+  const query = new Parse.Query(Parse.User);
+  query.equalTo("objectId", staffId);
+  
+  const staff = await query.first({ useMasterKey: true });
+  
+  if (!staff) {
+    throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, "Staff member not found");
+  }
+  
+  // Verify this is a staff member (has staffRole and not admin)
+  const staffRole = staff.get("staffRole");
+  const role = staff.get("role");
+  
+  if (!staffRole || role === "admin") {
+    throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, "Staff member not found");
+  }
+
+  // Return user data as JSON
+  const attrs = staff.attributes;
+  return {
+    objectId: staff.id,
+    id: staff.id,
+    className: staff.className,
+    ...attrs,
+    createdAt: staff.createdAt,
+    updatedAt: staff.updatedAt,
+  };
+});
+

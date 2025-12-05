@@ -109,30 +109,6 @@ export default function ConfigPage() {
     }
   }
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file')
-        return
-      }
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size must be less than 5MB')
-        return
-      }
-      setLogoFile(file)
-      setRemoveLogo(false) // Cancel remove if uploading new logo
-      // Create preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">{t.config.title || 'Clinic Configuration'}</h1>

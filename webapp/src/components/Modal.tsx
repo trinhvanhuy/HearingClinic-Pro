@@ -31,9 +31,9 @@ export default function Modal({ isOpen, onClose, title, children, footer }: Moda
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-10">
+      <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 z-10 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
@@ -46,7 +46,7 @@ export default function Modal({ isOpen, onClose, title, children, footer }: Moda
         </div>
 
         {/* Content */}
-        <div className="p-6">{children}</div>
+        <div className="p-6 overflow-y-auto flex-1">{children}</div>
 
         {/* Footer */}
         {footer && (
