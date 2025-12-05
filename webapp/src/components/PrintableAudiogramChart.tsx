@@ -30,7 +30,7 @@ export default function PrintableAudiogramChart({
   // Use container width - for A4 print, this should be ~190mm (210mm - 20mm margins)
   // Use large width for full page, will scale to 100% of container
   const effectiveWidth = width || 2000 // Large width for full page, will scale to 100%
-  const padding = { top: 60, right: 60, bottom: 80, left: 80 } // Larger padding for better proportions
+  const padding = { top: 0, right: 0, bottom: 0, left: 0 } // Reduced top padding to minimize spacing
   const chartWidth = effectiveWidth - padding.left - padding.right
   const chartHeight = height - padding.top - padding.bottom
 

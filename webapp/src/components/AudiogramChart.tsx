@@ -493,7 +493,7 @@ export default function AudiogramChart({
           ref={svgRef}
           width={width}
           height={height}
-          className="border border-gray-300 rounded cursor-crosshair"
+          className="rounded cursor-crosshair"
           onClick={handleClick}
           onMouseMove={handleMouseMove}
           onMouseDown={handleMouseDown}
