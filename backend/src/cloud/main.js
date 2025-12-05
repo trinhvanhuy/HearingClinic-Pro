@@ -26,13 +26,34 @@ Parse.Cloud.beforeSave("Client", async (request) => {
 Parse.Cloud.beforeSave("Client", async (request) => {
   const client = request.object;
   
-  if (!client.get("firstName") || !client.get("lastName")) {
-    throw new Parse.Error(Parse.Error.VALIDATION_ERROR, "First name and last name are required");
+  // Require either fullName OR (firstName AND lastName)
+  const fullName = client.get("fullName");
+  const firstName = client.get("firstName");
+  const lastName = client.get("lastName");
+  
+  if (!fullName && (!firstName || !lastName)) {
+    throw new Parse.Error(Parse.Error.VALIDATION_ERROR, "Full name or first name and last name are required");
   }
   
-  if (!client.get("phone")) {
-    throw new Parse.Error(Parse.Error.VALIDATION_ERROR, "Phone number is required");
+  // If fullName exists but firstName/lastName don't, try to split fullName
+  if (fullName && (!firstName || !lastName)) {
+    const nameParts = String(fullName).trim().split(/\s+/);
+    if (nameParts.length > 1) {
+      client.set("lastName", nameParts[0]);
+      client.set("firstName", nameParts.slice(1).join(" "));
+    } else {
+      client.set("firstName", fullName);
+      client.set("lastName", "");
+    }
   }
+  
+  // Ensure fullName exists
+  if (!fullName && firstName && lastName) {
+    client.set("fullName", `${lastName} ${firstName}`.trim());
+  }
+  
+  // Phone is now optional (can be empty string)
+  // Remove the phone validation to allow empty phones
 });
 
 // Update client's lastVisitDate after saving HearingReport
