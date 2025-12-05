@@ -53,13 +53,6 @@ export default function DashboardPage() {
             <PlusIcon className="w-4 h-4" />
             {t.dashboard.newClient}
           </Link>
-          <Link 
-            to="/hearing-reports/new" 
-            className="bg-primary text-white rounded-xl shadow-sm px-4 py-2 flex items-center gap-2 hover:opacity-90 transition-all font-medium"
-          >
-            <PlusIcon className="w-4 h-4" />
-            {t.dashboard.newHearingReport}
-          </Link>
         </div>
       </div>
 

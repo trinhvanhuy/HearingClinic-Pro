@@ -9,11 +9,10 @@ import ViewAudiogramButton from '../../components/ViewAudiogramButton'
 export default function ClientListPage() {
   const { t } = useI18n()
   const [search, setSearch] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(true)
 
   const { data: clients = [], isLoading } = useQuery({
-    queryKey: ['clients', search, isActiveFilter],
-    queryFn: () => clientService.getAll({ search, isActive: isActiveFilter }),
+    queryKey: ['clients', search],
+    queryFn: () => clientService.getAll({ search }),
   })
 
   return (
@@ -34,18 +33,6 @@ export default function ClientListPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <select
-            className="input w-48"
-            value={isActiveFilter === undefined ? 'all' : isActiveFilter ? 'active' : 'inactive'}
-            onChange={(e) => {
-              const value = e.target.value
-              setIsActiveFilter(value === 'all' ? undefined : value === 'active')
-            }}
-          >
-            <option value="all">{t.clients.allClients}</option>
-            <option value="active">{t.clients.activeOnly}</option>
-            <option value="inactive">{t.clients.inactiveOnly}</option>
-          </select>
         </div>
 
         {isLoading ? (

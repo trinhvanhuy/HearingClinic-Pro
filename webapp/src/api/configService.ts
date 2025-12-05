@@ -6,6 +6,7 @@ export interface ClinicConfig {
   clinicName: string
   clinicAddress: string
   clinicPhone?: string
+  logoUrl?: string
 }
 
 export const configService = {
@@ -17,13 +18,21 @@ export const configService = {
       const Config = Parse.Object.extend('Config')
       const query = new Parse.Query(Config)
       query.equalTo('key', CONFIG_KEY)
+      query.include('logo')
       const result = await query.first()
       
       if (result) {
+        const logo = result.get('logo')
+        let logoUrl: string | undefined
+        if (logo && logo instanceof Parse.File) {
+          logoUrl = logo.url()
+        }
+        
         return {
           clinicName: result.get('clinicName') || 'Hearing Clinic Pro',
           clinicAddress: result.get('clinicAddress') || '',
           clinicPhone: result.get('clinicPhone') || '',
+          logoUrl: logoUrl,
         }
       }
       
@@ -32,6 +41,7 @@ export const configService = {
         clinicName: 'Hearing Clinic Pro',
         clinicAddress: '',
         clinicPhone: '',
+        logoUrl: undefined,
       }
     } catch (error) {
       console.error('Error getting config:', error)
@@ -39,6 +49,7 @@ export const configService = {
         clinicName: 'Hearing Clinic Pro',
         clinicAddress: '',
         clinicPhone: '',
+        logoUrl: undefined,
       }
     }
   },
@@ -46,7 +57,7 @@ export const configService = {
   /**
    * Update clinic configuration (admin only)
    */
-  async updateConfig(config: ClinicConfig): Promise<void> {
+  async updateConfig(config: ClinicConfig & { logoFile?: File; removeLogo?: boolean }): Promise<void> {
     const Config = Parse.Object.extend('Config')
     const query = new Parse.Query(Config)
     query.equalTo('key', CONFIG_KEY)
@@ -64,6 +75,15 @@ export const configService = {
       configObj.set('clinicPhone', config.clinicPhone)
     } else {
       configObj.unset('clinicPhone')
+    }
+    
+    // Handle logo upload or removal
+    if (config.removeLogo) {
+      configObj.unset('logo')
+    } else if (config.logoFile) {
+      const parseFile = new Parse.File('logo.png', config.logoFile, 'image/png')
+      await parseFile.save()
+      configObj.set('logo', parseFile)
     }
     
     await configObj.save()

@@ -5,13 +5,14 @@ import { useAuth } from '../../hooks/useAuth'
 import { isAdminSync } from '../../utils/roleHelper'
 import { Navigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 export default function ConfigPage() {
   const { t } = useI18n()
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const isAdmin = isAdminSync(user)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: config, isLoading } = useQuery({
     queryKey: ['clinic-config'],
@@ -23,6 +24,9 @@ export default function ConfigPage() {
     clinicAddress: '',
     clinicPhone: '',
   })
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [removeLogo, setRemoveLogo] = useState(false)
 
   useEffect(() => {
     if (config) {
@@ -31,14 +35,24 @@ export default function ConfigPage() {
         clinicAddress: config.clinicAddress,
         clinicPhone: config.clinicPhone || '',
       })
+      if (config.logoUrl) {
+        setLogoPreview(config.logoUrl)
+      } else {
+        setLogoPreview(null)
+      }
     }
   }, [config])
 
   const mutation = useMutation({
-    mutationFn: (data: typeof formData) => configService.updateConfig(data),
+    mutationFn: (data: typeof formData & { logoFile?: File; removeLogo?: boolean }) => configService.updateConfig(data),
     onSuccess: () => {
       toast.success(t.config.configUpdated || 'Configuration updated successfully')
       queryClient.invalidateQueries({ queryKey: ['clinic-config'] })
+      setLogoFile(null)
+      setRemoveLogo(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     },
     onError: (error: any) => {
       toast.error(error.message || t.common.save)
@@ -55,7 +69,68 @@ export default function ConfigPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    mutation.mutate(formData)
+    mutation.mutate({
+      ...formData,
+      logoFile: logoFile || undefined,
+      removeLogo: removeLogo,
+    })
+  }
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file')
+        return
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB')
+        return
+      }
+      setLogoFile(file)
+      setRemoveLogo(false) // Cancel remove if uploading new logo
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null)
+    setRemoveLogo(true)
+    setLogoPreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file')
+        return
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB')
+        return
+      }
+      setLogoFile(file)
+      setRemoveLogo(false) // Cancel remove if uploading new logo
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   return (
@@ -93,6 +168,49 @@ export default function ConfigPage() {
             value={formData.clinicPhone}
             onChange={(e) => setFormData({ ...formData, clinicPhone: e.target.value })}
           />
+        </div>
+
+        <div>
+          <label className="label">{t.config.logo || 'Clinic Logo'}</label>
+          <div className="space-y-3">
+            {(logoPreview || config?.logoUrl) && (
+              <div className="relative inline-block">
+                <img
+                  src={logoPreview || config?.logoUrl}
+                  alt="Logo preview"
+                  className="h-20 w-auto border border-gray-300 rounded-lg p-2 bg-white"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
+                className="hidden"
+                id="logo-upload"
+              />
+              <label
+                htmlFor="logo-upload"
+                className="btn btn-secondary cursor-pointer"
+              >
+                {logoPreview ? t.config.changeLogo || 'Change Logo' : t.config.uploadLogo || 'Upload Logo'}
+              </label>
+              {(logoPreview || config?.logoUrl) && (
+                <button
+                  type="button"
+                  onClick={handleRemoveLogo}
+                  className="btn btn-secondary"
+                >
+                  {t.config.removeLogo || 'Remove Logo'}
+                </button>
+              )}
+            </div>
+            <p className="text-sm text-gray-500">
+              {t.config.logoHint || 'Recommended: PNG format, transparent background, max 5MB'}
+            </p>
+          </div>
         </div>
 
         <div className="flex gap-2 justify-end">
