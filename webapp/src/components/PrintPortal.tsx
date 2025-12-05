@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import PrintableHearingReport from './PrintableHearingReport'
+import { useI18n } from '../i18n/I18nContext'
 
 interface PrintPortalProps {
   report: any
@@ -27,6 +28,7 @@ export default function PrintPortal({
   isOpen,
   onAfterPrint,
 }: PrintPortalProps) {
+  const { language } = useI18n()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [mounted, setMounted] = useState(false)
 
@@ -96,6 +98,7 @@ export default function PrintPortal({
       clinicConfig={clinicConfig}
       chartImages={chartImages}
       formData={formData}
+      language={language}
     />,
     containerRef.current
   )

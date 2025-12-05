@@ -5,8 +5,10 @@ import { hearingReportService } from '../../api/hearingReportService'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import toast from 'react-hot-toast'
 import ConfirmDeleteModal from '../../components/ConfirmDeleteModal'
+import { useI18n } from '../../i18n/I18nContext'
 
 export default function HearingReportDetailPage() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -28,7 +30,7 @@ export default function HearingReportDetailPage() {
   const deleteMutation = useMutation({
     mutationFn: () => hearingReportService.delete(id!),
     onSuccess: () => {
-      toast.success('Report deleted')
+      toast.success(t.hearingReports.reportDeleted)
       queryClient.invalidateQueries({ queryKey: ['hearing-reports'] })
       // Invalidate appointments to refresh Patient History
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
@@ -43,7 +45,7 @@ export default function HearingReportDetailPage() {
       }
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete report')
+      toast.error(error.message || t.hearingReports.failedToDelete)
     },
   })
 
@@ -52,7 +54,7 @@ export default function HearingReportDetailPage() {
   }
 
   if (!report) {
-    return <div className="text-center py-8">Report not found</div>
+    return <div className="text-center py-8">{t.hearingReports.noReports}</div>
   }
 
   const client = report.get('client')
@@ -63,7 +65,7 @@ export default function HearingReportDetailPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Hearing Report</h1>
+        <h1 className="text-3xl font-bold">{t.hearingReports.title}</h1>
         <div className="flex gap-2">
           <Link to={`/hearing-reports/${id}/print`} className="btn btn-secondary">
             Print
@@ -72,7 +74,7 @@ export default function HearingReportDetailPage() {
             onClick={() => setDeleteModalOpen(true)}
             className="btn btn-danger"
           >
-            Delete
+            {t.common.delete}
           </button>
         </div>
       </div>
@@ -80,7 +82,7 @@ export default function HearingReportDetailPage() {
       <div className="card space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Client</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-1">{t.hearingReports.client}</h3>
             <p className="text-lg">
               <Link
                 to={`/clients/${client?.id}`}
@@ -95,7 +97,7 @@ export default function HearingReportDetailPage() {
             <p className="text-lg">{formatDate(report.get('testDate'))}</p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Type of Test</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-1">{t.appointments.hearingTestType}</h3>
             <p className="text-lg capitalize">{report.get('typeOfTest') || '-'}</p>
           </div>
           {report.get('audiologist') && (
@@ -112,12 +114,12 @@ export default function HearingReportDetailPage() {
 
         {/* Hearing Thresholds */}
         <div>
-          <h3 className="text-lg font-semibold mb-4">Hearing Thresholds (dB HL)</h3>
+          <h3 className="text-lg font-semibold mb-4">{t.hearingReports.pureToneAudiometry}</h3>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="border px-4 py-2">Frequency (Hz)</th>
+                  <th className="border px-4 py-2">{t.hearingReports.frequency}</th>
                   {frequencies.map((freq) => (
                     <th key={freq} className="border px-4 py-2">
                       {freq}
@@ -127,7 +129,7 @@ export default function HearingReportDetailPage() {
               </thead>
               <tbody>
               <tr>
-                <td className="border px-4 py-2 font-medium" style={{ color: '#1E88E5' }}>Left</td>
+                <td className="border px-4 py-2 font-medium" style={{ color: '#1E88E5' }}>{t.hearingReports.left}</td>
                 {frequencies.map((freq) => (
                   <td key={freq} className="border px-4 py-2 text-center">
                     {leftEar[freq as keyof typeof leftEar] ?? '-'}
@@ -135,7 +137,7 @@ export default function HearingReportDetailPage() {
                 ))}
               </tr>
               <tr>
-                <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>Right</td>
+                <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>{t.hearingReports.right}</td>
                 {frequencies.map((freq) => (
                   <td key={freq} className="border px-4 py-2 text-center">
                     {rightEar[freq as keyof typeof rightEar] ?? '-'}
@@ -156,7 +158,7 @@ export default function HearingReportDetailPage() {
 
         {report.get('recommendations') && (
           <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Recommendations</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-1">{t.hearingReports.recommendations}</h3>
             <p className="whitespace-pre-wrap">{report.get('recommendations')}</p>
           </div>
         )}
@@ -173,8 +175,8 @@ export default function HearingReportDetailPage() {
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={() => deleteMutation.mutate()}
-        title="Delete Hearing Report"
-        message="Are you sure you want to delete this report? This action cannot be undone."
+        title={t.hearingReports.reportDetails}
+        message={t.hearingReports.confirmDelete}
         isLoading={deleteMutation.isPending}
       />
     </div>

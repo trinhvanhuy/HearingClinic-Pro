@@ -190,13 +190,13 @@ export default function ClientFormPage() {
         </div>
 
         <div>
-          <label className="label">{t.clients.referrer || 'Người giới thiệu'}</label>
+          <label className="label">{t.clients.referrer}</label>
           <input
             type="text"
             className="input"
             value={formData.referrer}
             onChange={(e) => setFormData({ ...formData, referrer: e.target.value })}
-            placeholder={t.clients.referrerPlaceholder || 'Tên người giới thiệu'}
+            placeholder={t.clients.referrerPlaceholder}
           />
         </div>
 
@@ -208,17 +208,17 @@ export default function ClientFormPage() {
               className="input"
               value={formData.hearingAidLeft}
               onChange={(e) => setFormData({ ...formData, hearingAidLeft: e.target.value })}
-              placeholder={t.clients.hearingAidPlaceholder || 'Ví dụ: Phonak Audeo P90'}
+              placeholder={t.clients.hearingAidPlaceholder}
             />
           </div>
           <div>
-            <label className="label">{t.clients.hearingAidRight || 'Loại máy đang đeo bên phải'}</label>
+            <label className="label">{t.clients.hearingAidRight}</label>
             <input
               type="text"
               className="input"
               value={formData.hearingAidRight}
               onChange={(e) => setFormData({ ...formData, hearingAidRight: e.target.value })}
-              placeholder={t.clients.hearingAidPlaceholder || 'Ví dụ: Phonak Audeo P90'}
+              placeholder={t.clients.hearingAidPlaceholder}
             />
           </div>
         </div>

@@ -132,10 +132,10 @@ export default function LoginPage() {
         <div className="mb-12 flex items-center gap-4">
           <img
             src={logoUrl}
-            alt="Hearing Clinic Pro"
+            alt={t.config.defaultClinicName}
             className="h-16"
           />
-          <h1 className="text-3xl font-bold" style={{ color: '#E14D4D' }}>Hearing Clinic Pro</h1>
+          <h1 className="text-3xl font-bold" style={{ color: '#E14D4D' }}>{t.config.defaultClinicName}</h1>
         </div>
 
         {/* Login Panel */}

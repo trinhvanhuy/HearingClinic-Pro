@@ -27,6 +27,7 @@ export interface Translations {
     notAvailable: string
     saving: string
     updating: string
+    both: string
   }
 
   // Navigation
@@ -47,6 +48,15 @@ export interface Translations {
     clinicAddress: string
     clinicPhone: string
     configUpdated: string
+    logo: string
+    changeLogo: string
+    uploadLogo: string
+    removeLogo: string
+    pleaseSelectImage: string
+    imageSizeLimit: string
+    defaultClinicName: string
+    logoHint: string
+    logoPreview: string
   }
 
   // Login
@@ -154,8 +164,69 @@ export interface Translations {
     enterSignatureName: string
     enterPrintName: string
     enterLicenseNumber: string
-      viewAudiogram: string
-      createAudiogram: string
+    viewAudiogram: string
+    createAudiogram: string
+    reportUpdated: string
+    reportCreated: string
+    reportDeleted: string
+    failedToSave: string
+    failedToDelete: string
+    confirmDelete: string
+    pleaseSelectClient: string
+    invalidClient: string
+    clientNotFound: string
+    clientEmailNotFound: string
+    generatingPdf: string
+    clientRequired: string
+    invalidClientId: string
+    pdfGenerated: string
+    pdfGenerationFailed: string
+    openingPrintDialog: string
+    pdfReadyForEmail: string
+    hearingLossAssessment: string
+    patientInformation: string
+    lastName: string
+    firstName: string
+    addressStreet: string
+    cityTown: string
+    telephoneNumber: string
+    dateOfBirth: string
+    dateOfService: string
+    frequency: string
+    right: string
+    left: string
+    dataPoints: string
+    addRow: string
+    ear: string
+    dbHL: string
+    recognitionPercent: string
+    action: string
+    delete: string
+    noDataPoints: string
+    correctPercent: string
+    loss: string
+    pressure: string
+    admittance: string
+    undo: string
+    clear: string
+    save: string
+    shareEmail: string
+    downloadPdf: string
+    updateReport: string
+    createReport: string
+    tel: string
+    discriminationLossChart: string
+    hearingAidSuggested: string
+    generatedOn: string
+    expandMenu: string
+    collapseMenu: string
+    syncing: string
+    online: string
+    offline: string
+    checkingConnection: string
+    addNew: string
+    device: string
+    note: string
   }
 
   // Reminders
@@ -219,6 +290,54 @@ export interface Translations {
     counselingUpdated: string
     selectHearingReport: string
     hearingTestType: string
+    repairTitle: string
+    editRepairTitle: string
+    purchaseTitle: string
+    editPurchaseTitle: string
+    deviceName: string
+    deviceNameRequired: string
+    deviceNameRequiredPurchase: string
+    selectRepairer: string
+    selectBuyer: string
+    repairDate: string
+    purchaseDate: string
+    repairNote: string
+    purchaseNote: string
+    price: string
+    invalidPrice: string
+    isPaid: string
+    paymentMethod: string
+    cash: string
+    bankTransfer: string
+    paymentCollector: string
+    selectPaymentCollector: string
+    repairUpdated: string
+    repairCreated: string
+    purchaseUpdated: string
+    purchaseCreated: string
+    failedToSaveRepair: string
+    failedToSavePurchase: string
+    failedToSaveCounseling: string
+    noDateAvailable: string
+    selectStaff: string
+    searchStaff: string
+    noStaffFound: string
+    phone: string
+    email: string
+    address: string
+    dateOfBirth: string
+    counselingContent: string
+    enterCounselingContent: string
+    enterDeviceName: string
+    enterRepairContent: string
+    enterPurchaseContent: string
+    enterPrice: string
+    enterRepairDate: string
+    enterPurchaseDate: string
+    enterCounselingDate: string
+    selectCounselorStaff: string
+    updateAppointment: string
+    createAppointment: string
   }
 
   // Client Detail
@@ -299,6 +418,7 @@ export const translations: Record<Language, Translations> = {
       notAvailable: 'N/A',
       saving: 'Saving...',
       updating: 'Updating...',
+      both: 'Both',
     },
     nav: {
       dashboard: 'Dashboard',
@@ -315,6 +435,12 @@ export const translations: Record<Language, Translations> = {
       clinicAddress: 'Clinic Address',
       clinicPhone: 'Clinic Phone',
       configUpdated: 'Configuration updated successfully',
+      logo: 'Clinic Logo',
+      changeLogo: 'Change Logo',
+      uploadLogo: 'Upload Logo',
+      removeLogo: 'Remove Logo',
+      pleaseSelectImage: 'Please select an image file',
+      imageSizeLimit: 'Image size must be less than 5MB',
     },
     login: {
       title: 'Sign In',
@@ -423,6 +549,54 @@ export const translations: Record<Language, Translations> = {
       enterLicenseNumber: 'Enter license number',
       viewAudiogram: 'View Audiogram',
       createAudiogram: 'Create Audiogram',
+      reportUpdated: 'Report updated',
+      reportCreated: 'Report created',
+      reportDeleted: 'Report deleted',
+      failedToSave: 'Failed to save report',
+      failedToDelete: 'Failed to delete report',
+      confirmDelete: 'Are you sure you want to delete this report? This action cannot be undone.',
+      pleaseSelectClient: 'Please select a client',
+      invalidClient: 'Invalid client. Please select a valid client from the list.',
+      clientNotFound: 'Client not found',
+      clientEmailNotFound: 'Client email not found',
+      generatingPdf: 'Generating PDF...',
+      pdfGenerated: 'PDF generated successfully',
+      pdfGenerationFailed: 'Failed to export PDF',
+      openingPrintDialog: 'Opening print dialog...',
+      pdfReadyForEmail: 'PDF ready. Please attach it manually to the email.',
+      hearingLossAssessment: 'Hearing Loss Assessment',
+      patientInformation: 'Patient Information',
+      lastName: 'Last Name',
+      firstName: 'First Name',
+      addressStreet: 'Address (Street)',
+      cityTown: 'City/Town',
+      telephoneNumber: 'Telephone Number',
+      dateOfBirth: 'Date of Birth',
+      dateOfService: 'Date of Service',
+      frequency: 'Frequency (Hz)',
+      right: 'Right',
+      left: 'Left',
+      dataPoints: 'Data Points',
+      addRow: '+ Add Row',
+      ear: 'Ear',
+      dbHL: 'dB HL',
+      recognitionPercent: '% Recognition',
+      action: 'Action',
+      delete: 'Delete',
+      noDataPoints: 'No data points. Click "+ Add Row" to add data.',
+      correctPercent: 'Correct %',
+      loss: 'Loss',
+      pressure: 'Pressure (mmH₂O)',
+      admittance: 'Admittance',
+      undo: 'Undo',
+      clear: 'Clear',
+      save: 'Save',
+      shareEmail: 'Share Email',
+      downloadPdf: 'Download PDF',
+      updateReport: 'Update Report',
+      createReport: 'Create Report',
+      tel: 'Tel',
+      discriminationLossChart: 'Discrimination Loss Chart',
     },
     reminders: {
       title: 'Reminders',
@@ -482,6 +656,52 @@ export const translations: Record<Language, Translations> = {
       counselingUpdated: 'Counseling appointment updated',
       selectHearingReport: 'Select Hearing Report',
       hearingTestType: 'Audiogram',
+      repairTitle: 'Repair Information',
+      editRepairTitle: 'Edit Repair Information',
+      purchaseTitle: 'Purchase Information',
+      editPurchaseTitle: 'Edit Purchase Information',
+      deviceName: 'Device Name',
+      deviceNameRequired: 'Please enter device name',
+      selectRepairer: 'Please select repairer',
+      selectBuyer: 'Please select buyer',
+      repairDate: 'Repair Date',
+      purchaseDate: 'Purchase Date',
+      repairNote: 'Repair Content',
+      purchaseNote: 'Purchase Content',
+      price: 'Price',
+      invalidPrice: 'Invalid price',
+      isPaid: 'Paid',
+      paymentMethod: 'Payment Method',
+      cash: 'Cash',
+      bankTransfer: 'Bank Transfer',
+      paymentCollector: 'Payment Collector',
+      selectPaymentCollector: 'Select payment collector',
+      repairUpdated: 'Repair appointment updated',
+      repairCreated: 'Repair appointment created',
+      purchaseUpdated: 'Purchase information updated',
+      purchaseCreated: 'Purchase information created',
+      failedToSaveRepair: 'Failed to save repair appointment',
+      failedToSavePurchase: 'Failed to save purchase information',
+      failedToSaveCounseling: 'Failed to save counseling appointment',
+      noDateAvailable: 'No date available',
+      selectStaff: 'Select staff',
+      searchStaff: 'Search staff...',
+      noStaffFound: 'No staff found',
+      phone: 'Phone',
+      email: 'Email',
+      address: 'Address',
+      dateOfBirth: 'Date of Birth',
+      counselingContent: 'Counseling Content',
+      enterCounselingContent: 'Enter counseling content',
+      enterDeviceName: 'Enter device name',
+      enterDeviceNamePurchase: 'Enter device name to purchase',
+      enterRepairContent: 'Enter repair content',
+      enterPurchaseContent: 'Enter purchase content',
+      enterPrice: 'Enter price',
+      enterRepairDate: 'Enter repair date',
+      enterPurchaseDate: 'Enter purchase date',
+      enterCounselingDate: 'Enter counseling date',
+      selectCounselorStaff: 'Please select counselor staff',
     },
     clientDetail: {
       patient: 'Patient',
@@ -524,6 +744,9 @@ export const translations: Record<Language, Translations> = {
       hearingReport: 'Hearing Report',
       staff: 'Staff',
       viewReport: 'View Report',
+      hearingAidLeft: 'Hearing Aid (Left)',
+      hearingAidRight: 'Hearing Aid (Right)',
+      referrer: 'Referrer',
     },
     staff: {
       title: 'Staff Management',
@@ -553,6 +776,7 @@ export const translations: Record<Language, Translations> = {
       selectRole: 'Select role...',
       leaveBlank: 'Leave blank to keep current',
       required: 'is required',
+      staffIdRequired: 'Staff ID is required',
     },
     notFound: {
       title: '404',
@@ -587,6 +811,7 @@ export const translations: Record<Language, Translations> = {
       notAvailable: 'N/A',
       saving: 'Đang lưu...',
       updating: 'Đang cập nhật...',
+      both: 'Cả hai',
     },
     nav: {
       dashboard: 'Bảng điều khiển',
@@ -603,6 +828,15 @@ export const translations: Record<Language, Translations> = {
       clinicAddress: 'Địa chỉ phòng khám',
       clinicPhone: 'Số điện thoại',
       configUpdated: 'Cập nhật cấu hình thành công',
+      logo: 'Logo phòng khám',
+      changeLogo: 'Đổi logo',
+      uploadLogo: 'Tải logo',
+      removeLogo: 'Xóa logo',
+      pleaseSelectImage: 'Vui lòng chọn file ảnh',
+      imageSizeLimit: 'Kích thước ảnh phải nhỏ hơn 5MB',
+      defaultClinicName: 'Hearing Clinic Pro',
+      logoHint: 'Khuyến nghị: Định dạng PNG, nền trong suốt, tối đa 5MB',
+      logoPreview: 'Xem trước logo',
     },
     login: {
       title: 'Đăng nhập',
@@ -697,8 +931,81 @@ export const translations: Record<Language, Translations> = {
       speechAudiometry: 'Đo thính lực lời nói',
       tympanometry: 'Đo nhĩ lượng',
       recommendations: 'Khuyến nghị',
+      discriminationLoss: 'Mất phân biệt',
+      tympanograms: 'Đo nhĩ lượng (Áp suất mmH20)',
+      results: 'Kết quả',
+      signature: 'Chữ ký',
+      printName: 'Tên in',
+      licenseNo: 'Số giấy phép',
+      signatureDate: 'Ngày',
+      enterResults: 'Nhập tóm tắt kết quả...',
+      enterRecommendations: 'Nhập khuyến nghị...',
+      enterSignatureName: 'Nhập tên chữ ký',
+      enterPrintName: 'Nhập tên in',
+      enterLicenseNumber: 'Nhập số giấy phép',
       viewAudiogram: 'Xem đo thính lực',
       createAudiogram: 'Tạo đo thính lực',
+      reportUpdated: 'Đã cập nhật báo cáo',
+      reportCreated: 'Đã tạo báo cáo',
+      reportDeleted: 'Đã xóa báo cáo',
+      failedToSave: 'Không thể lưu báo cáo',
+      failedToDelete: 'Không thể xóa báo cáo',
+      confirmDelete: 'Bạn có chắc chắn muốn xóa báo cáo này? Hành động này không thể hoàn tác.',
+      pleaseSelectClient: 'Vui lòng chọn khách hàng',
+      invalidClient: 'Khách hàng không hợp lệ. Vui lòng chọn khách hàng từ danh sách.',
+      clientNotFound: 'Không tìm thấy khách hàng',
+      clientEmailNotFound: 'Không tìm thấy email khách hàng',
+      generatingPdf: 'Đang tạo PDF...',
+      clientRequired: 'Khách hàng là bắt buộc',
+      invalidClientId: 'ID khách hàng không hợp lệ. Vui lòng chọn khách hàng từ danh sách.',
+      pdfGenerated: 'Đã tạo PDF thành công',
+      pdfGenerationFailed: 'Không thể xuất PDF',
+      openingPrintDialog: 'Đang mở hộp thoại in...',
+      pdfReadyForEmail: 'PDF đã sẵn sàng. Vui lòng đính kèm thủ công vào email.',
+      hearingLossAssessment: 'Đánh giá Mất thính lực',
+      patientInformation: 'Thông tin Bệnh nhân',
+      lastName: 'Họ',
+      firstName: 'Tên',
+      addressStreet: 'Địa chỉ (Đường)',
+      cityTown: 'Thành phố/Thị trấn',
+      telephoneNumber: 'Số điện thoại',
+      dateOfBirth: 'Ngày sinh',
+      dateOfService: 'Ngày khám',
+      frequency: 'Tần số (Hz)',
+      right: 'Phải',
+      left: 'Trái',
+      dataPoints: 'Điểm dữ liệu',
+      addRow: '+ Thêm dòng',
+      ear: 'Tai',
+      dbHL: 'dB HL',
+      recognitionPercent: '% Nhận biết',
+      action: 'Thao tác',
+      delete: 'Xóa',
+      noDataPoints: 'Chưa có điểm dữ liệu. Nhấp "+ Thêm dòng" để thêm dữ liệu.',
+      correctPercent: '% Đúng',
+      loss: 'Mất',
+      pressure: 'Áp suất (mmH₂O)',
+      admittance: 'Độ dẫn',
+      undo: 'Hoàn tác',
+      clear: 'Xóa',
+      save: 'Lưu',
+      shareEmail: 'Chia sẻ Email',
+      downloadPdf: 'Tải PDF',
+      updateReport: 'Cập nhật Báo cáo',
+      createReport: 'Tạo Báo cáo',
+      tel: 'ĐT',
+      discriminationLossChart: 'Biểu đồ Mất phân biệt',
+      hearingAidSuggested: 'Máy trợ thính đề xuất',
+      generatedOn: 'Được tạo vào',
+      expandMenu: 'Mở rộng menu',
+      collapseMenu: 'Thu gọn menu',
+      syncing: 'Đang đồng bộ...',
+      online: 'Đang kết nối',
+      offline: 'Ngoại tuyến',
+      checkingConnection: 'Đang kiểm tra...',
+      addNew: 'Thêm mới',
+      device: 'Máy',
+      note: 'Ghi chú',
     },
     reminders: {
       title: 'Nhắc nhở',
@@ -742,6 +1049,72 @@ export const translations: Record<Language, Translations> = {
       markAsPending: 'Đánh dấu Chờ xử lý',
       markAsOverdue: 'Đánh dấu Quá hạn',
     },
+    appointments: {
+      counselingTitle: 'Thông tin tư vấn thính học',
+      editCounselingTitle: 'Sửa thông tin tư vấn thính học',
+      currentHearingStatus: 'Thính lực hiện tại',
+      clientInfo: 'Thông tin khách hàng',
+      counselingDate: 'Ngày tư vấn',
+      counselor: 'Người tư vấn',
+      counselingNote: 'Nội dung tư vấn',
+      noHearingReports: 'Chưa có báo cáo thính lực',
+      noDate: 'Không có ngày',
+      selectClient: 'Vui lòng chọn khách hàng',
+      selectCounselor: 'Vui lòng chọn nhân viên tư vấn',
+      counselingCreated: 'Tư vấn thính học đã được tạo',
+      counselingUpdated: 'Tư vấn thính học đã được cập nhật',
+      selectHearingReport: 'Chọn Báo cáo thính lực',
+      hearingTestType: 'Đo thính lực',
+      repairTitle: 'Thông tin sửa máy',
+      editRepairTitle: 'Sửa thông tin sửa máy',
+      purchaseTitle: 'Thông tin mua máy',
+      editPurchaseTitle: 'Sửa thông tin mua máy',
+      deviceName: 'Tên máy',
+      deviceNameRequired: 'Vui lòng nhập tên máy cần sửa',
+      deviceNameRequiredPurchase: 'Vui lòng nhập tên máy cần mua',
+      selectRepairer: 'Vui lòng chọn người sửa',
+      selectBuyer: 'Vui lòng chọn người mua',
+      repairDate: 'Ngày sửa',
+      purchaseDate: 'Ngày mua',
+      repairNote: 'Nội dung sửa',
+      purchaseNote: 'Nội dung mua',
+      price: 'Giá tiền',
+      invalidPrice: 'Giá tiền không hợp lệ',
+      isPaid: 'Đã thanh toán',
+      paymentMethod: 'Phương thức thanh toán',
+      cash: 'Tiền mặt',
+      bankTransfer: 'Chuyển khoản',
+      paymentCollector: 'Người thu tiền',
+      selectPaymentCollector: 'Chọn người thu tiền',
+      repairUpdated: 'Thông tin sửa máy đã được cập nhật',
+      repairCreated: 'Thông tin sửa máy đã được tạo',
+      purchaseUpdated: 'Thông tin mua máy đã được cập nhật',
+      purchaseCreated: 'Thông tin mua máy đã được tạo',
+      failedToSaveRepair: 'Không thể lưu thông tin sửa máy',
+      failedToSavePurchase: 'Không thể lưu thông tin mua máy',
+      failedToSaveCounseling: 'Không thể lưu tư vấn thính học',
+      noDateAvailable: 'Không có ngày',
+      selectStaff: 'Chọn nhân viên',
+      searchStaff: 'Tìm kiếm nhân viên...',
+      noStaffFound: 'Không tìm thấy nhân viên',
+      phone: 'SĐT',
+      email: 'Email',
+      address: 'Địa chỉ',
+      dateOfBirth: 'Ngày sinh',
+      counselingContent: 'Nội dung tư vấn',
+      enterCounselingContent: 'Nhập nội dung tư vấn',
+      enterDeviceName: 'Nhập tên máy cần sửa',
+      enterDeviceNamePurchase: 'Nhập tên máy cần mua',
+      enterRepairContent: 'Nhập nội dung sửa máy',
+      enterPurchaseContent: 'Nhập nội dung mua máy',
+      enterPrice: 'Nhập giá tiền',
+      enterRepairDate: 'Nhập ngày sửa',
+      enterPurchaseDate: 'Nhập ngày mua',
+      enterCounselingDate: 'Nhập ngày tư vấn',
+      selectCounselorStaff: 'Vui lòng chọn nhân viên tư vấn',
+      updateAppointment: 'Cập nhật Lịch hẹn',
+      createAppointment: 'Tạo Lịch hẹn',
+    },
     clientDetail: {
       patient: 'Bệnh nhân',
       patientDetails: 'Chi tiết bệnh nhân',
@@ -783,6 +1156,9 @@ export const translations: Record<Language, Translations> = {
       hearingReport: 'Báo cáo thính lực',
       staff: 'Nhân viên phụ trách',
       viewReport: 'Xem báo cáo',
+      hearingAidLeft: 'Loại máy đang đeo bên trái',
+      hearingAidRight: 'Loại máy đang đeo bên phải',
+      referrer: 'Người giới thiệu',
     },
     staff: {
       title: 'Quản lý Nhân viên',
@@ -812,6 +1188,7 @@ export const translations: Record<Language, Translations> = {
       selectRole: 'Chọn chức danh...',
       leaveBlank: 'Để trống để giữ nguyên',
       required: 'là bắt buộc',
+      staffIdRequired: 'ID nhân viên là bắt buộc',
     },
     notFound: {
       title: '404',

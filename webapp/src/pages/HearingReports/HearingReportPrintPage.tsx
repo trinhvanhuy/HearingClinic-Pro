@@ -5,8 +5,10 @@ import { configService } from '../../api/configService'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import { useEffect } from 'react'
 import { DEFAULT_LOGO } from '../../constants/logo'
+import { useI18n } from '../../i18n/I18nContext'
 
 export default function HearingReportPrintPage() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
 
   const { data: report, isLoading } = useQuery({
@@ -32,7 +34,7 @@ export default function HearingReportPrintPage() {
   }
 
   if (!report) {
-    return <div className="text-center py-8">Report not found</div>
+    return <div className="text-center py-8">{t.hearingReports.noReports}</div>
   }
 
   const client = report.get('client')
@@ -53,11 +55,11 @@ export default function HearingReportPrintPage() {
         {/* Clinic Header */}
         <div className="text-center border-b pb-4 mb-6">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <img src={clinicConfig?.logoUrl || DEFAULT_LOGO} alt="Logo" className="h-16" />
-            <h1 className="text-3xl font-bold">Hearing Loss Assessment</h1>
+            <img src={clinicConfig?.logoUrl || DEFAULT_LOGO} alt={t.config.defaultClinicName} className="h-16" />
+            <h1 className="text-3xl font-bold">{t.hearingReports.hearingLossAssessment}</h1>
           </div>
           <div className="text-sm text-gray-600">
-            <p className="font-semibold">{clinicConfig?.clinicName || 'Hearing Clinic Pro'}</p>
+            <p className="font-semibold">{clinicConfig?.clinicName || t.config.defaultClinicName}</p>
             <p>{clinicConfig?.clinicAddress || ''}</p>
             {clinicConfig?.clinicPhone && <p>Tel: {clinicConfig.clinicPhone}</p>}
           </div>
@@ -66,22 +68,22 @@ export default function HearingReportPrintPage() {
         {/* Client Info */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Client Name</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-1">{t.clients.fullName}</h3>
             <p className="text-lg">{client?.get('fullName')}</p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Test Date</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-1">{t.hearingReports.date}</h3>
             <p className="text-lg">{formatDate(report.get('testDate'))}</p>
           </div>
           {client?.get('dateOfBirth') && (
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Date of Birth</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">{t.hearingReports.dateOfBirth}</h3>
               <p className="text-lg">{formatDate(client.get('dateOfBirth'))}</p>
             </div>
           )}
           {report.get('typeOfTest') && (
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Type of Test</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">{t.appointments.hearingTestType}</h3>
               <p className="text-lg capitalize">{report.get('typeOfTest')}</p>
             </div>
           )}
@@ -89,11 +91,11 @@ export default function HearingReportPrintPage() {
 
         {/* Hearing Thresholds */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-4">Hearing Thresholds (dB HL)</h3>
+          <h3 className="text-lg font-semibold mb-4">{t.hearingReports.pureToneAudiometry}</h3>
           <table className="w-full border-collapse border">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border px-4 py-2">Frequency (Hz)</th>
+                <th className="border px-4 py-2">{t.hearingReports.frequency}</th>
                 {frequencies.map((freq) => (
                   <th key={freq} className="border px-4 py-2">
                     {freq}
@@ -111,7 +113,7 @@ export default function HearingReportPrintPage() {
                 ))}
               </tr>
               <tr>
-                <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>Right</td>
+                <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>{t.hearingReports.right}</td>
                 {frequencies.map((freq) => (
                   <td key={freq} className="border px-4 py-2 text-center">
                     {rightEar[freq as keyof typeof rightEar] ?? '-'}
@@ -133,7 +135,7 @@ export default function HearingReportPrintPage() {
         {/* Recommendations */}
         {report.get('recommendations') && (
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">Recommendations</h3>
+            <h3 className="text-lg font-semibold mb-2">{t.hearingReports.recommendations}</h3>
             <p className="whitespace-pre-wrap">{report.get('recommendations')}</p>
           </div>
         )}
@@ -141,14 +143,14 @@ export default function HearingReportPrintPage() {
         {/* Hearing Aid Suggested */}
         {report.get('hearingAidSuggested') && (
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">Hearing Aid Suggested</h3>
+            <h3 className="text-lg font-semibold mb-2">{t.hearingReports.hearingAidSuggested}</h3>
             <p>{report.get('hearingAidSuggested')}</p>
           </div>
         )}
 
         {/* Footer */}
         <div className="mt-8 pt-4 border-t text-center text-sm text-gray-500">
-          <p>Generated on {formatDate(new Date())}</p>
+          <p>{t.hearingReports.generatedOn} {formatDate(new Date())}</p>
         </div>
       </div>
     </div>

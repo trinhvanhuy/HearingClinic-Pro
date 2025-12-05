@@ -332,7 +332,7 @@ export default function ClientDetailPage() {
               <p className="font-medium">{totalCount}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">{t.clientDetail.referrer || 'Người giới thiệu'}:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.referrer}:</p>
               <p className="font-medium">{client.get('referrer') || '-'}</p>
             </div>
             <div>
@@ -340,7 +340,7 @@ export default function ClientDetailPage() {
               <p className="font-medium">{client.get('hearingAidLeft') || '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">{t.clientDetail.hearingAidRight || 'Loại máy đang đeo bên phải'}:</p>
+              <p className="text-sm text-gray-500">{t.clientDetail.hearingAidRight}:</p>
               <p className="font-medium">{client.get('hearingAidRight') || '-'}</p>
             </div>
           </div>
@@ -359,7 +359,7 @@ export default function ClientDetailPage() {
               <button
                 onClick={handleAddNewAppointment}
                 className="inline-flex items-center justify-center w-8 h-8 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
-                title="Thêm mới"
+                title={t.hearingReports.addNew}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -396,7 +396,7 @@ export default function ClientDetailPage() {
           <div className="text-center py-8">{t.common.loading}</div>
         ) : appointments.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            <p>{t.clientDetail.noAppointments || 'Chưa có lịch hẹn nào'}</p>
+            <p>{t.clientDetail.noAppointments}</p>
             {selectedType === 'REPAIR' ? (
               <button
                 onClick={handleOpenNewRepairModal}
@@ -426,11 +426,11 @@ export default function ClientDetailPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>{t.clientDetail.date || 'Ngày'}</th>
-                    <th>{t.clientDetail.type || 'Loại hẹn'}</th>
-                    <th>{t.clientDetail.description || 'Mô tả'}</th>
-                    <th>{t.clientDetail.hearingReport || 'Báo cáo thính lực'}</th>
-                    <th>{t.clientDetail.staff || 'Nhân viên phụ trách'}</th>
+                    <th>{t.clientDetail.date}</th>
+                    <th>{t.clientDetail.type}</th>
+                    <th>{t.clientDetail.description}</th>
+                    <th>{t.clientDetail.hearingReport}</th>
+                    <th>{t.clientDetail.staff}</th>
                     <th>{t.clientDetail.status}</th>
                   </tr>
                 </thead>
@@ -449,12 +449,12 @@ export default function ClientDetailPage() {
                     let description = note || ''
                     if (type === 'REPAIR' || type === 'PURCHASE') {
                       const parts: string[] = []
-                      if (deviceName) parts.push(`Máy: ${deviceName}`)
+                      if (deviceName) parts.push(`${t.hearingReports.device}: ${deviceName}`)
                       if (ear) {
-                        const earLabels: Record<string, string> = { LEFT: 'Trái', RIGHT: 'Phải', BOTH: 'Cả hai' }
-                        parts.push(`Tai: ${earLabels[ear] || ear}`)
+                        const earLabels: Record<string, string> = { LEFT: t.hearingReports.left, RIGHT: t.hearingReports.right, BOTH: t.common.both }
+                        parts.push(`${t.hearingReports.ear}: ${earLabels[ear] || ear}`)
                       }
-                      if (note) parts.push(`Ghi chú: ${note}`)
+                      if (note) parts.push(`${t.hearingReports.note}: ${note}`)
                       description = parts.join(' | ')
                     }
 
@@ -481,7 +481,7 @@ export default function ClientDetailPage() {
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
-                              {t.clientDetail.viewReport || 'Xem báo cáo'}
+                              {t.clientDetail.viewReport}
                             </Link>
                           ) : (
                             '-'
@@ -504,7 +504,7 @@ export default function ClientDetailPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6 pt-4 border-t">
                 <div className="text-sm text-gray-600">
-                  {t.common.showing || 'Hiển thị'} {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalCount)} {t.common.of || 'của'} {totalCount}
+                  {t.common.showing} {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalCount)} {t.common.of} {totalCount}
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -512,7 +512,7 @@ export default function ClientDetailPage() {
                     disabled={currentPage === 1}
                     className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
-                    {t.common.previous || 'Trước'}
+                    {t.common.previous}
                   </button>
                   <span className="px-4 py-2 text-sm text-gray-600">
                     {currentPage} / {totalPages}
@@ -522,7 +522,7 @@ export default function ClientDetailPage() {
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
-                    {t.common.next || 'Tiếp'}
+                    {t.common.next}
                   </button>
                 </div>
               </div>

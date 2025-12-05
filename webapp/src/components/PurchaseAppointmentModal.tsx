@@ -274,14 +274,14 @@ export default function PurchaseAppointmentModal({
       }
     },
     onSuccess: () => {
-      toast.success(isEdit ? 'Thông tin mua máy đã được cập nhật' : 'Thông tin mua máy đã được tạo')
+      toast.success(isEdit ? t.appointments.purchaseUpdated : t.appointments.purchaseCreated)
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['appointments', 'client', clientId] })
       queryClient.invalidateQueries({ queryKey: ['client', clientId] })
       onClose()
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Không thể lưu thông tin mua máy')
+      toast.error(error.message || t.appointments.failedToSavePurchase)
     },
   })
 
@@ -289,18 +289,18 @@ export default function PurchaseAppointmentModal({
     e.preventDefault()
 
     if (!formData.deviceName.trim()) {
-      toast.error('Vui lòng nhập tên máy cần mua')
+      toast.error(t.appointments.deviceNameRequiredPurchase)
       return
     }
 
     if (!formData.staffId) {
-      toast.error('Vui lòng chọn người mua')
+      toast.error(t.appointments.selectBuyer)
       return
     }
 
     const price = formData.price.trim() ? parseFloat(formData.price) : null
     if (price !== null && isNaN(price)) {
-      toast.error('Giá tiền không hợp lệ')
+      toast.error(t.appointments.invalidPrice)
       return
     }
 
@@ -373,7 +373,7 @@ export default function PurchaseAppointmentModal({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold">
-            {isEdit ? 'Sửa thông tin mua máy' : 'Thông tin mua máy'}
+            {isEdit ? t.appointments.editPurchaseTitle : t.appointments.purchaseTitle}
           </h2>
           <button
             onClick={onClose}
@@ -389,11 +389,11 @@ export default function PurchaseAppointmentModal({
           {/* 1. Current Hearing Status */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              1. Thính lực hiện tại
+              1. {t.appointments.currentHearingStatus}
             </label>
             {hearingReportsLoading ? (
               <p className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg border">
-                Đang tải...
+                {t.common.loading}
               </p>
             ) : hearingReports.length > 0 ? (
               <select
@@ -406,17 +406,17 @@ export default function PurchaseAppointmentModal({
                   const testDate = report.get('testDate')
                   const dateStr = testDate
                     ? new Date(testDate).toLocaleDateString('vi-VN')
-                    : 'Không có ngày'
+                    : t.appointments.noDateAvailable
                   return (
                     <option key={reportId} value={reportId}>
-                      {dateStr} - {report.get('typeOfTest') || 'Đo thính lực'}
+                      {dateStr} - {report.get('typeOfTest') || t.appointments.hearingTestType}
                     </option>
                   )
                 })}
               </select>
             ) : (
               <p className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg border">
-                Chưa có báo cáo thính lực
+                {t.appointments.noHearingReports}
               </p>
             )}
           </div>
@@ -432,11 +432,11 @@ export default function PurchaseAppointmentModal({
                   {client.get('fullName')}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  <span className="font-medium">SĐT:</span> {client.get('phone') || '-'}
+                  <span className="font-medium">{t.appointments.phone}:</span> {client.get('phone') || '-'}
                 </p>
                 {client.get('email') && (
                   <p className="text-sm text-gray-600">
-                    <span className="font-medium">Email:</span> {client.get('email')}
+                    <span className="font-medium">{t.appointments.email}:</span> {client.get('email')}
                   </p>
                 )}
                 {client.get('address') && (
@@ -446,7 +446,7 @@ export default function PurchaseAppointmentModal({
                 )}
                 {client.get('dateOfBirth') && (
                   <p className="text-sm text-gray-600">
-                    <span className="font-medium">Ngày sinh:</span>{' '}
+                    <span className="font-medium">{t.appointments.dateOfBirth}:</span>{' '}
                     {new Date(client.get('dateOfBirth')).toLocaleDateString('vi-VN')}
                   </p>
                 )}
@@ -457,14 +457,14 @@ export default function PurchaseAppointmentModal({
           {/* 3. Device Name */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              3. Máy cần mua <span className="text-red-500">*</span>
+              3. {t.appointments.deviceName} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               value={formData.deviceName}
               onChange={(e) => setFormData({ ...formData, deviceName: e.target.value })}
-              placeholder="Nhập tên máy cần mua"
+              placeholder={t.appointments.enterDeviceNamePurchase}
               required
             />
           </div>
@@ -484,7 +484,7 @@ export default function PurchaseAppointmentModal({
                   onChange={(e) => setFormData({ ...formData, ear: e.target.value as 'LEFT' | 'RIGHT' | 'BOTH' })}
                   className="mr-2"
                 />
-                <span>Trái</span>
+                <span>{t.hearingReports.left}</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -495,7 +495,7 @@ export default function PurchaseAppointmentModal({
                   onChange={(e) => setFormData({ ...formData, ear: e.target.value as 'LEFT' | 'RIGHT' | 'BOTH' })}
                   className="mr-2"
                 />
-                <span>Phải</span>
+                <span>{t.hearingReports.right}</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -506,7 +506,7 @@ export default function PurchaseAppointmentModal({
                   onChange={(e) => setFormData({ ...formData, ear: e.target.value as 'LEFT' | 'RIGHT' | 'BOTH' })}
                   className="mr-2"
                 />
-                <span>Cả hai</span>
+                <span>{t.common.both}</span>
               </label>
             </div>
           </div>
@@ -514,7 +514,7 @@ export default function PurchaseAppointmentModal({
           {/* 5. Purchase Date */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              5. Ngày mua <span className="text-red-500">*</span>
+              5. {t.appointments.purchaseDate} <span className="text-red-500">*</span>
             </label>
             <input
               type="datetime-local"
@@ -528,7 +528,7 @@ export default function PurchaseAppointmentModal({
           {/* 6. Staff Selection */}
           <div className="staff-dropdown-container">
             <label className="block text-sm font-medium mb-2">
-              6. Người mua <span className="text-red-500">*</span>
+              6. {t.appointments.selectBuyer.replace('Vui lòng chọn ', '')} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <button
@@ -543,7 +543,7 @@ export default function PurchaseAppointmentModal({
                 <span className={selectedStaff ? 'text-gray-900' : 'text-gray-400'}>
                   {selectedStaff
                     ? selectedStaff.get('fullName') || selectedStaff.get('username')
-                    : 'Chọn nhân viên'}
+                    : t.appointments.selectStaff}
                 </span>
                 <svg
                   className={`w-4 h-4 transition-transform ${showStaffDropdown ? 'transform rotate-180' : ''}`}
@@ -586,7 +586,7 @@ export default function PurchaseAppointmentModal({
                         </button>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-gray-500 text-sm">Không tìm thấy nhân viên</div>
+                      <div className="px-3 py-2 text-gray-500 text-sm">{t.appointments.noStaffFound}</div>
                     )}
                   </div>
                 </div>
@@ -597,21 +597,21 @@ export default function PurchaseAppointmentModal({
           {/* 7. Note */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              7. Nội dung mua
+              7. {t.appointments.purchaseNote}
             </label>
             <textarea
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={4}
               value={formData.note}
               onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-              placeholder="Nhập nội dung mua máy"
+              placeholder={t.appointments.enterPurchaseContent}
             />
           </div>
 
           {/* 8. Price */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              8. Giá tiền
+              8. {t.appointments.price}
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -619,7 +619,7 @@ export default function PurchaseAppointmentModal({
                 className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="Nhập giá tiền"
+                placeholder={t.appointments.enterPrice}
                 min="0"
                 step="1000"
               />
@@ -640,7 +640,7 @@ export default function PurchaseAppointmentModal({
                 onChange={(e) => setFormData({ ...formData, isPaid: e.target.checked })}
                 className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
               />
-              <span className="text-sm font-medium">9. Đã thanh toán</span>
+              <span className="text-sm font-medium">9. {t.appointments.isPaid}</span>
             </label>
           </div>
 
@@ -648,15 +648,15 @@ export default function PurchaseAppointmentModal({
           {formData.isPaid && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                10. Phương thức thanh toán
+                10. {t.appointments.paymentMethod}
               </label>
               <select
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 value={formData.paymentMethod}
                 onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as 'CASH' | 'BANK_TRANSFER' })}
               >
-                <option value="CASH">Tiền mặt</option>
-                <option value="BANK_TRANSFER">Chuyển khoản</option>
+                <option value="CASH">{t.appointments.cash}</option>
+                <option value="BANK_TRANSFER">{t.appointments.bankTransfer}</option>
               </select>
             </div>
           )}
@@ -665,7 +665,7 @@ export default function PurchaseAppointmentModal({
           {formData.isPaid && (
             <div className="payment-collector-dropdown-container">
               <label className="block text-sm font-medium mb-2">
-                11. Người thu tiền
+                11. {t.appointments.paymentCollector}
               </label>
               <div className="relative">
                 <button
@@ -679,7 +679,7 @@ export default function PurchaseAppointmentModal({
                   <span className={selectedPaymentCollector ? 'text-gray-900' : 'text-gray-400'}>
                     {selectedPaymentCollector
                       ? selectedPaymentCollector.get('fullName') || selectedPaymentCollector.get('username')
-                      : 'Chọn người thu tiền'}
+                      : t.appointments.selectPaymentCollector}
                   </span>
                   <svg
                     className={`w-4 h-4 transition-transform ${showPaymentCollectorDropdown ? 'transform rotate-180' : ''}`}
@@ -722,7 +722,7 @@ export default function PurchaseAppointmentModal({
                           </button>
                         ))
                       ) : (
-                        <div className="px-3 py-2 text-gray-500 text-sm">Không tìm thấy nhân viên</div>
+                        <div className="px-3 py-2 text-gray-500 text-sm">{t.appointments.noStaffFound}</div>
                       )}
                     </div>
                   </div>
@@ -738,14 +738,14 @@ export default function PurchaseAppointmentModal({
               onClick={onClose}
               className="px-6 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Hủy
+              {t.common.cancel}
             </button>
             <button
               type="submit"
               className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 transition-colors"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Lưu'}
+              {mutation.isPending ? t.common.saving : isEdit ? t.common.updating : t.common.save}
             </button>
           </div>
         </form>

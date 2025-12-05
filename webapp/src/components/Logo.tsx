@@ -7,7 +7,7 @@ interface LogoProps {
 }
 
 export default function Logo({ variant = 'full', size = 'md', className = '' }: LogoProps) {
-  const { language } = useI18n()
+  const { t } = useI18n()
   
   const sizeClasses = {
     sm: 'h-8',
@@ -19,7 +19,7 @@ export default function Logo({ variant = 'full', size = 'md', className = '' }: 
     return (
       <img
         src="/assets/logo-icon.png"
-        alt="Hearing Clinic Pro"
+        alt={t.config.defaultClinicName}
         className={`${sizeClasses[size]} ${className}`}
         onError={(e) => {
           // Fallback if image not found

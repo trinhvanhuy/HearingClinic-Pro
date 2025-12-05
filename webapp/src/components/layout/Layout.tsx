@@ -214,7 +214,7 @@ export default function Layout() {
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="hidden lg:flex p-1.5 rounded-lg hover:bg-gray-100 text-gray-900 transition-colors"
-                title={sidebarCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
+                title={sidebarCollapsed ? t.hearingReports.expandMenu : t.hearingReports.collapseMenu}
               >
                 <MenuIcon className="w-5 h-5" />
               </button>
@@ -228,7 +228,7 @@ export default function Layout() {
                   className="h-8 w-auto"
                 />
                 <span className="font-semibold text-base hidden sm:block" style={{ color: '#2D2D2D' }}>
-                  Hearing Clinic Pro
+                  {t.config.defaultClinicName}
                 </span>
               </div>
             </div>
@@ -259,7 +259,7 @@ export default function Layout() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Đang đồng bộ...</span>
+                  <span>{t.hearingReports.syncing}</span>
                 </div>
               )}
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
@@ -279,10 +279,10 @@ export default function Layout() {
                 }`} />
                 <span>
                   {connectionState === 'online'
-                    ? 'Đang kết nối'
+                    ? t.hearingReports.online
                     : connectionState === 'offline'
-                    ? 'Ngoại tuyến'
-                    : 'Đang kiểm tra...'}
+                    ? t.hearingReports.offline
+                    : t.hearingReports.checkingConnection}
                 </span>
               </div>
             </div>

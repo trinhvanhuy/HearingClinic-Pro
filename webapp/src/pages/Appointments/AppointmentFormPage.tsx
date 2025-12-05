@@ -106,7 +106,7 @@ export default function AppointmentFormPage() {
       }
     },
     onSuccess: () => {
-      toast.success(isEdit ? 'Appointment updated' : 'Appointment created')
+      toast.success(isEdit ? t.appointments.counselingUpdated : t.appointments.counselingCreated)
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       if (formData.clientId) {
         queryClient.invalidateQueries({ queryKey: ['appointments', 'client', formData.clientId] })
@@ -117,7 +117,7 @@ export default function AppointmentFormPage() {
       }
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to save appointment')
+      toast.error(error.message || t.appointments.failedToSaveCounseling)
     },
   })
 
@@ -125,7 +125,7 @@ export default function AppointmentFormPage() {
     e.preventDefault()
 
     if (!formData.clientId) {
-      toast.error('Please select a client')
+      toast.error(t.appointments.selectClient)
       return
     }
 
@@ -158,7 +158,7 @@ export default function AppointmentFormPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">
-        {isEdit ? 'Edit Appointment' : 'New Appointment'}
+        {isEdit ? t.appointments.editCounselingTitle : t.appointments.counselingTitle}
       </h1>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
@@ -174,7 +174,7 @@ export default function AppointmentFormPage() {
             required
             disabled={!!clientId} // Disable if clientId is in URL
           >
-            <option value="">Select a client</option>
+            <option value="">{t.appointments.selectClient}</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.get('fullName')} - {c.get('phone')}
@@ -250,7 +250,7 @@ export default function AppointmentFormPage() {
             rows={4}
             value={formData.note}
             onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-            placeholder="Enter appointment notes or description"
+            placeholder={t.appointments.counselingNote}
           />
         </div>
 
@@ -267,14 +267,14 @@ export default function AppointmentFormPage() {
             }}
             className="px-6 py-2 border rounded-lg hover:bg-gray-50"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             type="submit"
             className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 disabled:opacity-50"
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? 'Saving...' : isEdit ? 'Update Appointment' : 'Create Appointment'}
+            {mutation.isPending ? t.common.saving : isEdit ? t.appointments.counselingUpdated.replace('updated', 'Update') : t.appointments.counselingCreated.replace('created', 'Create')}
           </button>
         </div>
       </form>

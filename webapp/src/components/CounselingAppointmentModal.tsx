@@ -195,7 +195,7 @@ export default function CounselingAppointmentModal({
       }
     },
     onSuccess: () => {
-      toast.success(isEdit ? 'Tư vấn thính học đã được cập nhật' : 'Tư vấn thính học đã được tạo')
+      toast.success(isEdit ? t.appointments.counselingUpdated : t.appointments.counselingCreated)
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       if (clientId) {
         queryClient.invalidateQueries({ queryKey: ['appointments', 'client', clientId] })
@@ -204,7 +204,7 @@ export default function CounselingAppointmentModal({
       onClose()
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Không thể lưu tư vấn thính học')
+      toast.error(error.message || t.appointments.failedToSaveCounseling)
     },
   })
 
@@ -212,12 +212,12 @@ export default function CounselingAppointmentModal({
     e.preventDefault()
 
     if (!clientId) {
-      toast.error('Vui lòng chọn khách hàng')
+      toast.error(t.appointments.selectClient)
       return
     }
 
     if (!formData.staffId) {
-      toast.error('Vui lòng chọn nhân viên tư vấn')
+      toast.error(t.appointments.selectCounselorStaff)
       return
     }
 
@@ -271,7 +271,7 @@ export default function CounselingAppointmentModal({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold">
-            {isEdit ? 'Sửa thông tin tư vấn thính học' : 'Thông tin tư vấn thính học'}
+            {isEdit ? t.appointments.editCounselingTitle : t.appointments.counselingTitle}
           </h2>
           <button
             onClick={onClose}
@@ -288,11 +288,11 @@ export default function CounselingAppointmentModal({
           {clientId && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                1. Thính lực hiện tại
+                1. {t.appointments.currentHearingStatus}
               </label>
               {hearingReportsLoading ? (
                 <p className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg border">
-                  Đang tải...
+                  {t.common.loading}
                 </p>
               ) : hearingReports.length > 0 ? (
                 <select
@@ -305,17 +305,17 @@ export default function CounselingAppointmentModal({
                     const testDate = report.get('testDate')
                     const dateStr = testDate
                       ? new Date(testDate).toLocaleDateString('vi-VN')
-                      : 'Không có ngày'
+                      : t.appointments.noDateAvailable
                     return (
                       <option key={reportId} value={reportId}>
-                        {dateStr} - {report.get('typeOfTest') || 'Đo thính lực'}
+                        {dateStr} - {report.get('typeOfTest') || t.appointments.hearingTestType}
                       </option>
                     )
                   })}
                 </select>
               ) : (
                 <p className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg border">
-                  Chưa có báo cáo thính lực
+                  {t.appointments.noHearingReports}
                 </p>
               )}
             </div>
@@ -325,14 +325,14 @@ export default function CounselingAppointmentModal({
           {client && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                2. Thông tin khách hàng
+                2. {t.appointments.clientInfo}
               </label>
               <div className="p-3 bg-gray-50 rounded-lg border">
                 <p className="text-sm font-medium text-gray-900">
                   {client.get('fullName')}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  <span className="font-medium">SĐT:</span> {client.get('phone') || '-'}
+                  <span className="font-medium">{t.appointments.phone}:</span> {client.get('phone') || '-'}
                 </p>
                 {client.get('email') && (
                   <p className="text-sm text-gray-600">
@@ -341,7 +341,7 @@ export default function CounselingAppointmentModal({
                 )}
                 {client.get('address') && (
                   <p className="text-sm text-gray-600">
-                    <span className="font-medium">Địa chỉ:</span> {client.get('address')}
+                    <span className="font-medium">{t.appointments.address}:</span> {client.get('address')}
                   </p>
                 )}
               </div>
@@ -351,7 +351,7 @@ export default function CounselingAppointmentModal({
           {/* 3. Counseling Date */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              3. Ngày tư vấn <span className="text-red-500">*</span>
+                3. {t.appointments.counselingDate} <span className="text-red-500">*</span>
             </label>
             <input
               type="datetime-local"
@@ -376,7 +376,7 @@ export default function CounselingAppointmentModal({
                 <span className={selectedStaff ? 'text-gray-900' : 'text-gray-400'}>
                   {selectedStaff
                     ? selectedStaff.get('fullName') || selectedStaff.get('username')
-                    : 'Chọn nhân viên'}
+                    : t.appointments.selectStaff}
                 </span>
                 <svg
                   className={`w-4 h-4 transition-transform ${showStaffDropdown ? 'transform rotate-180' : ''}`}
@@ -419,7 +419,7 @@ export default function CounselingAppointmentModal({
                         </button>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-gray-500 text-sm">Không tìm thấy nhân viên</div>
+                      <div className="px-3 py-2 text-gray-500 text-sm">{t.appointments.noStaffFound}</div>
                     )}
                   </div>
                 </div>
@@ -430,14 +430,14 @@ export default function CounselingAppointmentModal({
           {/* 5. Note */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              5. Nội dung tư vấn
+              5. {t.appointments.counselingContent}
             </label>
             <textarea
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={4}
               value={formData.note}
               onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-              placeholder="Nhập nội dung tư vấn"
+              placeholder={t.appointments.enterCounselingContent}
             />
           </div>
 
@@ -448,14 +448,14 @@ export default function CounselingAppointmentModal({
               onClick={onClose}
               className="px-6 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Hủy
+              {t.common.cancel}
             </button>
             <button
               type="submit"
               className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 transition-colors"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Lưu'}
+              {mutation.isPending ? t.common.saving : isEdit ? t.common.updating : t.common.save}
             </button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot, Root } from 'react-dom/client'
 import PrintableHearingReport from '../components/PrintableHearingReport'
+import { Language, translations } from '../i18n/translations'
 
 /**
  * Render PrintableHearingReport component to HTML string with all styles
@@ -11,7 +12,8 @@ export function renderReportToHtml(
   client: any,
   clinicConfig: any,
   chartImages: any,
-  formData: any
+  formData: any,
+  language: Language = 'en'
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     try {
@@ -34,6 +36,7 @@ export function renderReportToHtml(
           clinicConfig,
           chartImages,
           formData,
+          language,
         })
       )
 
@@ -110,7 +113,7 @@ export function renderReportToHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hearing Report</title>
+  <title>${translations[language].hearingReports.title}</title>
   <style>
     ${allStylesheets}
     ${inlineStyles}

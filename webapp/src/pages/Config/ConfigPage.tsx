@@ -46,7 +46,7 @@ export default function ConfigPage() {
   const mutation = useMutation({
     mutationFn: (data: typeof formData & { logoFile?: File; removeLogo?: boolean }) => configService.updateConfig(data),
     onSuccess: () => {
-      toast.success(t.config.configUpdated || 'Configuration updated successfully')
+      toast.success(t.config.configUpdated)
       queryClient.invalidateQueries({ queryKey: ['clinic-config'] })
       setLogoFile(null)
       setRemoveLogo(false)
@@ -81,12 +81,12 @@ export default function ConfigPage() {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file')
+        toast.error(t.config.pleaseSelectImage)
         return
       }
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size must be less than 5MB')
+        toast.error(t.config.imageSizeLimit)
         return
       }
       setLogoFile(file)
@@ -111,11 +111,11 @@ export default function ConfigPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">{t.config.title || 'Clinic Configuration'}</h1>
+      <h1 className="text-3xl font-bold mb-6">{t.config.title}</h1>
 
       <form onSubmit={handleSubmit} className="card space-y-4">
         <div>
-          <label className="label">{t.config.clinicName || 'Clinic Name'} *</label>
+          <label className="label">{t.config.clinicName} *</label>
           <input
             type="text"
             className="input"
@@ -137,7 +137,7 @@ export default function ConfigPage() {
         </div>
 
         <div>
-          <label className="label">{t.config.clinicPhone || 'Clinic Phone'}</label>
+          <label className="label">{t.config.clinicPhone}</label>
           <input
             type="text"
             className="input"
@@ -153,7 +153,7 @@ export default function ConfigPage() {
               <div className="relative inline-block">
                 <img
                   src={logoPreview || config?.logoUrl}
-                  alt="Logo preview"
+                  alt={t.config.logoPreview}
                   className="h-20 w-auto border border-gray-300 rounded-lg p-2 bg-white"
                 />
               </div>
@@ -171,7 +171,7 @@ export default function ConfigPage() {
                 htmlFor="logo-upload"
                 className="btn btn-secondary cursor-pointer"
               >
-                {logoPreview ? t.config.changeLogo || 'Change Logo' : t.config.uploadLogo || 'Upload Logo'}
+                {logoPreview ? t.config.changeLogo : t.config.uploadLogo}
               </label>
               {(logoPreview || config?.logoUrl) && (
                 <button
@@ -184,7 +184,7 @@ export default function ConfigPage() {
               )}
             </div>
             <p className="text-sm text-gray-500">
-              {t.config.logoHint || 'Recommended: PNG format, transparent background, max 5MB'}
+              {t.config.logoHint}
             </p>
           </div>
         </div>

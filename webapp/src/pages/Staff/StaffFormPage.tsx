@@ -63,7 +63,7 @@ export default function StaffFormPage() {
         return staffService.update(id!, updateData)
       } else {
         if (!data.password) {
-          throw new Error(t.staff.passwordRequired || 'Password is required')
+          throw new Error(t.staff.passwordRequired)
         }
         return staffService.create({
           username: data.username,
@@ -88,7 +88,7 @@ export default function StaffFormPage() {
     const newErrors: Record<string, string> = {}
 
     if (!isEdit && !formData.username) {
-      newErrors.username = t.staff.username + ' ' + (t.common.required || 'is required')
+      newErrors.username = t.staff.username + ' ' + t.common.required
     }
 
     if (!isEdit && !formData.password) {
@@ -96,7 +96,7 @@ export default function StaffFormPage() {
     }
 
     if (formData.password && formData.password.length < 6) {
-      newErrors.password = t.staff.passwordMinLength || 'Password must be at least 6 characters'
+      newErrors.password = t.staff.passwordMinLength
     }
 
     if (formData.password && formData.password !== formData.confirmPassword) {
@@ -104,7 +104,7 @@ export default function StaffFormPage() {
     }
 
     if (!formData.staffRole) {
-      newErrors.staffRole = t.staff.staffRole + ' ' + (t.common.required || 'is required')
+      newErrors.staffRole = t.staff.staffRole + ' ' + t.common.required
     }
 
     setErrors(newErrors)
@@ -187,7 +187,7 @@ export default function StaffFormPage() {
 
         <div>
           <label className="label">
-            {t.staff.password} {isEdit && `(${t.staff.leaveBlank || 'Leave blank to keep current'})`} {!isEdit && '*'}
+            {t.staff.password} {isEdit && `(${t.staff.leaveBlank})`} {!isEdit && '*'}
           </label>
           <input
             type="password"

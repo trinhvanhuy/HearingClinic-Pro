@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useI18n } from '../i18n/I18nContext'
 
 export interface DiscriminationLossData {
   rightEar: {
@@ -19,6 +20,7 @@ const RIGHT_EAR_COLOR = '#E53935' // Red
 const LEFT_EAR_COLOR = '#1E88E5' // Blue
 
 export default function DiscriminationLossChart({ data }: DiscriminationLossChartProps) {
+  const { t } = useI18n()
   // SVG dimensions
   const width = 600
   const height = 400
@@ -44,7 +46,7 @@ export default function DiscriminationLossChart({ data }: DiscriminationLossChar
 
   return (
     <div className="w-full bg-white rounded-lg p-6">
-      <h3 className="text-lg font-semibold mb-4">Discrimination Loss Chart</h3>
+      <h3 className="text-lg font-semibold mb-4">{t.hearingReports.discriminationLossChart}</h3>
       
       {/* Chart */}
       <div className="overflow-x-auto">
@@ -128,7 +130,7 @@ export default function DiscriminationLossChart({ data }: DiscriminationLossChar
             fontSize="11"
             textAnchor="middle"
           >
-            Loss: {data.leftEar.lossPercent}%
+            {t.hearingReports.loss}: {data.leftEar.lossPercent}%
           </text>
 
           {/* Y-axis labels */}
@@ -158,7 +160,7 @@ export default function DiscriminationLossChart({ data }: DiscriminationLossChar
             textAnchor="middle"
             fontWeight="600"
           >
-            Right Ear
+            {t.hearingReports.rightEar}
           </text>
           <text
             x={leftBarX + barWidth / 2}
@@ -180,7 +182,7 @@ export default function DiscriminationLossChart({ data }: DiscriminationLossChar
             textAnchor="middle"
             fontWeight="bold"
           >
-            Ear
+            {t.hearingReports.ear}
           </text>
           <text
             x={20}
@@ -191,7 +193,7 @@ export default function DiscriminationLossChart({ data }: DiscriminationLossChar
             fontWeight="bold"
             transform={`rotate(-90, 20, ${height / 2})`}
           >
-            % Correct
+            {t.hearingReports.correctPercent}
           </text>
 
           {/* Axis lines */}
@@ -218,11 +220,11 @@ export default function DiscriminationLossChart({ data }: DiscriminationLossChar
       <div className="flex items-center gap-6 mt-4">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4" style={{ backgroundColor: RIGHT_EAR_COLOR, opacity: 0.8 }}></div>
-          <span className="text-sm font-medium text-gray-900">Right Ear</span>
+          <span className="text-sm font-medium text-gray-900">{t.hearingReports.rightEar}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4" style={{ backgroundColor: LEFT_EAR_COLOR, opacity: 0.8 }}></div>
-          <span className="text-sm font-medium text-gray-900">Left Ear</span>
+          <span className="text-sm font-medium text-gray-900">{t.hearingReports.leftEar}</span>
         </div>
       </div>
     </div>

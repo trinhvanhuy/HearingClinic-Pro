@@ -55,7 +55,7 @@ interface Tympanogram {
 }
 
 export default function HearingReportFormPage() {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const { id: routeId } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const clientId = searchParams.get('clientId')
@@ -208,7 +208,7 @@ export default function HearingReportFormPage() {
         }
       } catch (error: any) {
         console.error('Error fetching client:', error)
-        throw new Error(`Invalid client ID: ${error.message || 'Client ID is not valid'}`)
+        throw new Error(`${t.hearingReports.invalidClientId}: ${error.message || ''}`)
       }
       
       // Prepare report data, using a proper Parse Pointer for client
@@ -281,7 +281,7 @@ export default function HearingReportFormPage() {
     },
     onSuccess: async (createdReport) => {
       console.log('Mutation succeeded')
-      toast.success(isEdit ? 'Report updated' : 'Report created')
+      toast.success(isEdit ? t.hearingReports.reportUpdated : t.hearingReports.reportCreated)
       
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['hearing-reports'] })
@@ -335,7 +335,7 @@ export default function HearingReportFormPage() {
     },
     onError: (error: any) => {
       console.error('Mutation error:', error)
-      toast.error(error.message || 'Failed to save report')
+      toast.error(error.message || t.hearingReports.failedToSave)
     },
   })
 
@@ -347,14 +347,14 @@ export default function HearingReportFormPage() {
     
     // Validate client is selected
     if (!formData.clientId || formData.clientId.trim() === '') {
-      toast.error('Please select a client')
+      toast.error(t.hearingReports.pleaseSelectClient)
       return
     }
     
     // Additional validation: ensure clientId is not just "Client" string
     const clientIdStr = String(formData.clientId).trim()
     if (clientIdStr === 'Client' || clientIdStr === 'client' || clientIdStr.length < 10) {
-      toast.error('Invalid client. Please select a valid client from the list.')
+      toast.error(t.hearingReports.invalidClient)
       return
     }
     
@@ -564,7 +564,7 @@ export default function HearingReportFormPage() {
   const frequencies = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000]
 
   if (isEdit && isLoading) {
-    return <div className="text-center py-8">Loading...</div>
+    return <div className="text-center py-8">{t.common.loading}</div>
   }
 
   const client = selectedClient || clients.find(c => c.id === formData.clientId)
@@ -596,11 +596,11 @@ export default function HearingReportFormPage() {
 
   const handleExportPDF = async () => {
     if (!client) {
-      toast.error('Client not found')
+      toast.error(t.hearingReports.clientNotFound)
       return
     }
 
-    toast.loading('Generating PDF...', { id: 'export-pdf' })
+    toast.loading(t.hearingReports.generatingPdf, { id: 'export-pdf' })
 
     try {
       // Capture all charts first
@@ -621,7 +621,8 @@ export default function HearingReportFormPage() {
         client,
         clinicConfig,
         images,
-        formData
+        formData,
+        language
       )
 
       // Generate PDF using server-side API
@@ -639,20 +640,20 @@ export default function HearingReportFormPage() {
       const filename = `Hearing_Report_${client.get('fullName')}_${formData.testDate || new Date().toISOString().split('T')[0]}.pdf`
       downloadPdf(pdfBlob, filename)
       
-      toast.success('PDF generated successfully', { id: 'export-pdf' })
+      toast.success(t.hearingReports.pdfGenerated, { id: 'export-pdf' })
     } catch (error) {
       console.error('Error exporting PDF:', error)
-      toast.error('Failed to export PDF', { id: 'export-pdf' })
+      toast.error(t.hearingReports.pdfGenerationFailed, { id: 'export-pdf' })
     }
   }
 
   const handlePrint = async () => {
     if (!client) {
-      toast.error('Client not found')
+      toast.error(t.hearingReports.clientNotFound)
       return
     }
 
-    toast.loading('Generating PDF...', { id: 'print-pdf' })
+    toast.loading(t.hearingReports.generatingPdf, { id: 'print-pdf' })
 
     try {
       // Capture all charts first
@@ -673,7 +674,8 @@ export default function HearingReportFormPage() {
         client,
         clinicConfig,
         images,
-        formData
+        formData,
+        language
       )
 
       // Generate PDF using server-side API
@@ -690,26 +692,26 @@ export default function HearingReportFormPage() {
       // Open PDF in new window for printing
       printPdf(pdfBlob)
       
-      toast.success('Opening print dialog...', { id: 'print-pdf' })
+      toast.success(t.hearingReports.openingPrintDialog, { id: 'print-pdf' })
     } catch (error) {
       console.error('Error printing PDF:', error)
-      toast.error('Failed to generate PDF', { id: 'print-pdf' })
+      toast.error(t.hearingReports.pdfGenerationFailed, { id: 'print-pdf' })
     }
   }
 
   const handleShareEmail = async () => {
     if (!client) {
-      toast.error('Client not found')
+      toast.error(t.hearingReports.clientNotFound)
       return
     }
 
       const email = client.get('email')
     if (!email) {
-        toast.error('Client email not found')
+        toast.error(t.hearingReports.clientEmailNotFound)
       return
     }
 
-    toast.loading('Generating PDF for email...', { id: 'email-pdf' })
+    toast.loading(t.hearingReports.generatingPdf, { id: 'email-pdf' })
 
     try {
       // Capture all charts first
@@ -730,7 +732,8 @@ export default function HearingReportFormPage() {
         client,
         clinicConfig,
         images,
-        formData
+        formData,
+        language
       )
 
       // Generate PDF using server-side API
@@ -754,12 +757,12 @@ export default function HearingReportFormPage() {
         window.location.href = `mailto:${email}?subject=Hearing Report&body=Please find attached your hearing report.`
         // Download PDF as fallback
         downloadPdf(pdfBlob, filename)
-        toast.success('PDF ready. Please attach it manually to the email.', { id: 'email-pdf' })
+        toast.success(t.hearingReports.pdfReadyForEmail, { id: 'email-pdf' })
       }
       reader.readAsDataURL(pdfBlob)
     } catch (error) {
       console.error('Error generating PDF for email:', error)
-      toast.error('Failed to generate PDF', { id: 'email-pdf' })
+      toast.error(t.hearingReports.pdfGenerationFailed, { id: 'email-pdf' })
     }
   }
 
@@ -799,7 +802,7 @@ export default function HearingReportFormPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
               </svg>
-              {mutation.isPending ? 'Saving...' : 'Save'}
+              {mutation.isPending ? t.common.saving : t.common.save}
             </button>
               <button
                 type="button"
@@ -809,7 +812,7 @@ export default function HearingReportFormPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
-                Print
+                {t.hearingReports.print}
               </button>
               <button
                 type="button"
@@ -819,7 +822,7 @@ export default function HearingReportFormPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                Share Email
+                {t.hearingReports.shareEmail}
               </button>
               <button
                 type="button"
@@ -829,7 +832,7 @@ export default function HearingReportFormPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Download PDF
+                {t.hearingReports.downloadPdf}
               </button>
             </div>
           )}
@@ -837,23 +840,23 @@ export default function HearingReportFormPage() {
       {/* Header */}
       <div className="text-center mb-8 border-b pb-4">
         <div className="flex items-center justify-center gap-4 mb-4">
-          <img src={clinicConfig?.logoUrl || DEFAULT_LOGO} alt="Logo" className="h-16" />
-          <h1 className="text-2xl font-bold">Hearing Loss Assessment</h1>
+          <img src={clinicConfig?.logoUrl || DEFAULT_LOGO} alt={t.config.defaultClinicName} className="h-16" />
+          <h1 className="text-2xl font-bold">{t.hearingReports.hearingLossAssessment}</h1>
         </div>
         <div className="text-sm text-gray-600">
-          <p className="font-semibold">{clinicConfig?.clinicName || 'Hearing Clinic Pro'}</p>
+          <p className="font-semibold">{clinicConfig?.clinicName || t.config.defaultClinicName}</p>
           <p>{clinicConfig?.clinicAddress || ''}</p>
-          {clinicConfig?.clinicPhone && <p>Tel: {clinicConfig.clinicPhone}</p>}
+          {clinicConfig?.clinicPhone && <p>{t.hearingReports.tel}: {clinicConfig.clinicPhone}</p>}
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Patient Information */}
         <div className="rounded-lg">
-          <h2 className="text-lg font-bold mb-4">Patient Information</h2>
+          <h2 className="text-lg font-bold mb-4">{t.hearingReports.patientInformation}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Last Name *</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.lastName} *</label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded"
@@ -863,7 +866,7 @@ export default function HearingReportFormPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">First Name *</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.firstName} *</label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded"
@@ -873,7 +876,7 @@ export default function HearingReportFormPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Address (Street)</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.addressStreet}</label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded"
@@ -882,7 +885,7 @@ export default function HearingReportFormPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">City/Town</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.cityTown}</label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded"
@@ -891,7 +894,7 @@ export default function HearingReportFormPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Telephone Number</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.telephoneNumber}</label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border rounded"
@@ -900,7 +903,7 @@ export default function HearingReportFormPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Date of Birth</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.dateOfBirth}</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border rounded"
@@ -909,7 +912,7 @@ export default function HearingReportFormPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Date of Service *</label>
+              <label className="block text-sm font-medium mb-1">{t.hearingReports.dateOfService} *</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border rounded"
@@ -935,7 +938,7 @@ export default function HearingReportFormPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Puretone Audiometry
+                {t.hearingReports.pureToneAudiometry}
               </button>
               <button
                 type="button"
@@ -946,7 +949,7 @@ export default function HearingReportFormPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Speech Audiometry
+                {t.hearingReports.speechAudiometry}
               </button>
               <button
                 type="button"
@@ -957,7 +960,7 @@ export default function HearingReportFormPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Discrimination Loss
+                {t.hearingReports.discriminationLoss}
               </button>
               <button
                 type="button"
@@ -999,7 +1002,7 @@ export default function HearingReportFormPage() {
                   <table className="w-full border-collapse border">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="border px-4 py-2 text-left">Frequency (Hz)</th>
+                        <th className="border px-4 py-2 text-left">{t.hearingReports.frequency}</th>
                         {frequencies.map((freq) => (
                           <th key={freq} className="border px-4 py-2">
                             {freq}
@@ -1023,7 +1026,7 @@ export default function HearingReportFormPage() {
                         ))}
                       </tr>
                       <tr>
-                        <td className="border px-4 py-2 font-medium" style={{ color: '#1E88E5' }}>Left</td>
+                        <td className="border px-4 py-2 font-medium" style={{ color: '#1E88E5' }}>{t.hearingReports.left}</td>
                         {frequencies.map((freq) => (
                           <td key={freq} className="border px-4 py-2">
                             <input
@@ -1066,23 +1069,23 @@ export default function HearingReportFormPage() {
                 {/* Data Input Table */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-md font-semibold">Data Points</h3>
+                    <h3 className="text-md font-semibold">{t.hearingReports.dataPoints}</h3>
                     <button
                       type="button"
                       onClick={addSpeechAudiometryPoint}
                       className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
                     >
-                      + Add Row
+                      {t.hearingReports.addRow}
                     </button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border">
                       <thead>
                         <tr className="bg-gray-50">
-                          <th className="border px-4 py-2 text-left">Ear</th>
-                          <th className="border px-4 py-2">dB HL</th>
-                          <th className="border px-4 py-2">% Recognition</th>
-                          <th className="border px-4 py-2 w-20">Action</th>
+                          <th className="border px-4 py-2 text-left">{t.hearingReports.ear}</th>
+                          <th className="border px-4 py-2">{t.hearingReports.dbHL}</th>
+                          <th className="border px-4 py-2">{t.hearingReports.recognitionPercent}</th>
+                          <th className="border px-4 py-2 w-20">{t.hearingReports.action}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1094,8 +1097,8 @@ export default function HearingReportFormPage() {
                                 value={point.ear}
                                 onChange={(e) => updateSpeechAudiometryPoint(index, 'ear', e.target.value as 'R' | 'L')}
                               >
-                                <option value="R">Right</option>
-                                <option value="L">Left</option>
+                                <option value="R">{t.hearingReports.right}</option>
+                                <option value="L">{t.hearingReports.left}</option>
                               </select>
                             </td>
                             <td className="border px-4 py-2">
@@ -1134,7 +1137,7 @@ export default function HearingReportFormPage() {
                         {(!formData.speechAudiometry.points || formData.speechAudiometry.points.length === 0) && (
                           <tr>
                             <td colSpan={4} className="border px-4 py-8 text-center text-gray-500">
-                              No data points. Click "+ Add Row" to add data.
+                              {t.hearingReports.noDataPoints}
                             </td>
                           </tr>
                         )}
@@ -1159,7 +1162,7 @@ export default function HearingReportFormPage() {
                     <h3 className="text-md font-semibold mb-3">Right Ear</h3>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-medium mb-1">Correct %</label>
+                        <label className="block text-sm font-medium mb-1">{t.hearingReports.correctPercent}</label>
                         <input
                           type="number"
                           className="w-full px-3 py-2 border rounded"
@@ -1170,16 +1173,16 @@ export default function HearingReportFormPage() {
                           max="100"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Loss: {100 - (formData.discriminationLoss.rightCorrectPercent || 0)}%
+                          {t.hearingReports.loss}: {100 - (formData.discriminationLoss.rightCorrectPercent || 0)}%
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="border rounded-lg p-4">
-                    <h3 className="text-md font-semibold mb-3">Left Ear</h3>
+                    <h3 className="text-md font-semibold mb-3">{t.hearingReports.leftEar}</h3>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-medium mb-1">Correct %</label>
+                        <label className="block text-sm font-medium mb-1">{t.hearingReports.correctPercent}</label>
                         <input
                           type="number"
                           className="w-full px-3 py-2 border rounded"
@@ -1190,7 +1193,7 @@ export default function HearingReportFormPage() {
                           max="100"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Loss: {100 - (formData.discriminationLoss.leftCorrectPercent || 0)}%
+                          {t.hearingReports.loss}: {100 - (formData.discriminationLoss.leftCorrectPercent || 0)}%
                         </p>
                       </div>
                     </div>
@@ -1226,7 +1229,7 @@ export default function HearingReportFormPage() {
                   {/* Left Ear */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-md font-semibold">Left Ear</h3>
+                      <h3 className="text-md font-semibold">{t.hearingReports.leftEar}</h3>
                       <div className="flex gap-2">
                         <button
                           type="button"
@@ -1234,7 +1237,7 @@ export default function HearingReportFormPage() {
                           disabled={!formData.leftTympanogram.points || formData.leftTympanogram.points.length === 0}
                           className="px-3 py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                         >
-                          Undo
+                          {t.hearingReports.undo}
                         </button>
                         <button
                           type="button"
@@ -1249,7 +1252,7 @@ export default function HearingReportFormPage() {
                         onClick={() => addTympanogramPoint('left')}
                         className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
                       >
-                        + Add Row
+                        {t.hearingReports.addRow}
                       </button>
                       </div>
                     </div>
@@ -1257,9 +1260,9 @@ export default function HearingReportFormPage() {
                       <table className="w-full border-collapse border">
                         <thead>
                           <tr className="bg-gray-50">
-                            <th className="border px-3 py-2 text-left">Pressure (mmH₂O)</th>
-                            <th className="border px-3 py-2 text-left">Admittance</th>
-                            <th className="border px-3 py-2 w-16">Action</th>
+                            <th className="border px-3 py-2 text-left">{t.hearingReports.pressure}</th>
+                            <th className="border px-3 py-2 text-left">{t.hearingReports.admittance}</th>
+                            <th className="border px-3 py-2 w-16">{t.hearingReports.action}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1283,7 +1286,7 @@ export default function HearingReportFormPage() {
                                   className="w-full px-2 py-1 border rounded text-sm"
                                   value={point.admittance || ''}
                                   onChange={(e) => updateTympanogramPoint('left', index, 'admittance', e.target.value)}
-                                  placeholder="Admittance"
+                                  placeholder={t.hearingReports.admittance}
                                 />
                               </td>
                               <td className="border px-3 py-2 text-center">
@@ -1300,7 +1303,7 @@ export default function HearingReportFormPage() {
                           {(!formData.leftTympanogram.points || formData.leftTympanogram.points.length === 0) && (
                             <tr>
                               <td colSpan={3} className="border px-3 py-4 text-center text-gray-500 text-sm">
-                                No data points. Click "+ Add Row" to add data.
+                                {t.hearingReports.noDataPoints}
                               </td>
                             </tr>
                           )}
@@ -1312,7 +1315,7 @@ export default function HearingReportFormPage() {
                   {/* Right Ear */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-md font-semibold">Right Ear</h3>
+                      <h3 className="text-md font-semibold">{t.hearingReports.rightEar}</h3>
                       <div className="flex gap-2">
                         <button
                           type="button"
@@ -1320,7 +1323,7 @@ export default function HearingReportFormPage() {
                           disabled={!formData.rightTympanogram.points || formData.rightTympanogram.points.length === 0}
                           className="px-3 py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                         >
-                          Undo
+                          {t.hearingReports.undo}
                         </button>
                         <button
                           type="button"
@@ -1335,7 +1338,7 @@ export default function HearingReportFormPage() {
                         onClick={() => addTympanogramPoint('right')}
                         className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
                       >
-                        + Add Row
+                        {t.hearingReports.addRow}
                       </button>
                       </div>
                     </div>
@@ -1343,9 +1346,9 @@ export default function HearingReportFormPage() {
                       <table className="w-full border-collapse border">
                         <thead>
                           <tr className="bg-gray-50">
-                            <th className="border px-3 py-2 text-left">Pressure (mmH₂O)</th>
-                            <th className="border px-3 py-2 text-left">Admittance</th>
-                            <th className="border px-3 py-2 w-16">Action</th>
+                            <th className="border px-3 py-2 text-left">{t.hearingReports.pressure}</th>
+                            <th className="border px-3 py-2 text-left">{t.hearingReports.admittance}</th>
+                            <th className="border px-3 py-2 w-16">{t.hearingReports.action}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1369,7 +1372,7 @@ export default function HearingReportFormPage() {
                                   className="w-full px-2 py-1 border rounded text-sm"
                                   value={point.admittance || ''}
                                   onChange={(e) => updateTympanogramPoint('right', index, 'admittance', e.target.value)}
-                                  placeholder="Admittance"
+                                  placeholder={t.hearingReports.admittance}
                                 />
                               </td>
                               <td className="border px-3 py-2 text-center">
@@ -1386,7 +1389,7 @@ export default function HearingReportFormPage() {
                           {(!formData.rightTympanogram.points || formData.rightTympanogram.points.length === 0) && (
                             <tr>
                               <td colSpan={3} className="border px-3 py-4 text-center text-gray-500 text-sm">
-                                No data points. Click "+ Add Row" to add data.
+                                {t.hearingReports.noDataPoints}
                               </td>
                             </tr>
                           )}
@@ -1452,14 +1455,14 @@ export default function HearingReportFormPage() {
             }}
             className="px-6 py-2 border rounded-lg hover:bg-gray-50"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             type="submit"
             className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 disabled:opacity-50"
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? 'Saving...' : isEdit ? 'Update Report' : 'Create Report'}
+            {mutation.isPending ? t.common.saving : isEdit ? t.hearingReports.updateReport : t.hearingReports.createReport}
           </button>
         </div>
       </form>

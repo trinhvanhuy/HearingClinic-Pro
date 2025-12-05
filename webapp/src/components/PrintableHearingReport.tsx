@@ -3,6 +3,7 @@ import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
 import { EarThresholds } from '@hearing-clinic/shared/src/models/hearingReport'
 import PrintableAudiogramChart from './PrintableAudiogramChart'
 import { DEFAULT_LOGO } from '../constants/logo'
+import { translations, Language } from '../i18n/translations'
 
 interface ClinicConfig {
   clinicName?: string
@@ -40,6 +41,7 @@ interface PrintableHearingReportProps {
     printName?: string
     signatureDate?: string
   }
+  language?: Language
 }
 
 const FREQUENCIES = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000]
@@ -50,7 +52,9 @@ export default function PrintableHearingReport({
   clinicConfig,
   chartImages,
   formData,
+  language = 'en',
 }: PrintableHearingReportProps) {
+  const t = translations[language]
   const leftEarThresholds = formData?.leftEarThresholds || report.get('leftEarThresholds') || {}
   const rightEarThresholds = formData?.rightEarThresholds || report.get('rightEarThresholds') || {}
   const results = formData?.results || report.get('results') || ''
@@ -58,7 +62,7 @@ export default function PrintableHearingReport({
   const printName = formData?.printName || report.get('printName') || ''
   const signatureDate = formData?.signatureDate || report.get('signatureDate') || report.get('testDate') || ''
   const testDate = report.get('testDate')
-  const typeOfTest = report.get('typeOfTest') || 'Pure Tone Audiometry'
+  const typeOfTest = report.get('typeOfTest') || t.hearingReports.pureToneAudiometry
 
   const formatDateValue = (date: any) => {
     if (!date) return 'N/A'
@@ -75,38 +79,38 @@ export default function PrintableHearingReport({
         <div className="header-content">
           <div className="header-logo-title">
             <img src={clinicConfig?.logoUrl || DEFAULT_LOGO} alt="Logo" className="logo" />
-            <h1 className="report-title">Hearing Loss Assessment</h1>
+            <h1 className="report-title">{t.hearingReports.hearingLossAssessment}</h1>
           </div>
           <div className="clinic-info">
-            <p className="clinic-name">{clinicConfig?.clinicName || 'Hearing Clinic Pro'}</p>
+            <p className="clinic-name">{clinicConfig?.clinicName || t.config.defaultClinicName}</p>
             {clinicConfig?.clinicAddress && <p className="clinic-address">{clinicConfig.clinicAddress}</p>}
-            {clinicConfig?.clinicPhone && <p className="clinic-phone">Tel: {clinicConfig.clinicPhone}</p>}
+            {clinicConfig?.clinicPhone && <p className="clinic-phone">{t.hearingReports.tel}: {clinicConfig.clinicPhone}</p>}
           </div>
         </div>
       </div>
 
       {/* Patient Information */}
       <div className="section patient-info">
-        <h2 className="section-title">Patient Information</h2>
+        <h2 className="section-title">{t.hearingReports.patientInformation}</h2>
         <div className="info-grid">
           <div className="info-item">
-            <span className="info-label">Last Name:</span>
+            <span className="info-label">{t.hearingReports.lastName}:</span>
             <span className="info-value">{client.get('lastName') || 'N/A'}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">First Name:</span>
+            <span className="info-label">{t.hearingReports.firstName}:</span>
             <span className="info-value">{client.get('firstName') || 'N/A'}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Address:</span>
+            <span className="info-label">{t.clients.address}:</span>
             <span className="info-value">{client.get('address') || 'N/A'}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">City/Town:</span>
+            <span className="info-label">{t.hearingReports.cityTown}:</span>
             <span className="info-value">{client.get('city') || 'N/A'}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Telephone:</span>
+            <span className="info-label">{t.hearingReports.telephoneNumber}:</span>
             <span className="info-value">{client.get('phone') || 'N/A'}</span>
           </div>
           <div className="info-item">
@@ -116,7 +120,7 @@ export default function PrintableHearingReport({
             </span>
           </div>
           <div className="info-item">
-            <span className="info-label">Date of Service:</span>
+            <span className="info-label">{t.hearingReports.dateOfService}:</span>
             <span className="info-value">{formatDateValue(testDate)}</span>
           </div>
           <div className="info-item">
@@ -128,12 +132,12 @@ export default function PrintableHearingReport({
 
       {/* Pure Tone Audiometry */}
       <div className="section pure-tone-section">
-        <h2 className="section-title">Pure Tone Audiometry</h2>
+        <h2 className="section-title">{t.hearingReports.pureToneAudiometry}</h2>
         
         {/* Audiogram Chart */}
         <div className="chart-container audiogram-chart">
           {chartImages?.audiogram ? (
-            <img src={chartImages.audiogram} alt="Audiogram" className="chart-image audiogram-image" />
+            <img src={chartImages.audiogram} alt={t.hearingReports.pureToneAudiometry} className="chart-image audiogram-image" />
           ) : (
             <div className="audiogram-wrapper">
               <PrintableAudiogramChart
@@ -157,7 +161,7 @@ export default function PrintableHearingReport({
             </thead>
             <tbody>
               <tr>
-                <td className="ear-label right-ear">Right</td>
+                <td className="ear-label right-ear">{t.hearingReports.right}</td>
                 {FREQUENCIES.map((freq) => {
                   const value = rightEarThresholds[freq as keyof EarThresholds]
                   return <td key={freq}>{value !== undefined && value !== null ? value : ''}</td>
@@ -177,7 +181,7 @@ export default function PrintableHearingReport({
 
       {/* Results - Show recommendations if available, otherwise empty box for handwriting */}
       <div className="section results-section">
-        <h2 className="section-title">Result</h2>
+        <h2 className="section-title">{t.hearingReports.results}</h2>
         <div className="result-box">
           {recommendations ? (
             <div className="result-content">{recommendations}</div>
@@ -197,13 +201,13 @@ export default function PrintableHearingReport({
           <div className="signature-info">
             {printName && (
               <div className="signature-item">
-                <span className="signature-label">Signed by:</span>
+                <span className="signature-label">{t.hearingReports.printName}:</span>
                 <span className="signature-value">{printName}</span>
               </div>
             )}
             {signatureDate && (
               <div className="signature-item">
-                <span className="signature-label">Date:</span>
+                <span className="signature-label">{t.hearingReports.signatureDate}:</span>
                 <span className="signature-value">{formatDateValue(signatureDate)}</span>
               </div>
             )}

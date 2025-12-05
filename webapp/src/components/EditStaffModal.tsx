@@ -60,7 +60,7 @@ export default function EditStaffModal({ isOpen, onClose, staffId, staffData }: 
 
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      if (!staffId) throw new Error('Staff ID is required')
+      if (!staffId) throw new Error(t.staff.staffIdRequired)
       const updateData: any = {
         email: data.email || undefined,
         fullName: data.fullName || undefined,
@@ -72,7 +72,7 @@ export default function EditStaffModal({ isOpen, onClose, staffId, staffData }: 
       return staffService.update(staffId, updateData)
     },
     onSuccess: () => {
-      toast.success(t.staff.staffUpdated || 'Staff updated successfully')
+      toast.success(t.staff.staffUpdated)
       queryClient.invalidateQueries({ queryKey: ['staff'] })
       onClose()
     },
@@ -85,7 +85,7 @@ export default function EditStaffModal({ isOpen, onClose, staffId, staffData }: 
     const newErrors: Record<string, string> = {}
 
     if (formData.password && formData.password.length < 6) {
-      newErrors.password = t.staff.passwordMinLength || 'Password must be at least 6 characters'
+      newErrors.password = t.staff.passwordMinLength
     }
 
     if (formData.password && formData.password !== formData.confirmPassword) {
@@ -93,7 +93,7 @@ export default function EditStaffModal({ isOpen, onClose, staffId, staffData }: 
     }
 
     if (!formData.staffRole) {
-      newErrors.staffRole = t.staff.staffRole + ' ' + (t.common.required || 'is required')
+      newErrors.staffRole = t.staff.staffRole + ' ' + t.common.required
     }
 
     setErrors(newErrors)
@@ -123,7 +123,7 @@ export default function EditStaffModal({ isOpen, onClose, staffId, staffData }: 
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={t.staff.editStaff || 'Edit Staff'}
+      title={t.staff.editStaff}
       footer={
         <>
           <button
@@ -202,7 +202,7 @@ export default function EditStaffModal({ isOpen, onClose, staffId, staffData }: 
 
           <div>
             <label className="label">
-              {t.staff.password} ({t.staff.leaveBlank || 'Leave blank to keep current'})
+              {t.staff.password} ({t.staff.leaveBlank})
             </label>
             <input
               type="password"
