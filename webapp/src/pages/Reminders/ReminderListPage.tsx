@@ -9,6 +9,22 @@ import toast from 'react-hot-toast'
 import ConfirmDeleteModal from '../../components/ConfirmDeleteModal'
 import ReminderDetailModal from '../../components/ReminderDetailModal'
 
+// Constants for reminder types and priorities
+const REMINDER_TYPES: ReminderType[] = [
+  'FOLLOW_UP_COUNSELING',
+  'AUDIOGRAM_DUE',
+  'MAINTENANCE_DUE',
+  'WARRANTY_EXPIRING',
+  'POST_REPAIR_CHECK',
+  'POST_PURCHASE_SUPPORT',
+  'CLIENT_INACTIVE',
+  'BIRTHDAY',
+  'RECOMMENDATION_FOLLOW_UP',
+  'CUSTOM',
+]
+
+const REMINDER_PRIORITIES: ReminderPriority[] = ['low', 'medium', 'high']
+
 // Helper functions to get translated labels
 const getReminderTypeLabel = (type: ReminderType | 'all', t: any): string => {
   if (type === 'all') return t.reminders.all
@@ -136,7 +152,7 @@ export default function ReminderListPage() {
             }}
           >
             <option value="all">{t.reminders.all}</option>
-            {Object.values(ReminderType).map((type) => (
+            {REMINDER_TYPES.map((type) => (
               <option key={type} value={type}>
                 {getReminderTypeLabel(type, t)}
               </option>
@@ -156,7 +172,7 @@ export default function ReminderListPage() {
             }}
           >
             <option value="all">{t.reminders.all}</option>
-            {Object.values(ReminderPriority).map((priority) => (
+            {REMINDER_PRIORITIES.map((priority) => (
               <option key={priority} value={priority}>
                 {getReminderPriorityLabel(priority, t)}
               </option>
