@@ -2,11 +2,13 @@ import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
 import { EarThresholds } from '@hearing-clinic/shared/src/models/hearingReport'
 import PrintableAudiogramChart from './PrintableAudiogramChart'
+import { DEFAULT_LOGO } from '../constants/logo'
 
 interface ClinicConfig {
   clinicName?: string
   clinicAddress?: string
   clinicPhone?: string
+  logoUrl?: string
 }
 
 interface ChartImages {
@@ -72,7 +74,7 @@ export default function PrintableHearingReport({
       <div className="report-header">
         <div className="header-content">
           <div className="header-logo-title">
-            <img src="/assets/logo-transparent.png" alt="Logo" className="logo" />
+            <img src={clinicConfig?.logoUrl || DEFAULT_LOGO} alt="Logo" className="logo" />
             <h1 className="report-title">Hearing Loss Assessment</h1>
           </div>
           <div className="clinic-info">

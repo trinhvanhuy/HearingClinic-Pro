@@ -18,6 +18,7 @@ import PrintPortal from '../../components/PrintPortal'
 import { captureAllCharts } from '../../utils/exportReport'
 import { generatePdfFromHtml, downloadPdf, printPdf } from '../../utils/pdfApi'
 import { renderReportToHtml } from '../../utils/renderToHtml'
+import { DEFAULT_LOGO } from '../../constants/logo'
 
 interface SpeechAudiometry {
   // Legacy format (for backward compatibility)
@@ -836,7 +837,7 @@ export default function HearingReportFormPage() {
       {/* Header */}
       <div className="text-center mb-8 border-b pb-4">
         <div className="flex items-center justify-center gap-4 mb-4">
-          <img src="/assets/logo-transparent.png" alt="Logo" className="h-16" />
+          <img src={clinicConfig?.logoUrl || DEFAULT_LOGO} alt="Logo" className="h-16" />
           <h1 className="text-2xl font-bold">Hearing Loss Assessment</h1>
         </div>
         <div className="text-sm text-gray-600">

@@ -1,6 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useI18n } from '../../i18n/I18nContext'
+import { useClinicConfig } from '../../hooks/useClinicConfig'
 import { connectionStatus } from '../../services/connectionStatus'
 import { syncService } from '../../services/syncService'
 import { isAdminSync } from '../../utils/roleHelper'
@@ -9,6 +10,7 @@ import { useState, useEffect } from 'react'
 export default function Layout() {
   const { user, logout } = useAuth()
   const { t, language, setLanguage } = useI18n()
+  const { logoUrl } = useClinicConfig()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -221,7 +223,7 @@ export default function Layout() {
               {/* Logo */}
               <div className="flex items-center gap-2.5">
                 <img
-                  src="/assets/logo-transparent.png"
+                  src={logoUrl}
                   alt="Hearing Clinic Pro"
                   className="h-8 w-auto"
                 />

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../i18n/I18nContext'
+import { useClinicConfig } from '../hooks/useClinicConfig'
 import toast from 'react-hot-toast'
 
 const REMEMBER_ME_KEY = 'hearing_clinic_remember_me'
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const { login, requestPasswordReset, isLoggingIn, user, loading } = useAuth()
   const { t, language, setLanguage } = useI18n()
+  const { logoUrl } = useClinicConfig()
   const navigate = useNavigate()
 
   // Load remembered username on mount
@@ -129,7 +131,7 @@ export default function LoginPage() {
         {/* Logo and App Name */}
         <div className="mb-12 flex items-center gap-4">
           <img
-            src="/assets/logo-transparent.png"
+            src={logoUrl}
             alt="Hearing Clinic Pro"
             className="h-16"
           />

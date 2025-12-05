@@ -4,6 +4,7 @@ import { hearingReportService } from '../../api/hearingReportService'
 import { configService } from '../../api/configService'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import { useEffect } from 'react'
+import { DEFAULT_LOGO } from '../../constants/logo'
 
 export default function HearingReportPrintPage() {
   const { id } = useParams<{ id: string }>()
@@ -52,7 +53,7 @@ export default function HearingReportPrintPage() {
         {/* Clinic Header */}
         <div className="text-center border-b pb-4 mb-6">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <img src="/assets/logo-transparent.png" alt="Logo" className="h-16" />
+            <img src={clinicConfig?.logoUrl || DEFAULT_LOGO} alt="Logo" className="h-16" />
             <h1 className="text-3xl font-bold">Hearing Loss Assessment</h1>
           </div>
           <div className="text-sm text-gray-600">

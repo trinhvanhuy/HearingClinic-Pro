@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { configService } from '../api/configService'
-
-const DEFAULT_LOGO = '/assets/logo-transparent.png'
+import { DEFAULT_LOGO } from '../constants/logo'
 
 export function useClinicConfig() {
   const { data: config, isLoading } = useQuery({
