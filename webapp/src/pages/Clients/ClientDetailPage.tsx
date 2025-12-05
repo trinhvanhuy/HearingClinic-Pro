@@ -8,6 +8,8 @@ import { formatDate, formatPhone, formatDateTime } from '@hearing-clinic/shared/
 import { AppointmentType } from '@hearing-clinic/shared/src/models/appointment'
 import { useState } from 'react'
 import RepairAppointmentModal from '../../components/RepairAppointmentModal'
+import PurchaseAppointmentModal from '../../components/PurchaseAppointmentModal'
+import CounselingAppointmentModal from '../../components/CounselingAppointmentModal'
 import Parse from '../../api/parseClient'
 import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
 
@@ -33,6 +35,10 @@ export default function ClientDetailPage() {
   const pageSize = 20
   const [isRepairModalOpen, setIsRepairModalOpen] = useState(false)
   const [selectedRepairAppointmentId, setSelectedRepairAppointmentId] = useState<string | undefined>()
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+  const [selectedPurchaseAppointmentId, setSelectedPurchaseAppointmentId] = useState<string | undefined>()
+  const [isCounselingModalOpen, setIsCounselingModalOpen] = useState(false)
+  const [selectedCounselingAppointmentId, setSelectedCounselingAppointmentId] = useState<string | undefined>()
 
   const { data: client, isLoading: clientLoading } = useQuery({
     queryKey: ['client', id],
@@ -177,26 +183,49 @@ export default function ClientDetailPage() {
   const handleRowClick = (appointment: any) => {
     const type = appointment.get('type')
     if (type === 'REPAIR') {
-      // Open repair modal for viewing/editing
       setSelectedRepairAppointmentId(appointment.id)
       setIsRepairModalOpen(true)
+    } else if (type === 'PURCHASE') {
+      setSelectedPurchaseAppointmentId(appointment.id)
+      setIsPurchaseModalOpen(true)
+    } else if (type === 'COUNSELING') {
+      setSelectedCounselingAppointmentId(appointment.id)
+      setIsCounselingModalOpen(true)
     } else {
-    const hearingReport = appointment.get('hearingReport')
-    if (hearingReport) {
-      const reportId = hearingReport.id || hearingReport.objectId
-      navigate(`/hearing-reports/${reportId}`)
-    }
+      const hearingReport = appointment.get('hearingReport')
+      if (hearingReport) {
+        const reportId = hearingReport.id || hearingReport.objectId
+        navigate(`/hearing-reports/${reportId}`)
+      }
     }
   }
 
-  const handleCloseRepairModal = () => {
-    setIsRepairModalOpen(false)
-    setSelectedRepairAppointmentId(undefined)
-  }
 
   const handleOpenNewRepairModal = () => {
     setSelectedRepairAppointmentId(undefined)
     setIsRepairModalOpen(true)
+  }
+
+  const handleOpenNewPurchaseModal = () => {
+    setSelectedPurchaseAppointmentId(undefined)
+    setIsPurchaseModalOpen(true)
+  }
+
+  const handleOpenNewCounselingModal = () => {
+    setSelectedCounselingAppointmentId(undefined)
+    setIsCounselingModalOpen(true)
+  }
+
+  const handleAddNewAppointment = () => {
+    if (selectedType === 'REPAIR') {
+      handleOpenNewRepairModal()
+    } else if (selectedType === 'PURCHASE') {
+      handleOpenNewPurchaseModal()
+    } else if (selectedType === 'COUNSELING') {
+      handleOpenNewCounselingModal()
+    } else if (selectedType === 'AUDIOGRAM') {
+      navigate(`/hearing-reports/new?clientId=${id}`)
+    }
   }
 
   return (
@@ -322,9 +351,22 @@ export default function ClientDetailPage() {
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">{t.clientDetail.patientHistory}</h2>
-          <span className="text-sm text-gray-600">
-            {t.clientDetail.totalVisitsCount}: {totalCount}
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              {t.clientDetail.totalVisitsCount}: {totalCount}
+            </span>
+            {(selectedType === 'REPAIR' || selectedType === 'PURCHASE' || selectedType === 'COUNSELING' || selectedType === 'AUDIOGRAM') && (
+              <button
+                onClick={handleAddNewAppointment}
+                className="inline-flex items-center justify-center w-8 h-8 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                title="Thêm mới"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filter Tabs */}
@@ -405,7 +447,7 @@ export default function ClientDetailPage() {
 
                     // Build description text
                     let description = note || ''
-                    if (type === 'REPAIR') {
+                    if (type === 'REPAIR' || type === 'PURCHASE') {
                       const parts: string[] = []
                       if (deviceName) parts.push(`Máy: ${deviceName}`)
                       if (ear) {
@@ -493,9 +535,38 @@ export default function ClientDetailPage() {
       {id && (
         <RepairAppointmentModal
           isOpen={isRepairModalOpen}
-          onClose={handleCloseRepairModal}
+          onClose={() => {
+            setIsRepairModalOpen(false)
+            setSelectedRepairAppointmentId(undefined)
+          }}
           clientId={id}
           appointmentId={selectedRepairAppointmentId}
+        />
+      )}
+
+      {/* Purchase Appointment Modal */}
+      {id && (
+        <PurchaseAppointmentModal
+          isOpen={isPurchaseModalOpen}
+          onClose={() => {
+            setIsPurchaseModalOpen(false)
+            setSelectedPurchaseAppointmentId(undefined)
+          }}
+          clientId={id}
+          appointmentId={selectedPurchaseAppointmentId}
+        />
+      )}
+
+      {/* Counseling Appointment Modal */}
+      {id && (
+        <CounselingAppointmentModal
+          isOpen={isCounselingModalOpen}
+          onClose={() => {
+            setIsCounselingModalOpen(false)
+            setSelectedCounselingAppointmentId(undefined)
+          }}
+          clientId={id}
+          appointmentId={selectedCounselingAppointmentId}
         />
       )}
     </div>

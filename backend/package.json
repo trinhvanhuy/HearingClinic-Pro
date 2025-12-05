@@ -12,6 +12,7 @@
     "create-admin": "node src/createAdmin.js",
     "seed-appointments": "node src/seedAppointments.js",
     "seed-staff": "node src/seedStaff.js",
+    "seed-sample-users": "node src/seedSampleUsers.js",
     "fix-schema": "node src/fixSchema.js",
     "import-clients": "node src/importClientsFromFolders.js"
   },
