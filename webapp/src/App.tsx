@@ -10,6 +10,7 @@ import HearingReportFormPage from './pages/HearingReports/HearingReportFormPage'
 import HearingReportDetailPage from './pages/HearingReports/HearingReportDetailPage'
 import HearingReportPrintPage from './pages/HearingReports/HearingReportPrintPage'
 import ReminderListPage from './pages/Reminders/ReminderListPage'
+import ReminderDetailPage from './pages/Reminders/ReminderDetailPage'
 import StaffListPage from './pages/Staff/StaffListPage'
 import StaffFormPage from './pages/Staff/StaffFormPage'
 import ConfigPage from './pages/Config/ConfigPage'
@@ -59,6 +60,7 @@ function App() {
             <Route path="hearing-reports/:id" element={<HearingReportDetailPage />} />
             <Route path="hearing-reports/:id/print" element={<HearingReportPrintPage />} />
             <Route path="reminders" element={<ReminderListPage />} />
+            <Route path="reminders/:id" element={<ReminderDetailPage />} />
             <Route path="staff" element={<StaffListPage />} />
             <Route path="staff/new" element={<StaffFormPage />} />
             <Route path="staff/:id/edit" element={<StaffFormPage />} />

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { reminderService } from '../api/reminderService'
 import { clientService } from '../api/clientService'
 import { useI18n } from '../i18n/I18nContext'
@@ -23,6 +23,7 @@ const PhoneIcon = ({ className }: { className?: string }) => (
 
 export default function DashboardPage() {
   const { t } = useI18n()
+  const navigate = useNavigate()
   const today = startOfToday()
   const weekEnd = endOfWeek(addDays(today, 7))
 
@@ -88,7 +89,7 @@ export default function DashboardPage() {
             </h2>
             {overdueReminders.length > 0 && (
               <span className="px-3 py-1 text-xs rounded-full font-medium bg-danger-100 text-danger-800">
-                {overdueReminders.length} quá hạn
+                {overdueReminders.length} {t.dashboard.overdueCount}
               </span>
             )}
           </div>
@@ -105,6 +106,7 @@ export default function DashboardPage() {
                 return (
                   <li
                     key={reminder.id}
+                    onClick={() => navigate(`/reminders/${reminder.id}`)}
                     className={`rounded-[10px] border p-3 hover:shadow-sm hover:scale-[1.01] transition-all cursor-pointer ${
                       isOverdue
                         ? 'border-danger-300 bg-danger-50'
@@ -131,12 +133,12 @@ export default function DashboardPage() {
                                   : 'bg-gray-100 text-gray-800'
                               }`}
                             >
-                              {priority === 'high' ? 'Cao' : priority === 'medium' ? 'Trung bình' : 'Thấp'}
+                              {priority === 'high' ? t.dashboard.priorityHigh : priority === 'medium' ? t.dashboard.priorityMedium : t.dashboard.priorityLow}
                             </span>
                           )}
                         </div>
                         <p className="text-sm mb-1" style={{ color: '#9B9B9B' }}>
-                          {t.dashboard.client}: {reminder.get('client')?.get('fullName') || 'N/A'}
+                          {t.dashboard.client}: {reminder.get('client')?.get('fullName') || t.common.notAvailable}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-xs font-medium" style={{ 
@@ -150,17 +152,17 @@ export default function DashboardPage() {
                           </p>
                           {isOverdue && (
                             <span className="text-xs font-medium text-danger-600">
-                              (Quá hạn {Math.abs(daysUntilDue)} ngày)
+                              ({t.dashboard.overdueCount} {Math.abs(daysUntilDue)} {t.dashboard.daysOverdue})
                             </span>
                           )}
                           {isToday(dueDate) && !isOverdue && (
                             <span className="text-xs font-medium text-warning-600">
-                              (Hôm nay)
+                              ({t.dashboard.today})
                             </span>
                           )}
                           {isTomorrow(dueDate) && !isOverdue && (
                             <span className="text-xs font-medium text-accent-600">
-                              (Ngày mai)
+                              ({t.dashboard.tomorrow})
                             </span>
                           )}
                         </div>
