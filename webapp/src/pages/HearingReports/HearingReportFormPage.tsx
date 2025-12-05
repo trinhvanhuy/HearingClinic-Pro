@@ -978,7 +978,7 @@ export default function HearingReportFormPage() {
             {activeTestTab === 'pureTone' && (
               <div>
                 {/* Interactive Audiogram */}
-                <div className="mb-6" ref={audiogramChartRef}>
+                <div ref={audiogramChartRef}>
                   <AudiogramChart
                     leftEar={formData.leftEarThresholds}
                     rightEar={formData.rightEarThresholds}
@@ -1045,7 +1045,7 @@ export default function HearingReportFormPage() {
             {activeTestTab === 'speech' && (
               <div>
                 {/* Speech Audiometry Chart */}
-                <div className="mb-6" ref={speechChartRef}>
+                <div  ref={speechChartRef}>
                   <SpeechAudiometryChart 
                     data={getSpeechAudiometryChartData()} 
                     mode={speechAudiometryMode}
@@ -1148,7 +1148,7 @@ export default function HearingReportFormPage() {
             {activeTestTab === 'discrimination' && (
               <div>
                 {/* Discrimination Loss Chart */}
-                <div className="mb-6" ref={discriminationChartRef}>
+                <div ref={discriminationChartRef}>
                   <DiscriminationLossChart data={getDiscriminationLossChartData()} />
                 </div>
 
@@ -1202,7 +1202,7 @@ export default function HearingReportFormPage() {
             {activeTestTab === 'tympanogram' && (
               <div>
                 {/* Tympanogram Chart */}
-                <div className="mb-6" ref={tympanogramChartRef}>
+                <div  ref={tympanogramChartRef}>
                   <TympanogramChart 
                     data={getTympanogramChartData()} 
                     mode={tympanogramMode}
@@ -1397,18 +1397,6 @@ export default function HearingReportFormPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Results */}
-        <div className="rounded-lg">
-          <h2 className="text-lg font-bold mb-4">{t.hearingReports.results}</h2>
-          <textarea
-            className="w-full px-3 py-2 border rounded"
-            rows={4}
-            value={formData.results}
-            onChange={(e) => setFormData({ ...formData, results: e.target.value })}
-            placeholder={t.hearingReports.enterResults}
-          />
         </div>
 
         {/* Recommendations */}

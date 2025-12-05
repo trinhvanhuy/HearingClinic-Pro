@@ -43,7 +43,7 @@ export default function DiscriminationLossChart({ data }: DiscriminationLossChar
   const leftBarHeight = chartHeight * (data.leftEar.correctPercent / 100)
 
   return (
-    <div className="w-full bg-white rounded-lg border border-gray-200 p-6">
+    <div className="w-full bg-white rounded-lg p-6">
       <h3 className="text-lg font-semibold mb-4">Discrimination Loss Chart</h3>
       
       {/* Chart */}

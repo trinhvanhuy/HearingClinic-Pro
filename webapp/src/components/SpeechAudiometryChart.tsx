@@ -319,7 +319,7 @@ export default function SpeechAudiometryChart({
   }
 
   return (
-    <div className="w-full bg-white rounded-lg border border-gray-200 p-6">
+    <div className="w-full bg-white rounded-lg  p-6">
       {/* Legend and Mode Selector */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-6">
