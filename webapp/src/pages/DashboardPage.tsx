@@ -124,24 +124,24 @@ export default function DashboardPage() {
               {recentClients.map((client) => (
                 <li key={client.id}>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all border border-gray-200">
-                    <Link
-                      to={`/clients/${client.id}`}
+                  <Link
+                    to={`/clients/${client.id}`}
                       className="flex-1 min-w-0"
-                    >
+                  >
                       <p className="font-semibold text-sm mb-0.5 truncate" style={{ color: '#2D2D2D' }}>
-                        {client.get('fullName')}
-                      </p>
+                          {client.get('fullName')}
+                        </p>
                       <div className="flex items-center gap-1.5">
                         <PhoneIcon className="w-3 h-3" style={{ color: '#9B9B9B' }} />
                         <p className="text-xs truncate" style={{ color: '#9B9B9B' }}>
-                          {client.get('phone')}
-                        </p>
-                      </div>
-                      {client.get('lastVisitDate') && (
+                            {client.get('phone')}
+                          </p>
+                        </div>
+                        {client.get('lastVisitDate') && (
                         <p className="text-xs mt-0.5" style={{ color: '#9B9B9B' }}>
-                          {t.dashboard.lastVisit}: {formatDate(client.get('lastVisitDate'))}
-                        </p>
-                      )}
+                            {t.dashboard.lastVisit}: {formatDate(client.get('lastVisitDate'))}
+                          </p>
+                        )}
                     </Link>
                     <div className="flex items-center gap-1.5 ml-2" onClick={(e) => e.stopPropagation()}>
                       <Link

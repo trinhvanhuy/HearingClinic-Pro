@@ -25,11 +25,12 @@ export default function PrintableAudiogramChart({
   rightEar = {},
   leftEar = {},
   width, // No default - will be 100% of container
-  height = 600,
+  height = 1400, // Large height for chart (will scale proportionally to maintain aspect ratio)
 }: PrintableAudiogramChartProps) {
-  // Use container width, default to 100% of parent
-  const effectiveWidth = width || 1000
-  const padding = { top: 50, right: 50, bottom: 70, left: 70 }
+  // Use container width - for A4 print, this should be ~190mm (210mm - 20mm margins)
+  // Use large width for full page, will scale to 100% of container
+  const effectiveWidth = width || 2000 // Large width for full page, will scale to 100%
+  const padding = { top: 60, right: 60, bottom: 80, left: 80 } // Larger padding for better proportions
   const chartWidth = effectiveWidth - padding.left - padding.right
   const chartHeight = height - padding.top - padding.bottom
 
@@ -95,12 +96,12 @@ export default function PrintableAudiogramChart({
   }, [leftPoints])
 
   return (
-    <div className="printable-audiogram-chart" style={{ width: '100%', margin: '0 auto' }}>
+    <div className="printable-audiogram-chart" style={{ width: '100%', margin: '0 auto', border: 'none', outline: 'none' }}>
       <svg
         width={effectiveWidth}
         height={height}
         viewBox={`0 0 ${effectiveWidth} ${height}`}
-        style={{ display: 'block', width: '100%', height: 'auto' }}
+        style={{ display: 'block', width: '100%', height: 'auto', margin: '0 auto', border: 'none', outline: 'none', boxShadow: 'none' }}
         preserveAspectRatio="xMidYMid meet"
       >
         {/* Background zones */}

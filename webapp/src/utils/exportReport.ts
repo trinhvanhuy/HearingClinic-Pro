@@ -30,14 +30,30 @@ export async function captureChartAsImage(
     // If onlySvg is true, find SVG container (div with overflow-x-auto) inside element
     let targetElement = element
     if (options.onlySvg) {
-      // Find the div that contains the SVG (usually has class "overflow-x-auto")
-      const svgContainer = element.querySelector('div.overflow-x-auto, svg')?.parentElement
-      if (svgContainer && svgContainer !== element) {
-        targetElement = svgContainer as HTMLElement
-      } else {
-        // Fallback: find SVG directly and create wrapper
-        const svg = element.querySelector('svg')
-        if (svg) {
+      // Find the SVG directly
+      const svg = element.querySelector('svg')
+      if (svg) {
+        // Hide all buttons in the parent container before capture
+        const buttons = element.querySelectorAll('button')
+        const originalStyles: Array<{ element: HTMLElement; display: string }> = []
+        buttons.forEach((btn) => {
+          originalStyles.push({ element: btn as HTMLElement, display: (btn as HTMLElement).style.display })
+          ;(btn as HTMLElement).style.display = 'none'
+        })
+        
+        // Hide instructions and other UI elements
+        const instructions = element.querySelectorAll('p.text-xs, .chart-controls, .legend-controls')
+        instructions.forEach((el) => {
+          originalStyles.push({ element: el as HTMLElement, display: (el as HTMLElement).style.display })
+          ;(el as HTMLElement).style.display = 'none'
+        })
+        
+        // Find the div that contains the SVG (usually has class "overflow-x-auto")
+        const svgContainer = svg.closest('div.overflow-x-auto') || svg.parentElement
+        if (svgContainer && svgContainer !== element) {
+          targetElement = svgContainer as HTMLElement
+        } else {
+          // Fallback: find SVG directly and create wrapper
           const wrapper = document.createElement('div')
           wrapper.style.position = 'absolute'
           wrapper.style.left = '-9999px'
@@ -51,25 +67,60 @@ export async function captureChartAsImage(
           const svgClone = svg.cloneNode(true) as SVGSVGElement
           svgClone.style.width = '100%'
           svgClone.style.height = '100%'
+          svgClone.style.border = 'none'
+          svgClone.style.outline = 'none'
+          svgClone.removeAttribute('class')
+          // Remove any border-related attributes
+          svgClone.removeAttribute('stroke')
           wrapper.appendChild(svgClone)
           document.body.appendChild(wrapper)
           
           try {
             const canvas = await html2canvas(wrapper, {
-              scale: options.scale || 2,
+              scale: options.scale || 3,
               backgroundColor: '#ffffff',
               useCORS: true,
               logging: false,
             })
             const dataUrl = canvas.toDataURL('image/png', 1.0)
             document.body.removeChild(wrapper)
+            
+            // Restore original styles
+            originalStyles.forEach(({ element, display }) => {
+              element.style.display = display
+            })
+            
             return dataUrl
           } catch (err) {
             if (document.body.contains(wrapper)) {
               document.body.removeChild(wrapper)
             }
+            // Restore original styles even on error
+            originalStyles.forEach(({ element, display }) => {
+              element.style.display = display
+            })
             throw err
           }
+        }
+        
+        // Restore original styles after capture (if not using wrapper)
+        if (targetElement === svgContainer) {
+          const canvas = await html2canvas(targetElement, {
+            scale: options.scale || 3,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false,
+            width: targetElement.offsetWidth || targetElement.scrollWidth,
+            height: targetElement.offsetHeight || targetElement.scrollHeight,
+          })
+          const dataUrl = canvas.toDataURL('image/png', 1.0)
+          
+          // Restore original styles
+          originalStyles.forEach(({ element, display }) => {
+            element.style.display = display
+          })
+          
+          return dataUrl
         }
       }
     }

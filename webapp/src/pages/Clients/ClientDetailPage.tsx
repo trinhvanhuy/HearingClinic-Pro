@@ -181,11 +181,11 @@ export default function ClientDetailPage() {
       setSelectedRepairAppointmentId(appointment.id)
       setIsRepairModalOpen(true)
     } else {
-      const hearingReport = appointment.get('hearingReport')
-      if (hearingReport) {
-        const reportId = hearingReport.id || hearingReport.objectId
-        navigate(`/hearing-reports/${reportId}`)
-      }
+    const hearingReport = appointment.get('hearingReport')
+    if (hearingReport) {
+      const reportId = hearingReport.id || hearingReport.objectId
+      navigate(`/hearing-reports/${reportId}`)
+    }
     }
   }
 
@@ -238,8 +238,8 @@ export default function ClientDetailPage() {
             </div>
             
             <div className="flex gap-2">
-              <Link
-                to={`/clients/${id}/edit`}
+            <Link
+              to={`/clients/${id}/edit`}
                 className="inline-flex items-center justify-center w-10 h-10 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
                 title={t.clientDetail.editProfile}
               >
@@ -273,7 +273,7 @@ export default function ClientDetailPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                </Link>
+            </Link>
               )}
             </div>
           </div>
@@ -363,12 +363,12 @@ export default function ClientDetailPage() {
                 {t.clientDetail.createFirstReport || 'Tạo báo cáo đầu tiên'}
               </button>
             ) : selectedType === 'AUDIOGRAM' ? (
-              <Link
-                to={`/hearing-reports/new?clientId=${id}`}
-                className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
-              >
-                {t.clientDetail.createFirstReport}
-              </Link>
+            <Link
+              to={`/hearing-reports/new?clientId=${id}`}
+              className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
+            >
+              {t.clientDetail.createFirstReport}
+            </Link>
             ) : (
               <Link
                 to={`/appointments/new?clientId=${id}&type=${selectedType}`}

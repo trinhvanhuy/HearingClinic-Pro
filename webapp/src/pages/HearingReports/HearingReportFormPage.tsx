@@ -211,13 +211,11 @@ export default function HearingReportFormPage() {
       }
       
       // Prepare report data, using a proper Parse Pointer for client
-      const clientPointer = (Client as any).createWithoutData
-        ? (Client as any).createWithoutData(clientIdStr)
-        : (() => {
-            const c = new (Client as any)()
-            c.id = clientIdStr
-            return c
-          })()
+      const clientPointer = {
+        __type: 'Pointer',
+        className: 'Client',
+        objectId: clientIdStr,
+      }
       const reportData: any = {
         client: clientPointer,
         testDate: new Date(data.testDate),
@@ -704,9 +702,9 @@ export default function HearingReportFormPage() {
       return
     }
 
-    const email = client.get('email')
+      const email = client.get('email')
     if (!email) {
-      toast.error('Client email not found')
+        toast.error('Client email not found')
       return
     }
 
@@ -776,18 +774,18 @@ export default function HearingReportFormPage() {
   return (
     <div className="max-w-6xl mx-auto bg-white p-8 relative">
       {/* Floating Action Button */}
-      <div className="fixed bottom-8 right-8 z-50 floating-menu-container">
-        <button
-          type="button"
-          onClick={() => setShowFloatingMenu(!showFloatingMenu)}
-          className="w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-primary-600 transition-colors flex items-center justify-center"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-          </svg>
-        </button>
-        {showFloatingMenu && (
-          <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl border p-2 min-w-[180px]">
+        <div className="fixed bottom-8 right-8 z-50 floating-menu-container">
+          <button
+            type="button"
+            onClick={() => setShowFloatingMenu(!showFloatingMenu)}
+            className="w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-primary-600 transition-colors flex items-center justify-center"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            </svg>
+          </button>
+          {showFloatingMenu && (
+            <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl border p-2 min-w-[180px]">
             <button
               type="button"
               onClick={() => {
@@ -802,39 +800,39 @@ export default function HearingReportFormPage() {
               </svg>
               {mutation.isPending ? 'Saving...' : 'Save'}
             </button>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-              </svg>
-              Print
-            </button>
-            <button
-              type="button"
-              onClick={handleShareEmail}
-              className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Share Email
-            </button>
-            <button
-              type="button"
-              onClick={handleDownloadPDF}
-              className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Download PDF
-            </button>
-          </div>
-        )}
-      </div>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
+              </button>
+              <button
+                type="button"
+                onClick={handleShareEmail}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Share Email
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download PDF
+              </button>
+            </div>
+          )}
+        </div>
       {/* Header */}
       <div className="text-center mb-8 border-b pb-4">
         <div className="flex items-center justify-center gap-4 mb-4">
@@ -1245,13 +1243,13 @@ export default function HearingReportFormPage() {
                         >
                           Clear
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => addTympanogramPoint('left')}
-                          className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
-                        >
-                          + Add Row
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => addTympanogramPoint('left')}
+                        className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
+                      >
+                        + Add Row
+                      </button>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -1331,13 +1329,13 @@ export default function HearingReportFormPage() {
                         >
                           Clear
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => addTympanogramPoint('right')}
-                          className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
-                        >
-                          + Add Row
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => addTympanogramPoint('right')}
+                        className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 text-sm font-medium"
+                      >
+                        + Add Row
+                      </button>
                       </div>
                     </div>
                     <div className="overflow-x-auto">

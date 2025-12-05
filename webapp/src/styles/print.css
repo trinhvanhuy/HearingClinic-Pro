@@ -88,7 +88,7 @@
   /* Header */
   .report-header {
     text-align: center;
-    border-bottom: 1px solid #000;
+    border-bottom: none;
     padding: 0;
     padding-bottom: 4mm;
     margin: 0;
@@ -148,6 +148,13 @@
     border-bottom: 1px solid #ccc;
     padding-bottom: 1mm;
   }
+  
+  /* Pure Tone Audiometry section title - keep border like Patient Information */
+  .pure-tone-section .section-title {
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 1mm;
+    margin-bottom: 2mm;
+  }
 
   /* Patient Information */
   .patient-info .info-grid {
@@ -182,36 +189,74 @@
   }
 
   .chart-container.audiogram-chart {
-    width: 100%;
-    max-height: 65mm;
-    overflow: hidden;
-    margin: 2mm 0;
+    width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 2mm auto;
+    border: none !important;
+    outline: none !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .chart-image.audiogram-image {
     width: 100% !important;
     height: auto !important;
-    max-height: 65mm;
+    max-height: none !important;
     display: block;
     object-fit: contain;
     object-position: center;
   }
 
   .audiogram-wrapper {
-    width: 100%;
+    width: 100% !important;
+    height: auto !important;
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
   }
 
   .audiogram-chart svg,
   .audiogram-wrapper svg {
     width: 100% !important;
     height: auto !important;
-    max-height: 65mm;
+    max-height: none !important;
+    min-height: 130mm !important;
     display: block;
+    margin: 0 auto;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    stroke: none !important;
+  }
+  
+  /* Remove any border from chart container */
+  .printable-audiogram-chart {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Ensure chart takes maximum space */
+  .pure-tone-section .chart-container {
+    flex: 1;
+    min-height: 130mm;
+  }
+  
+  /* Hide buttons in audiogram chart */
+  .audiogram-chart button,
+  .audiogram-wrapper button,
+  .chart-container button {
+    display: none !important;
+    visibility: hidden !important;
   }
 
   /* Data Table */
   .data-table-container {
-    margin: 2mm 0;
+    margin: 0.5mm 0;
+    margin-top: 1mm;
     page-break-inside: avoid;
   }
 
@@ -275,17 +320,50 @@
   /* Result box */
   .result-box {
     min-height: 20mm;
-    border: 1px solid #ccc;
-    background: repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 5mm,
-      #e0e0e0 5mm,
-      #e0e0e0 5.2mm
-    );
-    margin-top: 2mm;
-    padding: 2mm;
+    border: none;
+    background: transparent;
+    margin-top: 0.5mm;
+    padding: 1mm 2mm;
     page-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+  
+  .result-line {
+    min-height: 3mm;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin: 0.5mm 0;
+    overflow: hidden;
+  }
+  
+  .result-dots {
+    color: #999;
+    font-size: 12pt;
+    letter-spacing: 3px;
+    line-height: 1.2;
+    white-space: nowrap;
+    width: 100%;
+    display: block;
+  }
+  
+  .result-content {
+    font-size: 10pt;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #000;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Reduce spacing for Result section title */
+  .results-section .section-title {
+    margin-bottom: 0.5mm;
+    padding-bottom: 0.5mm;
   }
 
   /* Signature */

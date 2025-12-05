@@ -30,9 +30,15 @@ router.post('/export', async (req, res) => {
     const page = await browser.newPage()
 
     // Set content with HTML
+    // Use 'domcontentloaded' - faster, doesn't wait for network requests
+    // All CSS and images should be embedded inline (base64) in the HTML
     await page.setContent(html, {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
+      timeout: 60000, // 60 seconds timeout for complex HTML with embedded images
     })
+    
+    // Wait a bit more for any embedded images/CSS to render
+    await page.waitForTimeout(1000)
 
     // Generate PDF with no header/footer
     const pdfBuffer = await page.pdf({

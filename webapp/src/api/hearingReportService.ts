@@ -31,7 +31,7 @@ export const hearingReportService = {
             className: 'Client',
             objectId: clientIdStr,
           } as any)
-        }
+      }
       }
       
       // Sort by updatedAt first (most recently updated), then by testDate

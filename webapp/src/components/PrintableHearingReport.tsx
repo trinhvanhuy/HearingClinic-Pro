@@ -173,10 +173,20 @@ export default function PrintableHearingReport({
         </div>
       </div>
 
-      {/* Results - Always show empty box for handwriting */}
+      {/* Results - Show recommendations if available, otherwise empty box for handwriting */}
       <div className="section results-section">
         <h2 className="section-title">Result</h2>
-        <div className="result-box"></div>
+        <div className="result-box">
+          {recommendations ? (
+            <div className="result-content">{recommendations}</div>
+          ) : (
+            [...Array(5)].map((_, i) => (
+              <div key={i} className="result-line">
+                <span className="result-dots">................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................</span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Signature */}

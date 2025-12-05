@@ -116,37 +116,37 @@ export interface Translations {
   }
 
   // Hearing Reports
-    hearingReports: {
-      title: string
-      newReport: string
-      editReport: string
-      reportDetails: string
-      print: string
-      normalHearingAbility: string
-      decreasedHearingAbility: string
-      noReports: string
-      client: string
-      date: string
-      examiner: string
-      pureToneAudiometry: string
-      speechAudiometry: string
-      tympanometry: string
-      recommendations: string
-      discriminationLoss: string
-      tympanograms: string
-      results: string
-      signature: string
-      printName: string
-      licenseNo: string
-      signatureDate: string
-      enterResults: string
-      enterRecommendations: string
-      enterSignatureName: string
-      enterPrintName: string
-      enterLicenseNumber: string
+  hearingReports: {
+    title: string
+    newReport: string
+    editReport: string
+    reportDetails: string
+    print: string
+    normalHearingAbility: string
+    decreasedHearingAbility: string
+    noReports: string
+    client: string
+    date: string
+    examiner: string
+    pureToneAudiometry: string
+    speechAudiometry: string
+    tympanometry: string
+    recommendations: string
+    discriminationLoss: string
+    tympanograms: string
+    results: string
+    signature: string
+    printName: string
+    licenseNo: string
+    signatureDate: string
+    enterResults: string
+    enterRecommendations: string
+    enterSignatureName: string
+    enterPrintName: string
+    enterLicenseNumber: string
       viewAudiogram: string
       createAudiogram: string
-    }
+  }
 
   // Reminders
   reminders: {

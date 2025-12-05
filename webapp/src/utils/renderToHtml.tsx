@@ -83,33 +83,26 @@ export function renderReportToHtml(
             // Get HTML content (now with base64 images)
             const componentHtml = container.innerHTML
 
-            // Get all stylesheets from document
-            const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-              .map((link) => {
+            // Fetch ALL stylesheets and embed them inline (no external links)
+            const stylesheetLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+            const stylesheetPromises = stylesheetLinks.map(async (link) => {
+              try {
                 const href = (link as HTMLLinkElement).href
-                return `<link rel="stylesheet" href="${href}" />`
-              })
-              .join('\n')
+                const response = await fetch(href)
+                return await response.text()
+              } catch (error) {
+                console.warn('Failed to fetch stylesheet:', (link as HTMLLinkElement).href, error)
+                return ''
+              }
+            })
+            
+            const stylesheetsContent = await Promise.all(stylesheetPromises)
+            const allStylesheets = stylesheetsContent.filter(Boolean).join('\n\n')
 
             // Get inline styles from style tags
             const inlineStyles = Array.from(document.querySelectorAll('style'))
               .map((style) => style.innerHTML)
               .join('\n')
-
-            // Get print.css content specifically (try to fetch it)
-            const printCssLink = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-              .find((link) => (link as HTMLLinkElement).href.includes('print.css'))
-            
-            // Fetch print.css content
-            let printCssContent = ''
-            if (printCssLink) {
-              try {
-                const response = await fetch((printCssLink as HTMLLinkElement).href)
-                printCssContent = await response.text()
-              } catch (error) {
-                console.warn('Failed to fetch print.css:', error)
-              }
-            }
             
             // Combine everything into full HTML document
             const fullHtml = `<!DOCTYPE html>
@@ -118,10 +111,9 @@ export function renderReportToHtml(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hearing Report</title>
-  ${stylesheets}
   <style>
+    ${allStylesheets}
     ${inlineStyles}
-    ${printCssContent}
     /* Additional print styles */
     * {
       margin: 0;
