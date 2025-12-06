@@ -475,7 +475,7 @@ export default function RepairAppointmentModal({
               4. Tai <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-4">
-              <label className="flex items-center">
+              <label key="ear-left" className="flex items-center">
                 <input
                   type="radio"
                   name="ear"
@@ -486,7 +486,7 @@ export default function RepairAppointmentModal({
                 />
                 <span>{t.hearingReports.left}</span>
               </label>
-              <label className="flex items-center">
+              <label key="ear-right" className="flex items-center">
                 <input
                   type="radio"
                   name="ear"
@@ -497,7 +497,7 @@ export default function RepairAppointmentModal({
                 />
                 <span>{t.hearingReports.right}</span>
               </label>
-              <label className="flex items-center">
+              <label key="ear-both" className="flex items-center">
                 <input
                   type="radio"
                   name="ear"
@@ -569,9 +569,9 @@ export default function RepairAppointmentModal({
                   </div>
                   <div className="max-h-48 overflow-y-auto">
                     {filteredStaff.length > 0 ? (
-                      filteredStaff.map((staff) => (
+                      filteredStaff.map((staff, index) => (
                         <button
-                          key={staff.id}
+                          key={staff.id || `staff-${staff.get('username') || index}`}
                           type="button"
                           onClick={() => {
                             setFormData({ ...formData, staffId: staff.id })
@@ -705,9 +705,9 @@ export default function RepairAppointmentModal({
                     </div>
                     <div className="max-h-48 overflow-y-auto">
                       {filteredPaymentCollectors.length > 0 ? (
-                        filteredPaymentCollectors.map((staff) => (
+                        filteredPaymentCollectors.map((staff, index) => (
                           <button
-                            key={staff.id}
+                            key={staff.id || `payment-collector-${staff.get('username') || index}`}
                             type="button"
                             onClick={() => {
                               setFormData({ ...formData, paymentCollectorId: staff.id })
