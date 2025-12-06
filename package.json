@@ -13,8 +13,10 @@
     "dev:backend": "cd backend && npm run dev",
     "dev:web": "cd webapp && npm run dev",
     "dev:mobile": "cd mobile && npm start",
+    "dev:desktop": "cd webapp && npm run dev:desktop",
     "build:web": "cd webapp && npm run build",
-    "build:mobile": "cd mobile && npm run build"
+    "build:mobile": "cd mobile && npm run build",
+    "build:desktop": "cd webapp && npm run build:desktop"
   },
   "keywords": [
     "hearing-clinic",
