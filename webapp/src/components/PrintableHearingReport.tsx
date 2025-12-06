@@ -62,7 +62,11 @@ export default function PrintableHearingReport({
   const printName = formData?.printName || report.get('printName') || ''
   const signatureDate = formData?.signatureDate || report.get('signatureDate') || report.get('testDate') || ''
   const testDate = report.get('testDate')
-  const typeOfTest = report.get('typeOfTest') || t.hearingReports.pureToneAudiometry
+  // Map typeOfTest value to translation if it's in English
+  const rawTypeOfTest = report.get('typeOfTest') || ''
+  const typeOfTest = rawTypeOfTest.toLowerCase() === 'pure tone audiometry' 
+    ? t.hearingReports.pureToneAudiometry 
+    : rawTypeOfTest || t.hearingReports.pureToneAudiometry
 
   const formatDateValue = (date: any) => {
     if (!date) return 'N/A'

@@ -5,7 +5,11 @@ import { useClinicConfig } from '../../hooks/useClinicConfig'
 import { connectionStatus } from '../../services/connectionStatus'
 import { syncService } from '../../services/syncService'
 import { isAdminSync } from '../../utils/roleHelper'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { reminderService } from '../../api/reminderService'
+import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
+import { startOfToday, endOfWeek, addDays } from 'date-fns'
 
 export default function Layout() {
   const { user, logout } = useAuth()
@@ -17,6 +21,35 @@ export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [connectionState, setConnectionState] = useState<'online' | 'offline' | 'checking'>('checking')
   const [isSyncing, setIsSyncing] = useState(false)
+  const [notificationOpen, setNotificationOpen] = useState(false)
+  const notificationRef = useRef<HTMLDivElement>(null)
+  
+  // Fetch reminders for notification dropdown
+  const today = startOfToday()
+  const weekEnd = endOfWeek(addDays(today, 7))
+  
+  const { data: reminders = [] } = useQuery({
+    queryKey: ['reminders', 'notifications'],
+    queryFn: () =>
+      reminderService.getAll({
+        dueFrom: today,
+        dueTo: weekEnd,
+        status: 'pending',
+        limit: 10,
+      }),
+  })
+  
+  const { data: overdueReminders = [] } = useQuery({
+    queryKey: ['reminders', 'overdue-notifications'],
+    queryFn: () =>
+      reminderService.getAll({
+        dueTo: today,
+        status: 'overdue',
+        limit: 5,
+      }),
+  })
+  
+  const allNotifications = [...overdueReminders, ...reminders].slice(0, 10)
 
   useEffect(() => {
     const unsubscribeConnection = connectionStatus.subscribe(setConnectionState)
@@ -27,6 +60,31 @@ export default function Layout() {
       unsubscribeSync()
     }
   }, [])
+  
+  // Close notification dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setNotificationOpen(false)
+      }
+    }
+    
+    if (notificationOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [notificationOpen])
+  
+  const handleSearchClick = () => {
+    navigate('/clients')
+  }
+  
+  const handleNotificationClick = () => {
+    setNotificationOpen(!notificationOpen)
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -238,19 +296,102 @@ export default function Layout() {
             {/* Right: Search, Notification, and Connection Status */}
             <div className="flex items-center gap-3">
               {/* Search Icon */}
-              <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+              <button 
+                onClick={handleSearchClick}
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                title={t.common.search}
+              >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
               
-              {/* Notification Icon */}
-              <button className="p-1.5 hover:bg-gray-100 rounded-lg relative transition-colors">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              {/* Notification Icon with Dropdown */}
+              <div className="relative" ref={notificationRef}>
+                <button 
+                  onClick={handleNotificationClick}
+                  className="p-1.5 hover:bg-gray-100 rounded-lg relative transition-colors"
+                  title={t.reminders.title}
+                >
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {allNotifications.length > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </button>
+                
+                {/* Notification Dropdown */}
+                {notificationOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900">{t.reminders.title}</h3>
+                      <Link
+                        to="/reminders"
+                        onClick={() => setNotificationOpen(false)}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {t.common.view}
+                      </Link>
+                    </div>
+                    <div className="overflow-y-auto flex-1">
+                      {allNotifications.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 text-sm">
+                          {t.reminders.noReminders}
+                        </div>
+                      ) : (
+                        <ul className="divide-y divide-gray-200">
+                          {allNotifications.map((reminder) => {
+                            const dueDate = new Date(reminder.get('dueAt'))
+                            const isOverdue = reminder.get('status') === 'overdue'
+                            const priority = reminder.get('priority') as 'low' | 'medium' | 'high'
+                            const client = reminder.get('client')
+                            
+                            return (
+                              <li
+                                key={reminder.id}
+                                className="p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                                onClick={() => {
+                                  setNotificationOpen(false)
+                                  navigate(`/reminders/${reminder.id}`)
+                                }}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {reminder.get('title')}
+                                    </p>
+                                    {client && (
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        {t.dashboard.client}: {client.get('fullName')}
+                                      </p>
+                                    )}
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                      {t.dashboard.due}: {formatDate(dueDate)}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    {isOverdue && (
+                                      <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-red-100 text-red-800">
+                                        {t.reminders.overdue}
+                                      </span>
+                                    )}
+                                    {priority === 'high' && (
+                                      <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-red-100 text-red-800">
+                                        {t.dashboard.priorityHigh}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               
               {/* Connection Status Indicator */}
               {isSyncing && (

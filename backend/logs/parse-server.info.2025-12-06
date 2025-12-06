@@ -40,3 +40,38 @@
 {"level":"warn","message":"Warning: Duplicate cloud functions exist for Client. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T09:59:29.304Z"}
 {"level":"warn","message":"Warning: Duplicate cloud functions exist for Reminder. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T09:59:29.306Z"}
 {"level":"info","message":"Parse LiveQuery Server started running","timestamp":"2025-12-06T09:59:29.321Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:05:33.599Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:05:33.601Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:05:33.607Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:05:33.609Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Client. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:05:34.263Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Reminder. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:05:34.265Z"}
+{"level":"info","message":"Parse LiveQuery Server started running","timestamp":"2025-12-06T10:05:34.280Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:05:54.225Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:05:54.227Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:05:54.226Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:05:54.227Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Client. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:05:54.823Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Reminder. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:05:54.824Z"}
+{"level":"info","message":"Parse LiveQuery Server started running","timestamp":"2025-12-06T10:05:54.839Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:06:05.849Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:06:05.851Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:06:05.851Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:06:05.854Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Client. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:06:06.409Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Reminder. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:06:06.410Z"}
+{"level":"info","message":"Parse LiveQuery Server started running","timestamp":"2025-12-06T10:06:06.424Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:19:10.516Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:19:10.517Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:19:10.515Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:19:10.517Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Client. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:19:11.058Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Reminder. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:19:11.059Z"}
+{"level":"info","message":"Parse LiveQuery Server started running","timestamp":"2025-12-06T10:19:11.074Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:20:14.226Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:20:14.227Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2025-12-06T10:20:14.226Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2025-12-06T10:20:14.227Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Client. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:20:14.681Z"}
+{"level":"warn","message":"Warning: Duplicate cloud functions exist for Reminder. Only the last one will be used and the others will be ignored.","timestamp":"2025-12-06T10:20:14.682Z"}
+{"level":"info","message":"Parse LiveQuery Server started running","timestamp":"2025-12-06T10:20:14.699Z"}

@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot, Root } from 'react-dom/client'
 import PrintableHearingReport from '../components/PrintableHearingReport'
 import { Language, translations } from '../i18n/translations'
+import { generateNotoSansFontFace } from './fontLoader'
 
 /**
  * Render PrintableHearingReport component to HTML string with all styles
@@ -107,29 +108,39 @@ export function renderReportToHtml(
               .map((style) => style.innerHTML)
               .join('\n')
             
+            // Generate Noto Sans font face CSS
+            const notoSansFontFace = generateNotoSansFontFace()
+            
             // Combine everything into full HTML document
             const fullHtml = `<!DOCTYPE html>
-<html>
+<html lang="${language}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${translations[language].hearingReports.title}</title>
   <style>
+    ${notoSansFontFace}
     ${allStylesheets}
     ${inlineStyles}
-    /* Additional print styles */
+    /* Additional print styles with Vietnamese font support */
+    @charset "UTF-8";
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Arial', 'Tahoma', 'Roboto', 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
+      font-family: 'Noto Sans', 'Arial', 'Tahoma', 'Roboto', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
-      font-family: 'Arial', 'Tahoma', 'Roboto', 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
+      font-family: 'Noto Sans', 'Arial', 'Tahoma', 'Roboto', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     .printable-container {
       width: 210mm;

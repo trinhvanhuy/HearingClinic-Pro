@@ -1002,9 +1002,9 @@ export default function HearingReportFormPage() {
                   <table className="w-full border-collapse border">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="border px-4 py-2 text-left">{t.hearingReports.frequency}</th>
+                        <th className="border px-4 py-2 text-left text-sm font-medium">{t.hearingReports.frequency}</th>
                         {frequencies.map((freq) => (
-                          <th key={freq} className="border px-4 py-2">
+                          <th key={freq} className="border px-4 py-2 text-sm font-medium">
                             {freq}
                           </th>
                         ))}
@@ -1012,7 +1012,7 @@ export default function HearingReportFormPage() {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>Right</td>
+                        <td className="border px-4 py-2 font-medium" style={{ color: '#E53935' }}>{t.hearingReports.right}</td>
                         {frequencies.map((freq) => (
                           <td key={freq} className="border px-4 py-2">
                             <input

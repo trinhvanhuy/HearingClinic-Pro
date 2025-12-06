@@ -19,6 +19,12 @@ router.post('/export', async (req, res) => {
     // Use system Chromium if available (for Docker/Alpine)
     const launchOptions = {
       headless: true,
+      args: [
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--font-render-hinting=none', // Better font rendering
+        '--disable-font-subpixel-positioning', // Better font rendering
+      ],
     }
     
     if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH) {
@@ -26,28 +32,67 @@ router.post('/export', async (req, res) => {
     }
     
     const browser = await chromium.launch(launchOptions)
-
-    const page = await browser.newPage()
-
-    // Set default font for Vietnamese support
-    await page.addStyleTag({
-      content: `
-        * {
-          font-family: 'Arial', 'Tahoma', 'Roboto', 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
-        }
-      `
+    
+    // Create browser context with proper locale for Vietnamese
+    const context = await browser.newContext({
+      locale: 'vi-VN',
+      timezoneId: 'Asia/Ho_Chi_Minh',
     })
 
-    // Set content with HTML
-    // Use 'domcontentloaded' - faster, doesn't wait for network requests
-    // All CSS and images should be embedded inline (base64) in the HTML
+    const page = await context.newPage()
+
+    // Set content with HTML first
+    // Use 'networkidle' to wait for fonts from Google Fonts to load
     await page.setContent(html, {
-      waitUntil: 'domcontentloaded',
+      waitUntil: 'networkidle', // Wait for all network requests including fonts
       timeout: 60000, // 60 seconds timeout for complex HTML with embedded images
     })
     
-    // Wait a bit more for any embedded images/CSS to render
+    // Wait for fonts to be fully loaded and rendered
+    await page.waitForTimeout(3000) // Increased wait time for Google Fonts
+    
+    // Force font rendering with Noto Sans as primary
+    await page.addStyleTag({
+      content: `
+        * {
+          font-family: 'Noto Sans', 'Arial', 'Tahoma', 'Roboto', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+        }
+        /* Ensure bold text uses real bold font, not fake bold */
+        h1, h2, h3, .report-title, .section-title, .clinic-name, 
+        .data-table th, .ear-label, strong, b {
+          font-weight: 700 !important;
+          font-family: 'Noto Sans', sans-serif !important;
+        }
+        @supports (font-variant-ligatures: normal) {
+          * {
+            font-variant-ligatures: normal;
+          }
+        }
+      `
+    })
+    
+    // Wait for font styles to apply
     await page.waitForTimeout(1000)
+    
+    // Verify fonts are loaded by checking computed styles
+    try {
+      await page.evaluate(() => {
+        const testElement = document.createElement('div')
+        testElement.style.fontFamily = 'Noto Sans'
+        testElement.style.position = 'absolute'
+        testElement.style.visibility = 'hidden'
+        testElement.textContent = 'Đánh giá Mất thính lực'
+        document.body.appendChild(testElement)
+        const computedStyle = window.getComputedStyle(testElement)
+        console.log('Font family:', computedStyle.fontFamily)
+        document.body.removeChild(testElement)
+      })
+    } catch (error) {
+      console.warn('Font verification failed:', error)
+    }
 
     // Generate PDF with no header/footer
     const pdfBuffer = await page.pdf({
@@ -63,6 +108,7 @@ router.post('/export', async (req, res) => {
       preferCSSPageSize: true,
     })
 
+    await context.close()
     await browser.close()
 
     // Set response headers
