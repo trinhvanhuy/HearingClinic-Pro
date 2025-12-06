@@ -17,26 +17,60 @@ export const clientService = {
     try {
       const query = new Parse.Query(Client)
       
+      let finalQuery = query
+      
       if (params.search) {
-        const searchLower = params.search.toLowerCase()
-        query.or([
-          new Parse.Query(Client).contains('fullName', searchLower),
-          new Parse.Query(Client).contains('firstName', searchLower),
-          new Parse.Query(Client).contains('lastName', searchLower),
-          new Parse.Query(Client).contains('phone', params.search),
-          new Parse.Query(Client).contains('email', searchLower),
-        ])
+        const searchTerm = params.search.trim()
+        if (searchTerm) {
+          // Use regex for case-insensitive search
+          // Escape special regex characters and create case-insensitive pattern
+          const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          // Create regex pattern that matches anywhere in the string (case-insensitive)
+          // Add .* at start and end to match substring anywhere in the field
+          const searchRegex = new RegExp(`.*${escapedSearch}.*`, 'i')
+          
+          // Create separate queries for each field with base filters
+          const createBaseQuery = () => {
+            const q = new Parse.Query(Client)
+            if (params.isActive !== undefined) {
+              q.equalTo('isActive', params.isActive)
+            }
+            return q
+          }
+          
+          // Parse Server matches() accepts RegExp object
+          const fullNameQuery = createBaseQuery().matches('fullName', searchRegex)
+          const firstNameQuery = createBaseQuery().matches('firstName', searchRegex)
+          const lastNameQuery = createBaseQuery().matches('lastName', searchRegex)
+          const phoneQuery = createBaseQuery().matches('phone', searchRegex)
+          const emailQuery = createBaseQuery().matches('email', searchRegex)
+          
+          // Also try exact match for phone (without regex) in case it's a number
+          const phoneExactQuery = createBaseQuery().equalTo('phone', searchTerm)
+          
+          // Combine all queries with OR
+          finalQuery = Parse.Query.or(
+            fullNameQuery,
+            firstNameQuery,
+            lastNameQuery,
+            phoneQuery,
+            emailQuery,
+            phoneExactQuery
+          )
+        }
+      } else {
+        // If no search, apply filters to base query
+        if (params.isActive !== undefined) {
+          finalQuery.equalTo('isActive', params.isActive)
+        }
       }
       
-      if (params.isActive !== undefined) {
-        query.equalTo('isActive', params.isActive)
-      }
+      // Apply sorting and pagination to final query
+      finalQuery.descending('updatedAt')
+      finalQuery.limit(params.limit || 50)
+      finalQuery.skip(params.skip || 0)
       
-      query.descending('updatedAt')
-      query.limit(params.limit || 50)
-      query.skip(params.skip || 0)
-      
-      const clients = await query.find()
+      const clients = await finalQuery.find()
       
       // Cache the results
       if (isOnline) {
