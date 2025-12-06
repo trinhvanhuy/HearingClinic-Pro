@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query'
 import { reminderService } from '../../api/reminderService'
 import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import { startOfToday, endOfWeek, addDays } from 'date-fns'
+import ReminderDetailModal from '../ReminderDetailModal'
 
 export default function Layout() {
   const { user, logout } = useAuth()
@@ -22,6 +23,7 @@ export default function Layout() {
   const [connectionState, setConnectionState] = useState<'online' | 'offline' | 'checking'>('checking')
   const [isSyncing, setIsSyncing] = useState(false)
   const [notificationOpen, setNotificationOpen] = useState(false)
+  const [selectedReminderId, setSelectedReminderId] = useState<string | null>(null)
   const notificationRef = useRef<HTMLDivElement>(null)
   
   // Fetch reminders for notification dropdown
@@ -352,8 +354,8 @@ export default function Layout() {
                                 key={reminder.id}
                                 className="p-3 hover:bg-gray-50 cursor-pointer transition-colors"
                                 onClick={() => {
+                                  setSelectedReminderId(reminder.id)
                                   setNotificationOpen(false)
-                                  navigate(`/reminders/${reminder.id}`)
                                 }}
                               >
                                 <div className="flex items-start justify-between gap-2">
@@ -435,6 +437,15 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+      
+      {/* Reminder Detail Modal */}
+      {selectedReminderId && (
+        <ReminderDetailModal
+          isOpen={!!selectedReminderId}
+          onClose={() => setSelectedReminderId(null)}
+          reminderId={selectedReminderId}
+        />
+      )}
     </div>
   )
 }
