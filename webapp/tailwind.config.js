@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Arial', 'Tahoma', 'Roboto', 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', 'sans-serif'],
+      },
       colors: {
         primary: {
           DEFAULT: '#E14D4D',

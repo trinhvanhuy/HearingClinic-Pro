@@ -114,7 +114,7 @@ export default function PrintableHearingReport({
             <span className="info-value">{client.get('phone') || 'N/A'}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Date of Birth:</span>
+            <span className="info-label">{t.hearingReports.dateOfBirth}:</span>
             <span className="info-value">
               {client.get('dateOfBirth') ? formatDateValue(client.get('dateOfBirth')) : 'N/A'}
             </span>
@@ -124,7 +124,7 @@ export default function PrintableHearingReport({
             <span className="info-value">{formatDateValue(testDate)}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Type of Test:</span>
+            <span className="info-label">{t.appointments.hearingTestType}:</span>
             <span className="info-value">{typeOfTest}</span>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function PrintableHearingReport({
           <table className="data-table">
             <thead>
               <tr>
-                <th>Frequency (Hz)</th>
+                <th>{t.hearingReports.frequency}</th>
                 {FREQUENCIES.map((freq) => (
                   <th key={freq}>{freq}</th>
                 ))}
@@ -168,7 +168,7 @@ export default function PrintableHearingReport({
                 })}
               </tr>
               <tr>
-                <td className="ear-label left-ear">Left</td>
+                <td className="ear-label left-ear">{t.hearingReports.left}</td>
                 {FREQUENCIES.map((freq) => {
                   const value = leftEarThresholds[freq as keyof EarThresholds]
                   return <td key={freq}>{value !== undefined && value !== null ? value : ''}</td>

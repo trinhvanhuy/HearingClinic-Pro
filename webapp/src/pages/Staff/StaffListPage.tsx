@@ -7,6 +7,22 @@ import { formatDate } from '@hearing-clinic/shared/src/utils/formatting'
 import EditStaffModal from '../../components/EditStaffModal'
 import Parse from 'parse'
 
+// Export role color function for use in other components
+export const getStaffRoleColor = (role: StaffRole): string => {
+  switch (role) {
+    case 'hearing_doctor':
+      return 'bg-red-100 text-red-800 border-red-200' // Bác sĩ - màu đỏ
+    case 'audiologist':
+      return 'bg-blue-100 text-blue-800 border-blue-200' // Chuyên gia thính học - màu xanh dương
+    case 'consultant':
+      return 'bg-purple-100 text-purple-800 border-purple-200' // Nhân viên tư vấn - màu tím
+    case 'technical_specialist':
+      return 'bg-cyan-100 text-cyan-800 border-cyan-200' // Chuyên viên kỹ thuật - màu cyan
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+}
+
 const STAFF_ROLE_LABELS: Record<StaffRole, { en: string; vi: string }> = {
   technical_specialist: {
     en: 'Technical Specialist',
@@ -25,6 +41,7 @@ const STAFF_ROLE_LABELS: Record<StaffRole, { en: string; vi: string }> = {
     vi: 'Bác sĩ thính học',
   },
 }
+
 
 export default function StaffListPage() {
   const { t, language } = useI18n()
@@ -121,7 +138,7 @@ export default function StaffListPage() {
                       <td>{member.get('email') || '-'}</td>
                       <td>
                         {role ? (
-                          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${getStaffRoleColor(role)}`}>
                             {getRoleLabel(role)}
                           </span>
                         ) : (

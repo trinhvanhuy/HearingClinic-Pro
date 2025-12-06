@@ -29,6 +29,15 @@ router.post('/export', async (req, res) => {
 
     const page = await browser.newPage()
 
+    // Set default font for Vietnamese support
+    await page.addStyleTag({
+      content: `
+        * {
+          font-family: 'Arial', 'Tahoma', 'Roboto', 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
+        }
+      `
+    })
+
     // Set content with HTML
     // Use 'domcontentloaded' - faster, doesn't wait for network requests
     // All CSS and images should be embedded inline (base64) in the HTML

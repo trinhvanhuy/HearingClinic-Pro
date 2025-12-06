@@ -122,12 +122,14 @@ export function renderReportToHtml(
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: 'Arial', 'Tahoma', 'Roboto', 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
     }
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
+      font-family: 'Arial', 'Tahoma', 'Roboto', 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', sans-serif !important;
     }
     .printable-container {
       width: 210mm;

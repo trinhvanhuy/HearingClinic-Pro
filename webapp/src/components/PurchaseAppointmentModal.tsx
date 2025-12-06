@@ -2,13 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect, useRef } from 'react'
 import { appointmentService } from '../api/appointmentService'
 import { hearingReportService } from '../api/hearingReportService'
-import { staffService } from '../api/staffService'
+import { staffService, StaffRole } from '../api/staffService'
 import { clientService } from '../api/clientService'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { useI18n } from '../i18n/I18nContext'
 import Parse from '../api/parseClient'
 import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
+import { getStaffRoleColor } from '../pages/Staff/StaffListPage'
 
 interface PurchaseAppointmentModalProps {
   isOpen: boolean
@@ -540,11 +541,18 @@ export default function PurchaseAppointmentModal({
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-left bg-white flex items-center justify-between"
                 required
               >
-                <span className={selectedStaff ? 'text-gray-900' : 'text-gray-400'}>
-                  {selectedStaff
-                    ? selectedStaff.get('fullName') || selectedStaff.get('username')
-                    : t.appointments.selectStaff}
-                </span>
+                <div className="flex items-center gap-2 flex-1">
+                  <span className={selectedStaff ? 'text-gray-900' : 'text-gray-400'}>
+                    {selectedStaff
+                      ? selectedStaff.get('fullName') || selectedStaff.get('username')
+                      : t.appointments.selectStaff}
+                  </span>
+                  {selectedStaff?.get('staffRole') && (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStaffRoleColor(selectedStaff.get('staffRole') as StaffRole)}`}>
+                      {selectedStaff.get('staffRole')}
+                    </span>
+                  )}
+                </div>
                 <svg
                   className={`w-4 h-4 transition-transform ${showStaffDropdown ? 'transform rotate-180' : ''}`}
                   fill="none"
@@ -578,11 +586,16 @@ export default function PurchaseAppointmentModal({
                             setShowStaffDropdown(false)
                             setStaffSearchTerm('')
                           }}
-                          className={`w-full px-3 py-2 text-left hover:bg-gray-100 ${
+                          className={`w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center justify-between ${
                             formData.staffId === staff.id ? 'bg-primary/10 text-primary font-medium' : ''
                           }`}
                         >
-                          {staff.get('fullName') || staff.get('username')}
+                          <span>{staff.get('fullName') || staff.get('username')}</span>
+                          {staff.get('staffRole') && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStaffRoleColor(staff.get('staffRole') as StaffRole)}`}>
+                              {staff.get('staffRole')}
+                            </span>
+                          )}
                         </button>
                       ))
                     ) : (
@@ -676,11 +689,18 @@ export default function PurchaseAppointmentModal({
                   }}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-left bg-white flex items-center justify-between"
                 >
-                  <span className={selectedPaymentCollector ? 'text-gray-900' : 'text-gray-400'}>
-                    {selectedPaymentCollector
-                      ? selectedPaymentCollector.get('fullName') || selectedPaymentCollector.get('username')
-                      : t.appointments.selectPaymentCollector}
-                  </span>
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className={selectedPaymentCollector ? 'text-gray-900' : 'text-gray-400'}>
+                      {selectedPaymentCollector
+                        ? selectedPaymentCollector.get('fullName') || selectedPaymentCollector.get('username')
+                        : t.appointments.selectPaymentCollector}
+                    </span>
+                    {selectedPaymentCollector?.get('staffRole') && (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStaffRoleColor(selectedPaymentCollector.get('staffRole') as StaffRole)}`}>
+                        {selectedPaymentCollector.get('staffRole')}
+                      </span>
+                    )}
+                  </div>
                   <svg
                     className={`w-4 h-4 transition-transform ${showPaymentCollectorDropdown ? 'transform rotate-180' : ''}`}
                     fill="none"
@@ -714,11 +734,16 @@ export default function PurchaseAppointmentModal({
                               setShowPaymentCollectorDropdown(false)
                               setPaymentCollectorSearchTerm('')
                             }}
-                            className={`w-full px-3 py-2 text-left hover:bg-gray-100 ${
+                            className={`w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center justify-between ${
                               formData.paymentCollectorId === staff.id ? 'bg-primary/10 text-primary font-medium' : ''
                             }`}
                           >
-                            {staff.get('fullName') || staff.get('username')}
+                            <span>{staff.get('fullName') || staff.get('username')}</span>
+                            {staff.get('staffRole') && (
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStaffRoleColor(staff.get('staffRole') as StaffRole)}`}>
+                                {staff.get('staffRole')}
+                              </span>
+                            )}
                           </button>
                         ))
                       ) : (

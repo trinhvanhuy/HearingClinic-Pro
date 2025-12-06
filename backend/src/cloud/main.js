@@ -254,8 +254,10 @@ Parse.Cloud.define("getStaffMembers", async (request) => {
   return staff.map(user => {
     // Get all attributes
     const attrs = user.attributes;
+    const userId = user.id || user.objectId;
     return {
-      id: user.id,
+      id: userId,
+      objectId: userId, // Ensure objectId is set for Parse.User.fromJSON()
       className: user.className,
       ...attrs,
       createdAt: user.createdAt,
@@ -297,9 +299,10 @@ Parse.Cloud.define("getStaffById", async (request) => {
 
   // Return user data as JSON
   const attrs = staff.attributes;
+  const userId = staff.id || staff.objectId;
   return {
-    objectId: staff.id,
-    id: staff.id,
+    objectId: userId, // Ensure objectId is set for Parse.User.fromJSON()
+    id: userId,
     className: staff.className,
     ...attrs,
     createdAt: staff.createdAt,
@@ -330,6 +333,61 @@ async function createReminder(data, useMasterKey = true) {
   const saveOptions = useMasterKey ? { useMasterKey: true } : {};
   return await reminder.save(null, saveOptions);
 }
+
+// Generate unique repair code for REPAIR appointments
+Parse.Cloud.beforeSave("Appointment", async (request) => {
+  const appointment = request.object;
+  const appointmentType = appointment.get("type");
+  
+  // Only generate code for REPAIR appointments
+  if (appointmentType === "REPAIR") {
+    // If repairCode already exists (editing), keep it
+    if (appointment.get("repairCode")) {
+      return;
+    }
+    
+    // Generate unique 8-digit code
+    let repairCode = "";
+    let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (!isUnique && attempts < maxAttempts) {
+      // Generate random 8-digit number
+      repairCode = Math.floor(10000000 + Math.random() * 90000000).toString();
+      
+      // Check if code already exists
+      const Appointment = Parse.Object.extend("Appointment");
+      const query = new Parse.Query(Appointment);
+      query.equalTo("repairCode", repairCode);
+      query.equalTo("type", "REPAIR");
+      
+      const existing = await query.first({ useMasterKey: true });
+      
+      if (!existing) {
+        isUnique = true;
+      }
+      
+      attempts++;
+    }
+    
+    if (isUnique) {
+      appointment.set("repairCode", repairCode);
+    } else {
+      // Fallback: use timestamp-based code if random generation fails
+      const timestamp = Date.now().toString().slice(-8);
+      appointment.set("repairCode", timestamp);
+    }
+  }
+  
+  // Set createdBy/updatedBy if not set
+  if (!appointment.get("createdBy") && request.user) {
+    appointment.set("createdBy", request.user);
+  }
+  if (request.user) {
+    appointment.set("updatedBy", request.user);
+  }
+});
 
 // Auto-create reminders after saving Appointment
 Parse.Cloud.afterSave("Appointment", async (request) => {

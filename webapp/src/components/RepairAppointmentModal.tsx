@@ -2,13 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect, useRef } from 'react'
 import { appointmentService } from '../api/appointmentService'
 import { hearingReportService } from '../api/hearingReportService'
-import { staffService } from '../api/staffService'
+import { staffService, StaffRole } from '../api/staffService'
 import { clientService } from '../api/clientService'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { useI18n } from '../i18n/I18nContext'
 import Parse from '../api/parseClient'
 import { HearingReport } from '@hearing-clinic/shared/src/models/hearingReport'
+import { getStaffRoleColor } from '../pages/Staff/StaffListPage'
 
 interface RepairAppointmentModalProps {
   isOpen: boolean
@@ -27,6 +28,64 @@ export default function RepairAppointmentModal({
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const isEdit = !!appointmentId
+
+  // Helper function to get staff ID consistently
+  const getStaffId = (staff: Parse.User | null | undefined): string => {
+    if (!staff) return ''
+    
+    // Try multiple ways to get the ID
+    // Parse.User.id is a getter that returns objectId, but it might not work if objectId isn't set
+    let id = ''
+    
+    // First try the id property (getter)
+    try {
+      id = staff.id || ''
+    } catch (e) {
+      // id getter might fail
+    }
+    
+    // If id is empty, try objectId directly
+    if (!id) {
+      id = (staff as any).objectId || ''
+    }
+    
+    // Try _id as fallback
+    if (!id) {
+      id = (staff as any)._id || ''
+    }
+    
+    // Try getting from attributes
+    if (!id) {
+      try {
+        id = staff.get('objectId') || ''
+      } catch (e) {
+        // get might fail
+      }
+    }
+    
+    // Try from JSON
+    if (!id && staff.toJSON) {
+      try {
+        const json = staff.toJSON()
+        id = json.objectId || json.id || ''
+      } catch (e) {
+        // toJSON might fail
+      }
+    }
+    
+    // Debug log if still no ID
+    if (!id && staff) {
+      console.warn('Staff ID not found:', {
+        staff: staff.toJSON ? staff.toJSON() : staff,
+        hasId: !!staff.id,
+        hasObjectId: !!(staff as any).objectId,
+        has_id: !!(staff as any)._id,
+        className: (staff as any).className,
+      })
+    }
+    
+    return id
+  }
 
   // Get all hearing reports for dropdown - query directly to avoid cache issues
   const { data: hearingReports = [], isLoading: hearingReportsLoading } = useQuery({
@@ -118,6 +177,10 @@ export default function RepairAppointmentModal({
     paymentMethod: 'CASH' as 'CASH' | 'BANK_TRANSFER',
     paymentCollectorId: '',
   })
+  
+  // Store selected staff object reference to avoid ID issues
+  const [selectedStaffRef, setSelectedStaffRef] = useState<Parse.User | null>(null)
+  const [selectedPaymentCollectorRef, setSelectedPaymentCollectorRef] = useState<Parse.User | null>(null)
 
   const [staffSearchTerm, setStaffSearchTerm] = useState('')
   const [paymentCollectorSearchTerm, setPaymentCollectorSearchTerm] = useState('')
@@ -159,13 +222,23 @@ export default function RepairAppointmentModal({
       repairDate: appointment.get('date')
         ? new Date(appointment.get('date')).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16),
-      staffId: foundStaff?.id || '',
+      staffId: foundStaff ? getStaffId(foundStaff) : '',
+      // Also set the ref
+      // Note: We can't set refs in setFormData, so we'll set it separately
       note: appointment.get('note') || '',
       price: appointment.get('price') ? String(appointment.get('price')) : '',
       isPaid: appointment.get('isPaid') || false,
       paymentMethod: (appointment.get('paymentMethod') as 'CASH' | 'BANK_TRANSFER') || 'CASH',
-      paymentCollectorId: foundPaymentCollector?.id || '',
+      paymentCollectorId: foundPaymentCollector ? getStaffId(foundPaymentCollector) : '',
     })
+    
+    // Also set refs for selected staff
+    if (foundStaff) {
+      setSelectedStaffRef(foundStaff)
+    }
+    if (foundPaymentCollector) {
+      setSelectedPaymentCollectorRef(foundPaymentCollector)
+    }
     
     formInitializedRef.current = true
   }, [isOpen, isEdit, appointment?.id, staffList.length])
@@ -193,13 +266,21 @@ export default function RepairAppointmentModal({
       deviceName: '',
       ear: 'LEFT' as 'LEFT' | 'RIGHT' | 'BOTH',
       repairDate: new Date().toISOString().slice(0, 16),
-      staffId: user?.id || '',
+      staffId: user ? getStaffId(user) : '',
       note: '',
       price: '',
       isPaid: false,
       paymentMethod: 'CASH' as 'CASH' | 'BANK_TRANSFER',
       paymentCollectorId: '',
     })
+    
+    // Also set ref for user if available
+    if (user) {
+      setSelectedStaffRef(user)
+    } else {
+      setSelectedStaffRef(null)
+    }
+    setSelectedPaymentCollectorRef(null)
   }, [isOpen, isEdit, user?.id])
   
   // Set latest hearing report when available (only once after form reset)
@@ -236,10 +317,10 @@ export default function RepairAppointmentModal({
       paymentMethod: 'CASH' | 'BANK_TRANSFER'
       paymentCollectorId: string
     }) => {
-      const staff = staffList.find((s) => s.id === data.staffId)
+      const staff = staffList.find((s) => getStaffId(s) === data.staffId)
       const staffName = staff?.get('fullName') || staff?.get('username') || ''
       
-      const paymentCollector = staffList.find((s) => s.id === data.paymentCollectorId)
+      const paymentCollector = staffList.find((s) => getStaffId(s) === data.paymentCollectorId)
       const paymentCollectorName = paymentCollector?.get('fullName') || paymentCollector?.get('username') || ''
 
       if (isEdit && appointmentId) {
@@ -293,7 +374,73 @@ export default function RepairAppointmentModal({
       return
     }
 
-    if (!formData.staffId) {
+    // Get staffId - try multiple sources in order of priority
+    let staffId = formData.staffId?.trim() || ''
+    
+    // Priority 1: Use selectedStaffRef if available (most reliable)
+    if (!staffId && selectedStaffRef) {
+      try {
+        const json = selectedStaffRef.toJSON()
+        staffId = (json.objectId || json.id || '').trim()
+        console.log('Got staffId from selectedStaffRef.toJSON():', staffId)
+      } catch (e) {
+        staffId = getStaffId(selectedStaffRef).trim()
+        console.log('Got staffId from selectedStaffRef.getStaffId():', staffId)
+      }
+    }
+    
+    // Priority 2: Try selectedStaff (found from staffList)
+    if (!staffId && selectedStaff) {
+      try {
+        const json = selectedStaff.toJSON()
+        staffId = (json.objectId || json.id || '').trim()
+        console.log('Got staffId from selectedStaff.toJSON():', staffId)
+      } catch (e) {
+        staffId = getStaffId(selectedStaff).trim()
+        console.log('Got staffId from selectedStaff.getStaffId():', staffId)
+      }
+    }
+    
+    console.log('Form submit - checking staffId:', {
+      formDataStaffId: formData.staffId,
+      formDataStaffIdTrimmed: formData.staffId?.trim(),
+      resolvedStaffId: staffId,
+      staffIdType: typeof staffId,
+      staffIdLength: staffId?.length,
+      isEmpty: !staffId || staffId === '',
+      formData: { ...formData },
+      selectedStaff: selectedStaff ? {
+        id: getStaffId(selectedStaff),
+        jsonId: selectedStaff.toJSON ? (selectedStaff.toJSON().objectId || selectedStaff.toJSON().id) : null,
+        name: selectedStaff.get('fullName') || selectedStaff.get('username'),
+        json: selectedStaff.toJSON ? selectedStaff.toJSON() : null
+      } : null,
+      staffList: staffList.map(s => {
+        const json = s.toJSON ? s.toJSON() : null
+        return { 
+          id: getStaffId(s),
+          jsonId: json?.objectId || json?.id,
+          name: s.get('fullName') || s.get('username'),
+          json: json
+        }
+      })
+    })
+    
+    if (!staffId || staffId === '') {
+      console.error('Validation failed: staffId is empty after all attempts', { 
+        formData: { ...formData },
+        resolvedStaffId: staffId,
+        selectedStaff: selectedStaff ? {
+          id: getStaffId(selectedStaff),
+          json: selectedStaff.toJSON ? selectedStaff.toJSON() : null
+        } : null,
+        staffList: staffList.map(s => ({ 
+          id: getStaffId(s), 
+          jsonId: s.toJSON ? (s.toJSON().objectId || s.toJSON().id) : null,
+          name: s.get('fullName') || s.get('username'),
+          json: s.toJSON ? s.toJSON() : null
+        })) 
+      })
       toast.error(t.appointments.selectRepairer)
       return
     }
@@ -310,7 +457,7 @@ export default function RepairAppointmentModal({
       deviceName: formData.deviceName,
       ear: formData.ear,
       repairDate: new Date(formData.repairDate),
-      staffId: formData.staffId,
+      staffId: staffId, // Use resolved staffId
       note: formData.note,
       price,
       isPaid: formData.isPaid,
@@ -326,6 +473,8 @@ export default function RepairAppointmentModal({
       setPaymentCollectorSearchTerm('')
       setShowStaffDropdown(false)
       setShowPaymentCollectorDropdown(false)
+      setSelectedStaffRef(null)
+      setSelectedPaymentCollectorRef(null)
       formInitializedRef.current = false
       latestReportSetRef.current = false
     }
@@ -363,8 +512,29 @@ export default function RepairAppointmentModal({
     return fullName.includes(searchLower) || username.includes(searchLower)
   })
 
-  const selectedStaff = staffList.find((s) => s.id === formData.staffId)
-  const selectedPaymentCollector = staffList.find((s) => s.id === formData.paymentCollectorId)
+  // Find selected staff - try multiple ID comparison methods
+  const selectedStaff = staffList.find((s) => {
+    const staffId = getStaffId(s)
+    // Also try toJSON comparison
+    try {
+      const json = s.toJSON()
+      const jsonId = json.objectId || json.id
+      return staffId === formData.staffId || jsonId === formData.staffId
+    } catch (e) {
+      return staffId === formData.staffId
+    }
+  })
+  
+  const selectedPaymentCollector = staffList.find((s) => {
+    const staffId = getStaffId(s)
+    try {
+      const json = s.toJSON()
+      const jsonId = json.objectId || json.id
+      return staffId === formData.paymentCollectorId || jsonId === formData.paymentCollectorId
+    } catch (e) {
+      return staffId === formData.paymentCollectorId
+    }
+  })
 
   if (!isOpen) return null
 
@@ -372,9 +542,16 @@ export default function RepairAppointmentModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">
-            {isEdit ? t.appointments.editRepairTitle : t.appointments.repairTitle}
-          </h2>
+          <div>
+            <h2 className="text-2xl font-bold">
+              {isEdit ? t.appointments.editRepairTitle : t.appointments.repairTitle}
+            </h2>
+            {appointment?.get('repairCode') && (
+              <p className="text-sm text-gray-600 mt-1">
+                {t.appointments.repairCode}: <span className="font-mono font-semibold text-primary">{appointment.get('repairCode')}</span>
+              </p>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -540,11 +717,18 @@ export default function RepairAppointmentModal({
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-left bg-white flex items-center justify-between"
                 required
               >
-                <span className={selectedStaff ? 'text-gray-900' : 'text-gray-400'}>
-                  {selectedStaff
-                    ? selectedStaff.get('fullName') || selectedStaff.get('username')
-                    : t.appointments.selectStaff}
-                </span>
+                <div className="flex items-center gap-2 flex-1">
+                  <span className={selectedStaff ? 'text-gray-900' : 'text-gray-400'}>
+                    {selectedStaff
+                      ? selectedStaff.get('fullName') || selectedStaff.get('username')
+                      : t.appointments.selectStaff}
+                  </span>
+                  {selectedStaff?.get('staffRole') && (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStaffRoleColor(selectedStaff.get('staffRole') as StaffRole)}`}>
+                      {selectedStaff.get('staffRole')}
+                    </span>
+                  )}
+                </div>
                 <svg
                   className={`w-4 h-4 transition-transform ${showStaffDropdown ? 'transform rotate-180' : ''}`}
                   fill="none"
@@ -571,18 +755,93 @@ export default function RepairAppointmentModal({
                     {filteredStaff.length > 0 ? (
                       filteredStaff.map((staff, index) => (
                         <button
-                          key={staff.id || `staff-${staff.get('username') || index}`}
+                          key={getStaffId(staff) || `staff-${staff.get('username') || index}`}
                           type="button"
                           onClick={() => {
-                            setFormData({ ...formData, staffId: staff.id })
+                            // Get staff ID - prioritize toJSON() as it's most reliable
+                            let staffId = ''
+                            
+                            // First try toJSON to get the raw data (most reliable)
+                            try {
+                              const json = staff.toJSON()
+                              staffId = json.objectId || json.id || ''
+                              console.log('Got staffId from toJSON:', { staffId, json })
+                            } catch (e) {
+                              console.warn('toJSON failed:', e)
+                            }
+                            
+                            // If still no ID, try direct properties
+                            if (!staffId) {
+                              staffId = (staff as any).objectId || ''
+                              if (staffId) console.log('Got staffId from objectId property:', staffId)
+                            }
+                            
+                            // Try id getter
+                            if (!staffId) {
+                              try {
+                                staffId = staff.id || ''
+                                if (staffId) console.log('Got staffId from id getter:', staffId)
+                              } catch (e) {
+                                // id getter might fail
+                              }
+                            }
+                            
+                            // Try _id as last resort
+                            if (!staffId) {
+                              staffId = (staff as any)._id || ''
+                              if (staffId) console.log('Got staffId from _id:', staffId)
+                            }
+                            
+                            console.log('Selected staff - final result:', { 
+                              staffId, 
+                              staffIdType: typeof staffId,
+                              staffIdLength: staffId?.length,
+                              isValid: !!(staffId && staffId.trim() !== ''),
+                              staffJson: staff.toJSON ? staff.toJSON() : null,
+                              staffIdProp: staff.id,
+                              staffObjectId: (staff as any).objectId,
+                              formDataBefore: { ...formData }
+                            })
+                            
+                            if (!staffId || staffId.trim() === '') {
+                              console.error('Cannot get staff ID - all methods failed:', {
+                                staff,
+                                json: staff.toJSON ? staff.toJSON() : null,
+                                id: staff.id,
+                                objectId: (staff as any).objectId,
+                                _id: (staff as any)._id,
+                                className: (staff as any).className
+                              })
+                              toast.error('Không thể lấy ID nhân viên. Vui lòng thử lại.')
+                              return
+                            }
+                            
+                            // Use functional update to ensure state is updated correctly
+                            setFormData(prev => {
+                              const updated = { ...prev, staffId: staffId.trim() }
+                              console.log('FormData updated:', { 
+                                before: prev, 
+                                after: updated,
+                                staffIdSet: updated.staffId,
+                                staffIdLength: updated.staffId?.length
+                              })
+                              return updated
+                            })
+                            // Also store staff object reference
+                            setSelectedStaffRef(staff)
                             setShowStaffDropdown(false)
                             setStaffSearchTerm('')
                           }}
-                          className={`w-full px-3 py-2 text-left hover:bg-gray-100 ${
-                            formData.staffId === staff.id ? 'bg-primary/10 text-primary font-medium' : ''
+                          className={`w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center justify-between ${
+                            formData.staffId === getStaffId(staff) ? 'bg-primary/10 text-primary font-medium' : ''
                           }`}
                         >
-                          {staff.get('fullName') || staff.get('username')}
+                          <span>{staff.get('fullName') || staff.get('username')}</span>
+                          {staff.get('staffRole') && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStaffRoleColor(staff.get('staffRole') as StaffRole)}`}>
+                              {staff.get('staffRole')}
+                            </span>
+                          )}
                         </button>
                       ))
                     ) : (
@@ -676,11 +935,18 @@ export default function RepairAppointmentModal({
                   }}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-left bg-white flex items-center justify-between"
                 >
-                  <span className={selectedPaymentCollector ? 'text-gray-900' : 'text-gray-400'}>
-                    {selectedPaymentCollector
-                      ? selectedPaymentCollector.get('fullName') || selectedPaymentCollector.get('username')
-                      : t.appointments.selectPaymentCollector}
-                  </span>
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className={selectedPaymentCollector ? 'text-gray-900' : 'text-gray-400'}>
+                      {selectedPaymentCollector
+                        ? selectedPaymentCollector.get('fullName') || selectedPaymentCollector.get('username')
+                        : t.appointments.selectPaymentCollector}
+                    </span>
+                    {selectedPaymentCollector?.get('staffRole') && (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStaffRoleColor(selectedPaymentCollector.get('staffRole') as StaffRole)}`}>
+                        {selectedPaymentCollector.get('staffRole')}
+                      </span>
+                    )}
+                  </div>
                   <svg
                     className={`w-4 h-4 transition-transform ${showPaymentCollectorDropdown ? 'transform rotate-180' : ''}`}
                     fill="none"
@@ -707,18 +973,41 @@ export default function RepairAppointmentModal({
                       {filteredPaymentCollectors.length > 0 ? (
                         filteredPaymentCollectors.map((staff, index) => (
                           <button
-                            key={staff.id || `payment-collector-${staff.get('username') || index}`}
+                            key={getStaffId(staff) || `payment-collector-${staff.get('username') || index}`}
                             type="button"
-                            onClick={() => {
-                              setFormData({ ...formData, paymentCollectorId: staff.id })
-                              setShowPaymentCollectorDropdown(false)
-                              setPaymentCollectorSearchTerm('')
-                            }}
-                            className={`w-full px-3 py-2 text-left hover:bg-gray-100 ${
-                              formData.paymentCollectorId === staff.id ? 'bg-primary/10 text-primary font-medium' : ''
+                          onClick={() => {
+                            // Get staff ID - prioritize toJSON() as it's most reliable
+                            let staffId = ''
+                            
+                            // First try toJSON to get the raw data (most reliable)
+                            try {
+                              const json = staff.toJSON()
+                              staffId = json.objectId || json.id || ''
+                            } catch (e) {
+                              staffId = getStaffId(staff)
+                            }
+                            
+                            if (!staffId || staffId.trim() === '') {
+                              console.error('Cannot get payment collector ID:', staff)
+                              toast.error('Không thể lấy ID người thu tiền. Vui lòng thử lại.')
+                              return
+                            }
+                            
+                            setFormData(prev => ({ ...prev, paymentCollectorId: staffId.trim() }))
+                            setSelectedPaymentCollectorRef(staff)
+                            setShowPaymentCollectorDropdown(false)
+                            setPaymentCollectorSearchTerm('')
+                          }}
+                            className={`w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center justify-between ${
+                              formData.paymentCollectorId === getStaffId(staff) ? 'bg-primary/10 text-primary font-medium' : ''
                             }`}
                           >
-                            {staff.get('fullName') || staff.get('username')}
+                            <span>{staff.get('fullName') || staff.get('username')}</span>
+                            {staff.get('staffRole') && (
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStaffRoleColor(staff.get('staffRole') as StaffRole)}`}>
+                                {staff.get('staffRole')}
+                              </span>
+                            )}
                           </button>
                         ))
                       ) : (

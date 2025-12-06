@@ -29,7 +29,27 @@ export const staffService = {
       
       // Convert JSON data back to Parse.User objects
       return result.map((userData: any) => {
-        const user = Parse.User.fromJSON(userData)
+        // Ensure objectId is set (Parse.User.fromJSON requires it)
+        if (!userData.objectId && userData.id) {
+          userData.objectId = userData.id
+        }
+        // Ensure className is set
+        if (!userData.className) {
+          userData.className = '_User'
+        }
+        const user = Parse.User.fromJSON(userData, false) // false = don't mark as dirty
+        // Ensure objectId is set on the user object
+        if (userData.objectId && !(user as any).objectId) {
+          (user as any).objectId = userData.objectId
+        }
+        // Ensure id getter works (Parse.User.id is a getter that returns objectId)
+        if (!user.id && userData.objectId) {
+          Object.defineProperty(user, 'id', {
+            get: () => userData.objectId,
+            enumerable: true,
+            configurable: true
+          })
+        }
         // Mark as clean (not dirty) since this is fetched data
         ;(user as any)._isDirty = false
         return user
@@ -48,8 +68,28 @@ export const staffService = {
     try {
       const result = await Parse.Cloud.run('getStaffById', { id }) as any
       
+      // Ensure objectId is set (Parse.User.fromJSON requires it)
+      if (!result.objectId && result.id) {
+        result.objectId = result.id
+      }
+      // Ensure className is set
+      if (!result.className) {
+        result.className = '_User'
+      }
       // Convert JSON data back to Parse.User object
-      const user = Parse.User.fromJSON(result)
+      const user = Parse.User.fromJSON(result, false) // false = don't mark as dirty
+      // Ensure objectId is set on the user object
+      if (result.objectId && !(user as any).objectId) {
+        (user as any).objectId = result.objectId
+      }
+      // Ensure id getter works (Parse.User.id is a getter that returns objectId)
+      if (!user.id && result.objectId) {
+        Object.defineProperty(user, 'id', {
+          get: () => result.objectId,
+          enumerable: true,
+          configurable: true
+        })
+      }
       ;(user as any)._isDirty = false
       return user
     } catch (error: any) {

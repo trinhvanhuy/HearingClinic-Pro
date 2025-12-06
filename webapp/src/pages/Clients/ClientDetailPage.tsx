@@ -180,6 +180,21 @@ export default function ClientDetailPage() {
     }
   }
 
+  const getTypeColor = (type: AppointmentType): string => {
+    switch (type) {
+      case 'REPAIR':
+        return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'PURCHASE':
+        return 'bg-purple-100 text-purple-800 border-purple-200'
+      case 'AUDIOGRAM':
+        return 'bg-cyan-100 text-cyan-800 border-cyan-200'
+      case 'COUNSELING':
+        return 'bg-amber-100 text-amber-800 border-amber-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
   const handleRowClick = (appointment: any) => {
     const type = appointment.get('type')
     if (type === 'REPAIR') {
@@ -371,24 +386,62 @@ export default function ClientDetailPage() {
 
         {/* Filter Tabs */}
         <div className="flex flex-wrap gap-2 mb-6 pb-4 border-b">
-          {(['ALL', 'REPAIR', 'PURCHASE', 'AUDIOGRAM', 'COUNSELING'] as const).map((type) => (
-            <button
-              key={type}
-              onClick={() => {
-                setSelectedType(type)
-                setCurrentPage(1)
-              }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedType === type
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {type === 'ALL'
-                ? t.clientDetail.allAppointments || 'Tất cả'
-                : getTypeLabel(type)}
-            </button>
-          ))}
+          {(['ALL', 'REPAIR', 'PURCHASE', 'AUDIOGRAM', 'COUNSELING'] as const).map((type) => {
+            const isSelected = selectedType === type
+            const typeColors = {
+              REPAIR: { 
+                selected: 'bg-blue-500 text-white border-blue-600', 
+                unselected: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' 
+              },
+              PURCHASE: { 
+                selected: 'bg-purple-500 text-white border-purple-600', 
+                unselected: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' 
+              },
+              AUDIOGRAM: { 
+                selected: 'bg-cyan-500 text-white border-cyan-600', 
+                unselected: 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100' 
+              },
+              COUNSELING: { 
+                selected: 'bg-amber-500 text-white border-amber-600', 
+                unselected: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' 
+              },
+            }
+            
+            if (type === 'ALL') {
+              return (
+                <button
+                  key={type}
+                  onClick={() => {
+                    setSelectedType(type)
+                    setCurrentPage(1)
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    isSelected
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+                  }`}
+                >
+                  {t.clientDetail.allAppointments}
+                </button>
+              )
+            }
+            
+            const colors = typeColors[type]
+            return (
+              <button
+                key={type}
+                onClick={() => {
+                  setSelectedType(type)
+                  setCurrentPage(1)
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2 ${
+                  isSelected ? colors.selected : colors.unselected
+                }`}
+              >
+                {getTypeLabel(type)}
+              </button>
+            )
+          })}
         </div>
 
         {/* Appointments Table */}
@@ -466,7 +519,7 @@ export default function ClientDetailPage() {
                       >
                         <td>{date ? formatDateTime(date) : '-'}</td>
                         <td>
-                          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${getTypeColor(type)}`}>
                             {getTypeLabel(type)}
                           </span>
                         </td>
